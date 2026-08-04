@@ -1,0 +1,7 @@
+# Secrets — never commit real keys
+.env
+
+# Dependencies / junk
+node_modules/
+*.log
+.DS_Store

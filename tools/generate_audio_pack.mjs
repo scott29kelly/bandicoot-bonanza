@@ -4,7 +4,11 @@
  * index.html as base64 mp3 clips between the AUDIO_PACK markers.
  *
  * Usage:
- *   ELEVENLABS_API_KEY=sk_... node tools/generate_audio_pack.mjs [options]
+ *   node tools/generate_audio_pack.mjs [options]
+ *
+ * The API key is read from ELEVENLABS_API_KEY — either already exported in the
+ * environment, or set in a .env file at the repo root (copy .env.example).
+ * .env is gitignored; the key is never written anywhere else.
  *
  * Options:
  *   --voice <id>    ElevenLabs voice id for the announcer (default: Rachel)
@@ -20,10 +24,21 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+
+// load .env from the repo root if present (simple KEY=value lines, no dependency)
+const envPath=path.join(root,'.env');
+if(!process.env.ELEVENLABS_API_KEY&&fs.existsSync(envPath)){
+  for(const line of fs.readFileSync(envPath,'utf8').split('\n')){
+    const m=line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/);
+    if(m&&m[2]&&!process.env[m[1]])process.env[m[1]]=m[2].replace(/^["']|["']$/g,'');
+  }
+}
+
 const API='https://api.elevenlabs.io/v1';
 const KEY=process.env.ELEVENLABS_API_KEY;
 if(!KEY){
-  console.error('ELEVENLABS_API_KEY is not set. Aborting (nothing was modified).');
+  console.error('ELEVENLABS_API_KEY is not set (export it or put it in .env — see .env.example). Aborting; nothing was modified.');
   process.exit(1);
 }
 
@@ -106,7 +121,6 @@ if(!Object.keys(pack).length){
   process.exit(1);
 }
 
-const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const htmlPath=path.join(root,'index.html');
 let html=fs.readFileSync(htmlPath,'utf8');
 const START='/*__AUDIO_PACK_START__*/',END='/*__AUDIO_PACK_END__*/';
