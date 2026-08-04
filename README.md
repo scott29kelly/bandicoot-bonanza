@@ -8,37 +8,42 @@ A real, playable game with zero external assets: geometry, textures, materials, 
 
 ## Features
 
-- Full game loop: title screen, lives, checkpoints, game over, and victory sequence
-- Third-person cartoon platformer controller (run, jump, double-jump, spin attack)
-- Original procedurally-built mascot hero with squash-and-stretch animation
-- Breakable crates with physics debris, collectible fruit, and TNT hazards
-- Rolling-log obstacles and pit jumps with checkpoint respawns
-- Procedural Web Audio sound effects and ambient jungle melody (mute toggle included)
-- Toon/cel-shaded materials, saturated tropical palette, bloom and tone mapping
-- Instanced rendering and particle pooling targeting 60 FPS
+- Full game loop: animated title screen, 3 lives, checkpoint totems, game over, and a victory sequence with a camera pull-back, confetti, and a stats summary (fruit, crates, time)
+- Third-person cartoon platformer controller: run, jump, double-jump (with coyote time and jump buffering), and a radial spin attack
+- Original procedurally-built orange marsupial hero with idle/run/jump/spin animation, squash-and-stretch, and an inverted-hull outline
+- Breakable crates that shatter into physics plank debris and release collectible fruit; TNT crates with a ticking fuse, chained explosions, and screen shake
+- Rolling-log obstacles, bounce pads, pit jumps, a plank bridge, and a beach-to-jungle-to-temple corridor ending at the temple gate
+- Two glowing checkpoint totems; dying respawns you at the last one touched
+- HUD with fruit counter, crates-broken counter, lives, and checkpoint indicator
+- Procedural Web Audio sound effects (jump, spin, crate break, fruit pickup, TNT fuse and blast, checkpoint chime, fanfares) plus a looping ambient marimba melody with bird chirps — mute toggle included
+- Toon/cel-shaded materials via a stepped gradient ramp, painterly canvas textures (wood grain, mossy stone, sand, leaves), ACESFilmic tone mapping, bloom on emissives, FXAA, and a warm vignette
+- Ambient fireflies, landing dust, sparkle bursts, and pooled confetti particles
+- Instanced rendering (fruit, ferns, grass, rocks) and particle pooling targeting 60 FPS
 
 ## How to Play
 
-Open `index.html` in any modern browser. No build step, no install, no server required.
+Open `index.html` in any modern browser. No build step, no install, no server required (Three.js loads from a pinned CDN, so you need to be online).
 
 **Objective:** Reach the temple gate at the end of the path. Collect 80%+ of the fruit for a perfect-run bonus.
+
+On a slow or software-rendered GPU you can open `index.html?minfx` to disable shadows and post-processing.
 
 ## Controls
 
 | Input | Action |
 |-------|--------|
-| WASD | Move |
+| WASD / Arrow keys | Move |
 | Space | Jump / Double-jump |
-| Click | Spin attack |
-| Enter | Start / Retry |
+| Click / Shift / K | Spin attack |
+| Enter | Start / Retry / Back to title |
 | M | Mute audio |
 
 ## Tech
 
-- Three.js (CDN)
+- Three.js r128 (pinned CDN) with EffectComposer, UnrealBloomPass, and FXAA from the matching examples build
 - Procedural Canvas/WebGL textures — no external images or model files
 - Web Audio API for all sound
-- Optional lightweight physics (Cannon.js or custom Verlet)
+- Custom lightweight kinematic physics (AABB collision, ballistic debris) — no physics engine dependency
 
 ## Repo
 
