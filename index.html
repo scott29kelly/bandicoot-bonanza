@@ -31,6 +31,7 @@ h1.logo{font-size:min(11vw,90px);line-height:.95;margin:0 0 10px;color:#ffb020;-
 #perfect{font-size:30px;color:#ffd700;font-weight:900;-webkit-text-stroke:1px #7a4a00;animation:bob 1.4s ease-in-out infinite;margin:4px 0 8px}
 .sub{margin:0 0 8px;color:#cfe8b8;font-size:18px;text-shadow:1px 1px 0 rgba(0,0,0,.5)}
 #mute-ind{position:absolute;bottom:12px;right:16px;font-size:14px;font-weight:700;opacity:.8;background:rgba(0,0,0,.4);padding:4px 12px;border-radius:10px}
+#focus-tip{position:absolute;top:70px;left:50%;transform:translateX(-50%);font-size:17px;font-weight:800;color:#fff;background:rgba(180,40,20,.92);border:3px solid #ffd76e;border-radius:12px;padding:8px 18px;text-shadow:1px 1px 0 rgba(0,0,0,.6);animation:blink 1.2s steps(2) infinite;white-space:nowrap}
 #error{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#210f0f;color:#ffb0b0;font-size:20px;padding:40px;text-align:center;pointer-events:auto}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
@@ -73,6 +74,7 @@ h1.logo{font-size:min(11vw,90px);line-height:.95;margin:0 0 10px;color:#ffb020;-
     <p class="blink">PRESS ENTER FOR TITLE</p>
   </div>
   <div id="mute-ind">SOUND ON &nbsp;[M]</div>
+  <div id="focus-tip" class="hidden">KEYBOARD FOCUS LOST &mdash; CLICK THE GAME, THEN KEEP PLAYING</div>
   <div id="error" class="hidden"></div>
 </div>
 <script>
@@ -233,6 +235,9 @@ const audio={
     if(this.hasClip('music'))return; // baked music loop replaces the synth ambient
     // ambient marimba loop
     const c=this.ctx;
+    // if the tab was backgrounded the schedule falls behind — skip ahead instead
+    // of firing every missed note at once on resume
+    if(this.nextNote<c.currentTime-0.5)this.nextNote=c.currentTime+0.1;
     while(this.nextNote<c.currentTime+0.18){
       const deg=this.MELODY[this.step%this.MELODY.length];
       if(deg!==null){
@@ -1559,17 +1564,41 @@ window.addEventListener('keyup',e=>{
     case 'KeyD':case 'ArrowRight':keys.d=false;break;
   }
 });
+const focusTip=document.getElementById('focus-tip');
 window.addEventListener('mousedown',e=>{
   audio.init();audio.resume();
+  window.focus();
+  focusTip.classList.add('hidden');
   if(e.button===0)player.trySpin();
 });
-window.addEventListener('blur',()=>{keys.w=keys.a=keys.s=keys.d=false;});
+window.addEventListener('keydown',()=>{focusTip.classList.add('hidden');});
+window.addEventListener('focus',()=>{focusTip.classList.add('hidden');});
+window.addEventListener('blur',()=>{
+  keys.w=keys.a=keys.s=keys.d=false;
+  // make silent keyboard-focus theft (devtools, OS popups like Sticky Keys)
+  // visible and recoverable instead of looking like a freeze
+  if(game.state==='PLAYING'||game.state==='DYING')focusTip.classList.remove('hidden');
+});
 
 /* ============================ 15. MAIN LOOP ============================ */
 const gateGem=scene.getObjectByName('gateGem');
 const clock=new THREE.Clock();
+let runtimeErrs=0;
+function reportRuntimeErr(err){
+  runtimeErrs++;
+  if(runtimeErrs<=3){
+    console.error('Bandicoot Bonanza runtime error:',err);
+    errEl.textContent='Runtime error: '+err.message+' — please report this. The game will try to continue.';
+    errEl.classList.remove('hidden');
+  }
+}
 function frame(){
   requestAnimationFrame(frame);
+  try{frameBody();}catch(err){reportRuntimeErr(err);
+    try{renderer.render(scene,camera);}catch(e2){}
+  }
+}
+function frameBody(){
   const dt=Math.min(clock.getDelta(),0.033);
   const t=game.t+=dt;
   game.frames++;
