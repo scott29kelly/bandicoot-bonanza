@@ -62,7 +62,7 @@ const SFX={
   bounce:{text:'big springy trampoline bounce, cartoon video game sound effect',dur:0.8},
   crate:{text:'wooden crate smashing into planks, short cartoon video game sound effect',dur:0.8},
   fruit:{text:'bright sparkly fruit pickup chime, short cheerful video game collect sound',dur:0.5},
-  fuse:{text:'single short fuse tick spark, tiny video game sound effect',dur:0.4},
+  fuse:{text:'single short fuse tick spark, tiny video game sound effect',dur:0.5},
   explosion:{text:'cartoon TNT barrel explosion with deep boom, video game sound effect',dur:1.5},
   checkpoint:{text:'magical ascending chime arpeggio, checkpoint activation, video game sound effect',dur:1.2},
   hurt:{text:'cartoon character yelp ouch, short video game hit sound',dur:0.6},
