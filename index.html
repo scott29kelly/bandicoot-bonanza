@@ -422,11 +422,30 @@ const TEX={};
     x.bezierCurveTo(rand(0,256),y0+rand(-8,8),rand(0,256),y0+rand(-8,8),rnd()*256,y0+rand(-6,6));x.stroke();
   }
   TEX.water=toTex(c,true);TEX.water.repeat.set(10,8);
-  // sky gradient
-  c=mkCanvas(64);x=c.getContext('2d');
-  const sg=x.createLinearGradient(0,0,0,64);
+  // sky gradient — the single largest flat area in most framings, and a
+  // vertical gradient across 8-bit channels bands visibly wherever it is
+  // shallow. Rendered at a useful height and then dithered by about +/-1.5
+  // levels, which is below the threshold of visibility but above the
+  // threshold of quantisation, so the bands break up into noise.
+  c=mkCanvas(256);x=c.getContext('2d');
+  const sg=x.createLinearGradient(0,0,0,256);
   sg.addColorStop(0,'#4fa8e8');sg.addColorStop(0.55,'#9fd8f0');sg.addColorStop(0.72,'#ffe9b8');sg.addColorStop(1,'#ffd28a');
-  x.fillStyle=sg;x.fillRect(0,0,64,64);
+  x.fillStyle=sg;x.fillRect(0,0,256,256);
+  (function ditherSky(){
+    const img=x.getImageData(0,0,256,256),D=img.data;
+    // Ordered 4x4 Bayer rather than white noise: it is stable, it does not
+    // sparkle when the sky texture is sampled at different scales, and it
+    // costs one lookup.
+    const BAYER=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5];
+    for(let py=0;py<256;py++)for(let px=0;px<256;px++){
+      const o=(py*256+px)*4;
+      const t=(BAYER[(py&3)*4+(px&3)]/15-0.5)*3.0;
+      D[o]=clamp(D[o]+t,0,255);
+      D[o+1]=clamp(D[o+1]+t,0,255);
+      D[o+2]=clamp(D[o+2]+t,0,255);
+    }
+    x.putImageData(img,0,0);
+  })();
   TEX.sky=toTex(c);
 })();
 
@@ -515,6 +534,31 @@ const rim=new THREE.DirectionalLight(0x88bbff,0.17);
 rim.position.set(-6,8,-10);
 scene.add(rim);
 const SUN_OFF=new THREE.Vector3(14,26,16);
+/*
+ * Shadow-map texel snapping.
+ *
+ * The sun follows the player, so its orthographic shadow frustum slides
+ * continuously — and every shadow edge in the game crawls and fizzes as it
+ * does, because the depth samples land on a slightly different part of the
+ * world each frame. Shimmer is the single most legible "this was generated"
+ * tell there is, and it costs nothing to remove: quantise the shadow focus to
+ * whole shadow-map texels, in the light's own basis, so the frustum moves in
+ * discrete steps that the texel grid follows exactly.
+ */
+const SUN_DIR=SUN_OFF.clone().normalize();
+const SUN_RIGHT=new THREE.Vector3().crossVectors(new THREE.Vector3(0,1,0),SUN_DIR).normalize();
+const SUN_UP=new THREE.Vector3().crossVectors(SUN_DIR,SUN_RIGHT).normalize();
+const _sunFocus=new THREE.Vector3();
+function focusSun(v){
+  const cam=sun.shadow.camera;
+  const texel=(cam.right-cam.left)/sun.shadow.mapSize.x;
+  const a=Math.round(v.dot(SUN_RIGHT)/texel)*texel;
+  const b=Math.round(v.dot(SUN_UP)/texel)*texel;
+  const c=v.dot(SUN_DIR);
+  _sunFocus.copy(SUN_RIGHT).multiplyScalar(a).addScaledVector(SUN_UP,b).addScaledVector(SUN_DIR,c);
+  sun.target.position.copy(_sunFocus);
+  sun.position.copy(_sunFocus).add(SUN_OFF);
+}
 const flash=new THREE.PointLight(0xffa040,0,18,2);
 // flashAt() powers are authored against the old clipped chain; scale them
 // into the new baseline in one place rather than at every call site.
@@ -573,7 +617,66 @@ const ABLATE=(function(){
 const ablated=(name)=>ABLATE.indexOf(name)>=0;
 
 const POST=!MINFX&&!!(THREE.EffectComposer&&THREE.RenderPass&&THREE.ShaderPass&&THREE.UnrealBloomPass&&THREE.FXAAShader);
-let composer=null,fxaaPass=null,gradePass=null;
+let composer=null,fxaaPass=null,gradePass=null,aoApply=null;
+let depthRT=null,depthMat=null,aoRT=null,aoRT2=null,aoMat=null,aoBlurMat=null;
+let aoQuad=null,aoScene=null,aoCam=null;
+function aoBlit(mat,target){
+  aoQuad.material=mat;
+  renderer.setRenderTarget(target);
+  renderer.clear(true,false,false);
+  renderer.render(aoScene,aoCam);
+}
+/*
+ * One extra geometry pass, writing packed depth. At this scene's ~45k
+ * triangles it costs almost nothing, and it buys a depth buffer that works on
+ * every driver instead of only the ones with WEBGL_depth_texture.
+ *
+ * scene.background has to come off for the duration: the renderer draws it
+ * before the scene, and its colour would land in the depth target as if it
+ * were geometry sitting right against the near plane.
+ */
+/*
+ * depth -> AO -> blur X -> blur Y, all outside the composer, leaving the
+ * finished occlusion term in aoRT for the one in-chain pass to multiply.
+ */
+function renderAO(){
+  // Refreshed every frame rather than once at setup: the review harness
+  // retunes fov per framing, and reconstructing view positions through a
+  // stale projection would put the occlusion somewhere else entirely.
+  aoMat.uniforms.proj.value.copy(camera.projectionMatrix);
+  aoMat.uniforms.projInv.value.copy(camera.projectionMatrixInverse);
+  renderDepth();
+  aoBlit(aoMat,aoRT);
+  aoBlurMat.uniforms.tAO.value=aoRT.texture;
+  aoBlurMat.uniforms.dir.value.set(1,0);
+  aoBlit(aoBlurMat,aoRT2);
+  aoBlurMat.uniforms.tAO.value=aoRT2.texture;
+  aoBlurMat.uniforms.dir.value.set(0,1);
+  aoBlit(aoBlurMat,aoRT);
+  renderer.setRenderTarget(null);
+}
+function renderDepth(){
+  if(!depthRT)return;
+  const bg=scene.background,fog=scene.fog;
+  scene.background=null;scene.fog=null;
+  scene.overrideMaterial=depthMat;
+  renderer.setRenderTarget(depthRT);
+  renderer.clear(true,true,false);
+  renderer.render(scene,camera);
+  renderer.setRenderTarget(null);
+  scene.overrideMaterial=null;
+  scene.background=bg;scene.fog=fog;
+}
+function syncAOSize(){
+  if(!aoApply)return;
+  const pr=renderer.getPixelRatio();
+  const w=Math.max(2,Math.floor(window.innerWidth*pr)),h=Math.max(2,Math.floor(window.innerHeight*pr));
+  const hw=Math.max(2,w>>1),hh=Math.max(2,h>>1);
+  depthRT.setSize(w,h);
+  aoRT.setSize(hw,hh);
+  aoRT2.setSize(hw,hh);
+  aoBlurMat.uniforms.resolution.value.set(hw,hh);
+}
 
 /*
  * AgX, ported from the reference implementation three ships in its later
@@ -657,6 +760,177 @@ const GradeShader={
   ].join('\n')
 };
 
+/*
+ * Ambient occlusion.
+ *
+ * "AO and bloom on primitive boxes beat an expensive asset pack rendered raw"
+ * — this is the pass that makes props sit ON the ground instead of hovering
+ * above it, and it is worth more here than extra geometry, because a toon ramp
+ * has no other way to darken a crevice.
+ *
+ * It runs OFF the composer chain, into its own half-resolution buffer:
+ *   depth prepass -> AO term -> blur X -> blur Y -> (buffer)
+ * and a single pass inside the chain multiplies that buffer into the lit
+ * image, before bloom, so occluded corners do not glow.
+ *
+ * Keeping the AO term in its own buffer is the whole point. The first version
+ * multiplied AO straight into the colour and then ran the blur over the
+ * result, which blurred the entire frame — a soft, out-of-focus image that
+ * looked like a depth-of-field bug rather than occlusion. Only the AO term is
+ * allowed to be blurry.
+ *
+ * Depth is RGBA-packed from a MeshDepthMaterial prepass rather than read from
+ * a depth-texture attachment: WEBGL_depth_texture is not universally
+ * available (notably not in the software renderer the shot harness runs on),
+ * and a silently unsupported attachment reads back as zero — which shades
+ * every pixel as fully occluded and produces a frame of flat dark blue that
+ * every triangle counter in the tooling will happily call a successful render.
+ */
+const AO_UNPACK=[
+'const float UnpackDownscale=255.0/256.0;',
+'const vec3 PackFactors=vec3(256.0*256.0*256.0,256.0*256.0,256.0);',
+'const vec4 UnpackFactors=UnpackDownscale/vec4(PackFactors,1.0);',
+'float readDepth(sampler2D t,vec2 uv){return dot(texture2D(t,uv),UnpackFactors);}'
+].join('\n');
+
+/** Writes the occlusion term only — no colour touches this shader. */
+const AOShader={
+  uniforms:{
+    tDepth:{value:null},
+    projInv:{value:new THREE.Matrix4()},
+    proj:{value:new THREE.Matrix4()},
+    radius:{value:0.72},
+    intensity:{value:1.3},
+    bias:{value:0.02}
+  },
+  vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+  fragmentShader:[
+    'varying vec2 vUv;',
+    'uniform sampler2D tDepth;',
+    'uniform mat4 projInv;',
+    'uniform mat4 proj;',
+    'uniform float radius;',
+    'uniform float intensity;',
+    'uniform float bias;',
+    AO_UNPACK,
+    'vec3 viewPosAt(vec2 uv,float d){',
+    '  vec4 clip=vec4(uv*2.0-1.0,d*2.0-1.0,1.0);',
+    '  vec4 v=projInv*clip;',
+    '  return v.xyz/v.w;',
+    '}',
+    'void main(){',
+    '  float d=readDepth(tDepth,vUv);',
+    // Depth 1.0 is the far plane: sky and background. Occluding those would
+    // draw a dark halo around every silhouette standing against the sky.
+    '  if(d>=0.9999){gl_FragColor=vec4(1.0);return;}',
+    '  vec3 p=viewPosAt(vUv,d);',
+    '  vec3 n=normalize(cross(dFdx(p),dFdy(p)));',
+    // Interleaved-gradient noise: cheap, well distributed, stable per pixel,
+    // so the sampling pattern does not crawl as the camera moves. Shimmer is
+    // the tell; a rotating kernel that re-randomises every frame would put it
+    // straight back in.
+    '  float ign=fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(0.06711056,0.00583715))));',
+    '  vec3 t=normalize(abs(n.z)<0.9?cross(n,vec3(0.0,0.0,1.0)):cross(n,vec3(1.0,0.0,0.0)));',
+    '  vec3 b=cross(n,t);',
+    '  float ao=0.0;',
+    '  const int TAPS=12;',
+    '  for(int i=0;i<TAPS;i++){',
+    '    float fi=(float(i)+0.5)/float(TAPS);',
+    '    float ang=(fi*4.0+ign)*6.2831853;',
+    '    float r=radius*sqrt(fi);',
+    '    vec3 sp=p+(t*cos(ang)+b*sin(ang))*r+n*r*0.4;',
+    '    vec4 cp=proj*vec4(sp,1.0);',
+    '    vec2 suv=(cp.xy/cp.w)*0.5+0.5;',
+    '    if(suv.x<0.0||suv.x>1.0||suv.y<0.0||suv.y>1.0)continue;',
+    '    float sd=readDepth(tDepth,suv);',
+    '    if(sd>=0.9999)continue;',
+    '    vec3 sPos=viewPosAt(suv,sd);',
+    // Range check: a surface far in front of this one occludes in screen
+    // space but not in the world. Without this the pass draws a dark outline
+    // around every foreground silhouette.
+    '    float dz=sPos.z-p.z;',
+    '    float rangeOk=smoothstep(0.0,1.0,radius/max(abs(dz),1e-4));',
+    '    if(dz>bias)ao+=rangeOk;',
+    '  }',
+    '  ao=1.0-clamp(ao/float(TAPS)*intensity,0.0,1.0);',
+    '  gl_FragColor=vec4(ao,ao,ao,1.0);',
+    '}'
+  ].join('\n')
+};
+
+/**
+ * Depth-aware separable blur for the AO term.
+ *
+ * A 12-tap AO is noisy by construction. A plain blur would bleed occlusion
+ * across silhouette edges, so taps are weighted by depth similarity and the
+ * weights renormalised. Where every tap rejects — grazing surfaces, where a
+ * neighbouring texel spans metres of view depth — it falls back to the centre
+ * sample rather than dividing by nearly zero and fabricating a black band.
+ */
+const AOBlurShader={
+  uniforms:{
+    tAO:{value:null},
+    tDepth:{value:null},
+    resolution:{value:new THREE.Vector2(1,1)},
+    dir:{value:new THREE.Vector2(1,0)}
+  },
+  vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+  fragmentShader:[
+    'varying vec2 vUv;',
+    'uniform sampler2D tAO;',
+    'uniform sampler2D tDepth;',
+    'uniform vec2 resolution;',
+    'uniform vec2 dir;',
+    AO_UNPACK,
+    'void main(){',
+    '  vec2 texel=dir/resolution;',
+    '  float dc=readDepth(tDepth,vUv);',
+    '  float acc=texture2D(tAO,vUv).r;',
+    '  float wsum=1.0;',
+    '  for(int i=1;i<=3;i++){',
+    '    float fi=float(i);',
+    '    float w=exp(-fi*fi*0.3);',
+    '    vec2 o=texel*fi;',
+    '    float w1=w*exp(-abs(readDepth(tDepth,vUv+o)-dc)*700.0);',
+    '    float w2=w*exp(-abs(readDepth(tDepth,vUv-o)-dc)*700.0);',
+    '    acc+=texture2D(tAO,vUv+o).r*w1+texture2D(tAO,vUv-o).r*w2;',
+    '    wsum+=w1+w2;',
+    '  }',
+    '  float v=wsum>0.05?acc/wsum:texture2D(tAO,vUv).r;',
+    '  gl_FragColor=vec4(v,v,v,1.0);',
+    '}'
+  ].join('\n')
+};
+
+/**
+ * The only pass that touches colour: multiply the blurred occlusion into the
+ * lit image. Occlusion tints toward the sky colour rather than toward black —
+ * this game's entire lighting premise is that shadow is cool and lifted, and
+ * an AO term that multiplied to grey would undo the toon ramp exactly where
+ * the ramp is doing its most visible work.
+ */
+const AOApplyShader={
+  uniforms:{
+    tDiffuse:{value:null},
+    tAO:{value:null},
+    skyTint:{value:new THREE.Color(0x8fbfe4)},
+    strength:{value:0.9}
+  },
+  vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+  fragmentShader:[
+    'varying vec2 vUv;',
+    'uniform sampler2D tDiffuse;',
+    'uniform sampler2D tAO;',
+    'uniform vec3 skyTint;',
+    'uniform float strength;',
+    'void main(){',
+    '  vec4 src=texture2D(tDiffuse,vUv);',
+    '  float ao=texture2D(tAO,vUv).r;',
+    '  float k=mix(1.0,ao,strength);',
+    '  gl_FragColor=vec4(src.rgb*mix(skyTint*0.6,vec3(1.0),k),src.a);',
+    '}'
+  ].join('\n')
+};
 if(POST){
   // Half-float so the render is genuinely HDR: emissives sit well above 1.0
   // and survive all the way to the tonemap instead of being clipped at the
@@ -669,6 +943,39 @@ if(POST){
      encoding:THREE.LinearEncoding,stencilBuffer:false,depthBuffer:true});
   composer=new THREE.EffectComposer(renderer,hdr);
   composer.addPass(new THREE.RenderPass(scene,camera));
+
+  if(!ablated('ao')){
+    const rtOpt={minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,
+      format:THREE.RGBAFormat,type:THREE.UnsignedByteType,
+      stencilBuffer:false,depthBuffer:false};
+    depthRT=new THREE.WebGLRenderTarget(1,1,{minFilter:THREE.NearestFilter,
+      magFilter:THREE.NearestFilter,format:THREE.RGBAFormat,
+      type:THREE.UnsignedByteType,stencilBuffer:false,depthBuffer:true});
+    depthMat=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking});
+    // Half resolution. AO is a low-frequency term and the blur that follows
+    // would throw most of the extra detail away anyway.
+    aoRT=new THREE.WebGLRenderTarget(1,1,rtOpt);
+    aoRT2=new THREE.WebGLRenderTarget(1,1,rtOpt);
+    aoMat=new THREE.ShaderMaterial(AOShader);
+    aoMat.extensions.derivatives=true;             // normals from dFdx/dFdy
+    aoMat.uniforms.tDepth.value=depthRT.texture;
+    aoBlurMat=new THREE.ShaderMaterial(AOBlurShader);
+    aoBlurMat.uniforms.tDepth.value=depthRT.texture;
+    // r128's global examples build does not expose Pass.FullScreenQuad, so
+    // roll the two-triangle quad here rather than adding another CDN script
+    // for eleven lines of code.
+    aoQuad=new THREE.Mesh(new THREE.PlaneGeometry(2,2),aoMat);
+    aoScene=new THREE.Scene();
+    aoScene.add(aoQuad);
+    aoCam=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+
+    // The single in-chain pass, sitting between the render and the bloom so
+    // that occluded corners are dark BEFORE anything decides what glows.
+    aoApply=new THREE.ShaderPass(AOApplyShader);
+    aoApply.uniforms.tAO.value=aoRT.texture;
+    composer.addPass(aoApply);
+    syncAOSize();
+  }
 
   if(!ablated('bloom')){
     // Threshold is now in LINEAR HDR terms, so 1.0 means "brighter than a
@@ -709,6 +1016,7 @@ window.addEventListener('resize',()=>{
   if(composer){composer.setSize(w,h);
     const pr=renderer.getPixelRatio();
     if(fxaaPass)fxaaPass.material.uniforms.resolution.value.set(1/(w*pr),1/(h*pr));
+    syncAOSize();
   }
 });
 
@@ -2072,8 +2380,7 @@ function frameBody(){
       }
       if(game.state==='PLAYING'&&player.pos.z<gateZ+1.5&&player.pos.y>4)game.setState('VICTORY');
       updateFog(player.pos.z);
-      sun.position.set(player.pos.x+SUN_OFF.x,player.pos.y+SUN_OFF.y,player.pos.z+SUN_OFF.z);
-      sun.target.position.copy(player.pos);
+      focusSun(player.pos);
       camRig.follow(dt);
       break;
     }
@@ -2087,8 +2394,7 @@ function frameBody(){
       // Light the SUBJECT, not the camera — a shadow cascade centred on a
       // 20 m-back review camera puts the framing's actual subject at the
       // edge of the map where the shadows go soft and wrong.
-      sun.position.set(REVIEW.focus.x+SUN_OFF.x,REVIEW.focus.y+SUN_OFF.y,REVIEW.focus.z+SUN_OFF.z);
-      sun.target.position.copy(REVIEW.focus);
+      focusSun(REVIEW.focus);
       break;
     case 'DYING':
       player.deathUpdate(dt);
@@ -2124,6 +2430,7 @@ function frameBody(){
   confetti.update(dt);
   updateDebris(dt);
   if(camRig.pose)camRig.applyPose();
+  if(aoApply)renderAO();
   if(composer)composer.render();else renderer.render(scene,camera);
   sampleStats(dt);
   resolveSettles();
@@ -2189,6 +2496,18 @@ if(perfOn)show(perfEl,true);
 // tools drive the same path through BB.review()).
 const _shot=/[?&]shot=([a-z0-9-]+)/i.exec(location.search);
 if(_shot){window.BB.setUI(false);window.BB.review(_shot[1]);}
+/*
+ * Prewarm.
+ *
+ * Median-fps benchmarks lie: the first appearance of any material costs a
+ * synchronous shader compile, so the real experience is a smooth number and a
+ * visible hitch every time something new comes on screen. Compiling every
+ * program in the scene, and running one full composer frame so every post
+ * pass compiles too, moves all of that before frame 1 where nobody is playing
+ * yet.
+ */
+renderer.compile(scene,camera);
+if(composer){try{composer.render();}catch(err){}}
 window.BB.ready=true;
 frame();
 

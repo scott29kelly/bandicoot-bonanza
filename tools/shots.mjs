@@ -21,6 +21,7 @@ import {mkdirSync, writeFileSync} from 'node:fs';
 import path from 'node:path';
 import sharp from 'sharp';
 import {parseArgs, launch, gameUrl, boot, pin, ROOT} from './_harness.mjs';
+import {gateImage, gateLine, selfTest, PASS} from './_verify.mjs';
 
 const args=parseArgs(process.argv.slice(2));
 const W=Number(args.w??1280), H=Number(args.h??800);
@@ -52,15 +53,19 @@ async function montage(rows,out){
   console.log(`[shots] montage -> ${out}`);
 }
 
+// Prove the gate can still fail before trusting anything it passes.
+if(!await selfTest())process.exit(1);
+
 const browser=await launch(args);
 const page=await browser.newPage({viewport:{width:W,height:H},deviceScaleFactor:1});
 try{
-  await boot(page,gameUrl({seed:args.seed,minfx:args.minfx}));
+  await boot(page,gameUrl({seed:args.seed,minfx:args.minfx,ablate:args.ablate}));
   await pin(page);
 
   const framings=await page.evaluate(()=>window.BB.framings);
   mkdirSync(DIR,{recursive:true});
   const rows=[];
+  let failed=0;
   for(const f of framings){
     if(ONLY&&!ONLY.has(f.id))continue;
     // Re-settle at every framing. A hard cut from a portrait close-up to a
@@ -75,14 +80,22 @@ try{
     const file=path.join(DIR,f.id+'.png');
     await page.screenshot({path:file});
     const stats=await page.evaluate(()=>({...window.BB.stats}));
-    rows.push({...applied,file,stats});
-    console.log(`[shots] ${f.id.padEnd(16)} ${(stats.triangles/1000).toFixed(1).padStart(8)}k tris  ${String(stats.drawCalls).padStart(4)} draws  -> ${path.relative(ROOT,file)}`);
+    // Decode what was actually written and look at the PICTURE. Triangle and
+    // draw-call counts are happy to describe a frame of solid black.
+    const gate=await gateImage(file);
+    if(gate.verdict!==PASS)failed++;
+    rows.push({...applied,file,stats,gate});
+    console.log(`[shots] ${f.id.padEnd(16)} ${(stats.triangles/1000).toFixed(1).padStart(8)}k tris  ${String(stats.drawCalls).padStart(4)} draws  ${gateLine(gate)}`);
   }
   const err=await page.evaluate(()=>window.BB.error);
   if(err)console.error('[shots] WARNING — the game reported a runtime error during the sheet: '+err);
   writeFileSync(path.join(DIR,'sheet.json'),JSON.stringify({seed:await page.evaluate(()=>window.BB.seed),w:W,h:H,settle:SETTLE,rows},null,2));
   if(!args.nosheet)await montage(rows,path.join(DIR,'CONTACT-SHEET.png'));
   console.log(`[shots] ${rows.length} framings -> ${path.relative(ROOT,DIR)}`);
+  if(failed){
+    console.error(`[shots] ${failed} of ${rows.length} captures did not pass the frame gate — the sheet is NOT a valid record of this build`);
+    process.exitCode=1;
+  }
 }finally{
   await browser.close();
 }
