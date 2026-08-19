@@ -404,8 +404,26 @@ const TEX={};
 })();
 
 /* ============================ 5. MATERIALS ============================= */
-const rampData=new Uint8Array([68,68,68, 122,122,122, 188,188,188, 255,255,255]);
-const toonRamp=new THREE.DataTexture(rampData,4,1,THREE.RGBFormat);
+/*
+ * The toon ramp IS the lighting model here — MeshToonMaterial multiplies the
+ * light contribution through it — so the ramp is where the art direction
+ * lives. The old ramp was four greys, which meant every shadowed face in the
+ * game was desaturated: the quality bar's Pillar B test ("sample a shadowed
+ * pixel; if saturation is near zero, lighting has failed") failed everywhere.
+ *
+ * Five steps now, running cool-to-warm: a lifted blue-violet core shadow
+ * (never black, never grey), a cooler mid, a neutral turn, then two warm lit
+ * steps. Shadows read as sky-filled, lit faces read as sunlit, and the terminator
+ * between them carries a hue shift rather than only a value shift.
+ */
+const rampData=new Uint8Array([
+   72, 86,124,   // core shadow — cool, lifted, saturated
+  116,132,160,   // shadow, opening toward sky fill
+  178,182,178,   // the turn
+  238,230,202,   // sunlit, warm
+  255,251,236    // hot
+]);
+const toonRamp=new THREE.DataTexture(rampData,5,1,THREE.RGBFormat);
 toonRamp.minFilter=toonRamp.magFilter=THREE.NearestFilter;
 toonRamp.generateMipmaps=false;
 toonRamp.needsUpdate=true;
@@ -451,9 +469,12 @@ scene.fog=new THREE.Fog(0xbfe8f0,CFG.fogNear,CFG.fogFar);
 const camera=new THREE.PerspectiveCamera(58,window.innerWidth/window.innerHeight,0.1,300);
 camera.position.set(0,5,9);
 
-const hemi=new THREE.HemisphereLight(0xbde8ff,0x3a5f2a,0.55);
+// Sky fill is what keeps the ramp's cool shadow step from reading as dirt:
+// the sky colour lands on every up-facing shadowed surface and the ground
+// bounce puts jungle green back into everything standing on the moss.
+const hemi=new THREE.HemisphereLight(0xa8e0ff,0x4e7a34,0.78);
 scene.add(hemi);
-const sun=new THREE.DirectionalLight(0xfff2d0,1.3);
+const sun=new THREE.DirectionalLight(0xffeec2,1.22);
 sun.castShadow=true;
 sun.shadow.mapSize.set(2048,2048);
 sun.shadow.camera.left=-24;sun.shadow.camera.right=24;
@@ -495,7 +516,11 @@ let composer=null,fxaaPass=null;
 if(POST){
   composer=new THREE.EffectComposer(renderer);
   composer.addPass(new THREE.RenderPass(scene,camera));
-  const bloom=new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth,window.innerHeight),0.55,0.5,0.82);
+  // Threshold raised and strength pulled back: at 0.82/0.55 the fruit — the
+  // most-repeated object in the game — bloomed out to a featureless white
+  // ball in every framing. Flames, gems and the gate crystal still clear the
+  // new threshold; lit-but-not-emissive surfaces no longer do.
+  const bloom=new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth,window.innerHeight),0.42,0.62,0.9);
   composer.addPass(bloom);
   const VignetteWarmShader={
     uniforms:{tDiffuse:{value:null},strength:{value:0.42}},
@@ -508,6 +533,13 @@ if(POST){
       '  float v=1.0-smoothstep(0.28,0.95,dot(uv,uv)*2.2);',
       '  c.rgb*=mix(1.0-strength,1.0,v);',
       '  c.rgb+=vec3(0.045,0.02,-0.015)*(1.0-v);',
+      // Colour script (Pillar E): a teal-orange split. Shadows are pushed
+      // toward sky-teal and highlights toward sun-warm, so the image has a
+      // deliberate temperature axis instead of only a brightness axis. Kept
+      // small — this grades the art direction, it does not replace it.
+      '  float lum=dot(c.rgb,vec3(0.2126,0.7152,0.0722));',
+      '  c.rgb+=mix(vec3(-0.022,0.006,0.034),vec3(0.032,0.012,-0.026),smoothstep(0.16,0.74,lum));',
+      '  c.rgb=mix(vec3(lum),c.rgb,1.07);',
       '  c.r*=1.02;c.b*=0.985;',
       '  c.rgb=pow(max(c.rgb,vec3(0.0)),vec3(0.4545));',
       '  gl_FragColor=c;',
@@ -1078,7 +1110,10 @@ const FRUIT_TOTAL=fruits.length,CRATE_TOTAL=crates.length;
 const fruitGeo=new THREE.SphereGeometry(0.27,12,10);
 fruitGeo.scale(1,1.18,1);
 const fruitMesh=new THREE.InstancedMesh(fruitGeo,
-  toonMat({color:0xffa41f,emissive:0xff7a00,emissiveIntensity:0.55,noCache:true}),FRUIT_TOTAL);
+  // Emissive here is a glow HINT, not the fruit's colour. Above ~0.3 it
+  // flattens the toon shading into a single value and the sphere stops
+  // reading as a sphere.
+  toonMat({color:0xffa41f,emissive:0xff8c1a,emissiveIntensity:0.26,noCache:true}),FRUIT_TOTAL);
 fruitMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
 fruitMesh.frustumCulled=false;
 scene.add(fruitMesh);
