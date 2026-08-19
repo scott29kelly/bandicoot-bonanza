@@ -479,9 +479,11 @@ renderer.setPixelRatio(MINFX?1:Math.min(window.devicePixelRatio||1,2));
 renderer.setSize(window.innerWidth,window.innerHeight);
 renderer.shadowMap.enabled=!MINFX;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+// outputEncoding only applies when three renders straight to the canvas; the
+// composer path renders into a linear target, and the grade pass does the
+// sRGB encode itself at the end of the chain. Tone mapping is assigned below,
+// once we know whether there is a composer at all.
 renderer.outputEncoding=THREE.sRGBEncoding;
-renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.05;
 // The composer issues several render calls per frame; with autoReset on,
 // renderer.info would only ever report the LAST pass. Reset once per frame
 // (see frameBody) so the HUD's triangle and draw-call counts are the real
@@ -499,9 +501,9 @@ camera.position.set(0,5,9);
 // Sky fill is what keeps the ramp's cool shadow step from reading as dirt:
 // the sky colour lands on every up-facing shadowed surface and the ground
 // bounce puts jungle green back into everything standing on the moss.
-const hemi=new THREE.HemisphereLight(0xa8e0ff,0x4e7a34,0.78);
+const hemi=new THREE.HemisphereLight(0xa8e0ff,0x4e7a34,0.42);
 scene.add(hemi);
-const sun=new THREE.DirectionalLight(0xffeec2,1.22);
+const sun=new THREE.DirectionalLight(0xffeec2,0.66);
 sun.castShadow=true;
 sun.shadow.mapSize.set(2048,2048);
 sun.shadow.camera.left=-24;sun.shadow.camera.right=24;
@@ -509,14 +511,17 @@ sun.shadow.camera.top=24;sun.shadow.camera.bottom=-24;
 sun.shadow.camera.near=1;sun.shadow.camera.far=90;
 sun.shadow.bias=-0.0015;
 scene.add(sun);scene.add(sun.target);
-const rim=new THREE.DirectionalLight(0x88bbff,0.35);
+const rim=new THREE.DirectionalLight(0x88bbff,0.17);
 rim.position.set(-6,8,-10);
 scene.add(rim);
 const SUN_OFF=new THREE.Vector3(14,26,16);
 const flash=new THREE.PointLight(0xffa040,0,18,2);
+// flashAt() powers are authored against the old clipped chain; scale them
+// into the new baseline in one place rather than at every call site.
+const LIGHT_SCALE=0.5;
 scene.add(flash);
 let flashT=0;
-function flashAt(p,power){flash.position.copy(p);flash.position.y+=1;flash.intensity=power;flashT=0.35;}
+function flashAt(p,power){flash.position.copy(p);flash.position.y+=1;flash.intensity=power*LIGHT_SCALE;flashT=0.35;}
 
 // fog / biome palette by z
 const FOG_STOPS=[
@@ -538,53 +543,172 @@ function updateFog(pz){
 }
 
 /* =========================== POST-PROCESSING =========================== */
+/*
+ * The look lives in the pipeline, not in the assets.
+ *
+ * The old chain was wrong in three compounding ways. It tone-mapped inside
+ * every material's shader (renderer.toneMapping), so tone mapping ran per
+ * object rather than once over the finished frame. It rendered into the
+ * composer's default UnsignedByte target, so every value above 1.0 was thrown
+ * away before any pass could use it. And bloom therefore read an
+ * already-tone-mapped, already-clipped image, which is why nothing could
+ * bloom unless it was near white already — and why raising an emissive to get
+ * a glow blew the object's shape out instead.
+ *
+ * The chain now is: linear HDR render (half-float) -> bloom -> ONE tonemap and
+ * grade at the very end -> AA.
+ *
+ * AgX rather than ACES. ACES clips bright saturated hues hard, and this game
+ * is built out of saturated oranges and greens that were hitting that clip;
+ * AgX rolls highlights off toward white instead, so the fruit, the torch
+ * flames and the gate gem keep their form while still reading as bright.
+ *
+ * ?ablate=bloom,grade,fxaa turns individual passes off, so any one effect's
+ * cost and contribution can be A/B'd in seconds rather than argued about.
+ */
+const ABLATE=(function(){
+  const m=/[?&]ablate=([a-z0-9,]+)/i.exec(location.search);
+  return m?m[1].toLowerCase().split(','):[];
+})();
+const ablated=(name)=>ABLATE.indexOf(name)>=0;
+
 const POST=!MINFX&&!!(THREE.EffectComposer&&THREE.RenderPass&&THREE.ShaderPass&&THREE.UnrealBloomPass&&THREE.FXAAShader);
-let composer=null,fxaaPass=null;
+let composer=null,fxaaPass=null,gradePass=null;
+
+/*
+ * AgX, ported from the reference implementation three ships in its later
+ * releases (r128 has no AgX of its own). Working space is Rec.2020 through
+ * the inset/outset matrices; the sixth-order polynomial is the standard
+ * contrast approximation. The "punchy" look at the end is a small saturation
+ * and gamma push, which is what keeps a cartoon palette from going flat once
+ * the highlight rolloff is doing its job.
+ */
+const AGX_GLSL=[
+'const mat3 AgXInset=mat3(',
+'  0.856627153315983,0.137318972929847,0.11189821299995,',
+'  0.0951212405381588,0.761241990602591,0.0767994186031903,',
+'  0.0482516061458583,0.101439036467562,0.811302368396859);',
+'const mat3 AgXOutset=mat3(',
+'   1.1271005818144368,-0.1413297634984383,-0.14132976349843826,',
+'  -0.11060664309660323,1.157823702216272,-0.11060664309660294,',
+'  -0.016493938717834573,-0.016493938717834662,1.2519364065950405);',
+'const float AgXMinEv=-12.47393;',
+'const float AgXMaxEv=4.026069;',
+'vec3 agxContrast(vec3 x){',
+'  vec3 x2=x*x; vec3 x4=x2*x2;',
+'  return 15.5*x4*x2-40.14*x4*x+31.96*x4-6.868*x2*x+0.4298*x2+0.1191*x-0.00232;',
+'}',
+'vec3 agxLook(vec3 c){',
+'  float luma=dot(c,vec3(0.2126,0.7152,0.0722));',
+'  c=pow(max(c,vec3(0.0)),vec3(1.18));',
+'  return clamp(luma+1.22*(c-luma),0.0,1.0);',
+'}',
+'vec3 agx(vec3 color){',
+'  color=AgXInset*max(color,vec3(0.0));',
+'  color=clamp(log2(max(color,vec3(1e-10))),AgXMinEv,AgXMaxEv);',
+'  color=(color-AgXMinEv)/(AgXMaxEv-AgXMinEv);',
+'  color=agxContrast(color);',
+'  color=agxLook(color);',
+'  color=AgXOutset*color;',
+'  return clamp(color,0.0,1.0);',
+'}'
+].join('\n');
+
+/*
+ * One pass, run once, at the end: exposure -> AgX -> colour script -> vignette
+ * -> sRGB encode. Everything upstream of here is linear and unclamped; nothing
+ * downstream of here is allowed to touch colour.
+ */
+const GradeShader={
+  uniforms:{
+    tDiffuse:{value:null},
+    exposure:{value:1.15},
+    vignette:{value:0.40},
+    grade:{value:1.0}
+  },
+  vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+  fragmentShader:[
+    'varying vec2 vUv;',
+    'uniform sampler2D tDiffuse;',
+    'uniform float exposure;',
+    'uniform float vignette;',
+    'uniform float grade;',
+    AGX_GLSL,
+    'vec3 toSRGB(vec3 c){',
+    '  c=max(c,vec3(0.0));',
+    '  return mix(1.055*pow(c,vec3(1.0/2.4))-0.055,12.92*c,step(c,vec3(0.0031308)));',
+    '}',
+    'void main(){',
+    '  vec3 c=texture2D(tDiffuse,vUv).rgb*exposure;',
+    '  c=agx(c);',
+    // Colour script: a teal-orange split applied in display space, after the
+    // tonemap, so it grades the finished image instead of fighting the curve.
+    // Deliberately small — this is the last 5% of the art direction, not a
+    // substitute for lighting it properly.
+    '  float lum=dot(c,vec3(0.2126,0.7152,0.0722));',
+    '  vec3 split=mix(vec3(-0.028,0.004,0.040),vec3(0.030,0.010,-0.026),smoothstep(0.14,0.78,lum));',
+    '  c=mix(c,c+split,grade);',
+    '  c=mix(vec3(lum),c,mix(1.0,1.06,grade));',
+    '  vec2 uv=vUv-0.5;',
+    '  float v=1.0-smoothstep(0.30,0.98,dot(uv,uv)*2.15);',
+    '  c*=mix(1.0-vignette,1.0,v);',
+    '  gl_FragColor=vec4(toSRGB(c),1.0);',
+    '}'
+  ].join('\n')
+};
+
 if(POST){
-  composer=new THREE.EffectComposer(renderer);
+  // Half-float so the render is genuinely HDR: emissives sit well above 1.0
+  // and survive all the way to the tonemap instead of being clipped at the
+  // first target write.
+  const pr0=renderer.getPixelRatio();
+  const hdr=new THREE.WebGLRenderTarget(
+    Math.floor(window.innerWidth*pr0),Math.floor(window.innerHeight*pr0),
+    {minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,
+     format:THREE.RGBAFormat,type:THREE.HalfFloatType,
+     encoding:THREE.LinearEncoding,stencilBuffer:false,depthBuffer:true});
+  composer=new THREE.EffectComposer(renderer,hdr);
   composer.addPass(new THREE.RenderPass(scene,camera));
-  // Threshold raised and strength pulled back: at 0.82/0.55 the fruit — the
-  // most-repeated object in the game — bloomed out to a featureless white
-  // ball in every framing. Flames, gems and the gate crystal still clear the
-  // new threshold; lit-but-not-emissive surfaces no longer do.
-  const bloom=new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth,window.innerHeight),0.42,0.62,0.9);
-  composer.addPass(bloom);
-  const VignetteWarmShader={
-    uniforms:{tDiffuse:{value:null},strength:{value:0.42}},
-    vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
-    fragmentShader:[
-      'varying vec2 vUv;uniform sampler2D tDiffuse;uniform float strength;',
-      'void main(){',
-      '  vec4 c=texture2D(tDiffuse,vUv);',
-      '  vec2 uv=vUv-0.5;',
-      '  float v=1.0-smoothstep(0.28,0.95,dot(uv,uv)*2.2);',
-      '  c.rgb*=mix(1.0-strength,1.0,v);',
-      '  c.rgb+=vec3(0.045,0.02,-0.015)*(1.0-v);',
-      // Colour script (Pillar E): a teal-orange split. Shadows are pushed
-      // toward sky-teal and highlights toward sun-warm, so the image has a
-      // deliberate temperature axis instead of only a brightness axis. Kept
-      // small — this grades the art direction, it does not replace it.
-      '  float lum=dot(c.rgb,vec3(0.2126,0.7152,0.0722));',
-      '  c.rgb+=mix(vec3(-0.022,0.006,0.034),vec3(0.032,0.012,-0.026),smoothstep(0.16,0.74,lum));',
-      '  c.rgb=mix(vec3(lum),c.rgb,1.07);',
-      '  c.r*=1.02;c.b*=0.985;',
-      '  c.rgb=pow(max(c.rgb,vec3(0.0)),vec3(0.4545));',
-      '  gl_FragColor=c;',
-      '}'].join('\n')
-  };
-  composer.addPass(new THREE.ShaderPass(VignetteWarmShader));
-  fxaaPass=new THREE.ShaderPass(THREE.FXAAShader);
-  const pr=renderer.getPixelRatio();
-  fxaaPass.material.uniforms.resolution.value.set(1/(window.innerWidth*pr),1/(window.innerHeight*pr));
-  composer.addPass(fxaaPass);
+
+  if(!ablated('bloom')){
+    // Threshold is now in LINEAR HDR terms, so 1.0 means "brighter than a
+    // fully lit white surface" — i.e. only things that are actually emitting.
+    // Under the old clipped chain this number was meaningless.
+    const bloom=new THREE.UnrealBloomPass(
+      new THREE.Vector2(window.innerWidth,window.innerHeight),0.62,0.75,1.0);
+    // UnrealBloomPass builds its internal targets as UnsignedByte in r128,
+    // which would re-clip everything the half-float chain just preserved.
+    // The GPU textures are created lazily on first render, so setting the
+    // type here — before anything renders — is enough.
+    const rts=[bloom.renderTargetBright].concat(bloom.renderTargetsHorizontal||[],bloom.renderTargetsVertical||[]);
+    for(const rt of rts)if(rt&&rt.texture)rt.texture.type=THREE.HalfFloatType;
+    composer.addPass(bloom);
+  }
+
+  gradePass=new THREE.ShaderPass(GradeShader);
+  if(ablated('grade'))gradePass.uniforms.grade.value=0.0;
+  composer.addPass(gradePass);
+
+  if(!ablated('fxaa')){
+    fxaaPass=new THREE.ShaderPass(THREE.FXAAShader);
+    const pr=renderer.getPixelRatio();
+    fxaaPass.material.uniforms.resolution.value.set(1/(window.innerWidth*pr),1/(window.innerHeight*pr));
+    composer.addPass(fxaaPass);
+  }
 }
+// Tone mapping belongs to the grade pass now. Without a composer (?minfx)
+// there is no grade pass, so the renderer keeps its own tonemap — the low
+// setting is allowed to look worse, but not to look broken.
+renderer.toneMapping=POST?THREE.NoToneMapping:THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=POST?1.0:1.05;
+
 window.addEventListener('resize',()=>{
   const w=window.innerWidth,h=window.innerHeight;
   camera.aspect=w/h;camera.updateProjectionMatrix();
   renderer.setSize(w,h);
   if(composer){composer.setSize(w,h);
     const pr=renderer.getPixelRatio();
-    fxaaPass.material.uniforms.resolution.value.set(1/(w*pr),1/(h*pr));
+    if(fxaaPass)fxaaPass.material.uniforms.resolution.value.set(1/(w*pr),1/(h*pr));
   }
 });
 
@@ -1071,7 +1195,7 @@ function torch(x,baseY,z,withLight){
   scene.add(g);
   let light=null;
   if(withLight){
-    light=new THREE.PointLight(0xff9a30,1.15,10,2);
+    light=new THREE.PointLight(0xff9a30,0.62,11,2);
     light.position.set(0,2.2,0);
     g.add(light);
   }
@@ -1925,7 +2049,7 @@ function frameBody(){
   for(const p of palms)p.head.rotation.z=Math.sin(t*1.1+p.phase)*0.07;
   for(const tc of torches){
     tc.flame.scale.set(1+Math.sin(t*11+tc.phase)*0.15,1+Math.sin(t*13+tc.phase)*0.22,1+Math.sin(t*12+tc.phase)*0.15);
-    if(tc.light)tc.light.intensity=1.05+Math.sin(t*9+tc.phase)*0.25;
+    if(tc.light)tc.light.intensity=0.58+Math.sin(t*9+tc.phase)*0.14;
   }
   if(gateGem)gateGem.rotation.y+=dt*1.2;
   if(flashT>0){flashT-=dt;flash.intensity=Math.max(0,flash.intensity-dt*24);}
