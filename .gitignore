@@ -8,3 +8,7 @@ node_modules/
 
 # Review artifacts — regenerable via `node tools/shots.mjs`
 /shots/
+
+# Scratch analysis scripts and crops from review agents
+/_*.mjs
+/_crops/

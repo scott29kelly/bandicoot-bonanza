@@ -1705,15 +1705,191 @@ function scatterInstanced(geo,mat,count,scaleMin,scaleMax,edgeBias,colorJitter){
   scene.add(im);
   return im;
 }
-const fernGeo=new THREE.ConeGeometry(0.5,1.15,6);
-fernGeo.translate(0,0.55,0);
-scatterInstanced(fernGeo,toonMat({color:0xffffff,noCache:true}),150,0.6,1.4,true,true);
-const grassGeo=new THREE.ConeGeometry(0.22,0.55,5);
-grassGeo.translate(0,0.26,0);
-scatterInstanced(grassGeo,toonMat({color:0x3f9426,noCache:true}),190,0.7,1.5,false,false);
+/* --------------------------------------------------------------------------
+ * Vegetation.
+ *
+ * This was 340 instances of ConeGeometry, and it read exactly like 340 cones.
+ * Cones are the clearest "engine primitives demo" tell in the whole frame, and
+ * they were the subject of one of the nine review framings.
+ *
+ * What replaces them is built from ribbons: a frond is a tapered, arcing strip
+ * with real width and a droop, a grass clump is a handful of bent blades, and
+ * both are assembled once on the CPU and drawn as a single instanced mesh.
+ * Silhouette is where detail has to live in a toon renderer — there is no
+ * normal map doing secondary work — so the geometry has to carry it.
+ *
+ * All of it moves off ONE wind field (see windify below) rather than
+ * per-object phases that agree with nothing.
+ * ------------------------------------------------------------------------ */
+
+/** Concatenate BufferGeometries. r128's global build ships no BufferGeometryUtils. */
+function mergeGeos(geos){
+  let vc=0,ic=0;
+  for(const g of geos){vc+=g.attributes.position.count;ic+=g.index?g.index.count:0;}
+  const pos=new Float32Array(vc*3),nrm=new Float32Array(vc*3),uv=new Float32Array(vc*2);
+  const idx=new Uint16Array(ic);
+  let vo=0,io=0;
+  for(const g of geos){
+    const p=g.attributes.position,n=g.attributes.normal,t=g.attributes.uv,gi=g.index;
+    pos.set(p.array,vo*3);
+    if(n)nrm.set(n.array,vo*3);
+    if(t)uv.set(t.array,vo*2);
+    for(let i=0;i<gi.count;i++)idx[io+i]=gi.array[i]+vo;
+    vo+=p.count;io+=gi.count;
+  }
+  const out=new THREE.BufferGeometry();
+  out.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  out.setAttribute('normal',new THREE.BufferAttribute(nrm,3));
+  out.setAttribute('uv',new THREE.BufferAttribute(uv,2));
+  out.setIndex(new THREE.BufferAttribute(idx,1));
+  return out;
+}
+
+/**
+ * One ribbon: rises along +Y, arcs over toward +Z, tapers to a point, and is
+ * double-sided by construction (both winding orders emitted) so a frond seen
+ * from behind is not a hole. Doing it in geometry rather than with
+ * side:DoubleSide keeps the material shared and the draw call single.
+ */
+function ribbonGeo(len,wid,segs,droop,twist){
+  const vs=[],ns=[],uvs=[],ix=[];
+  for(let i=0;i<=segs;i++){
+    const t=i/segs;
+    const y=len*t*(1-0.18*t);
+    const z=droop*t*t*len;
+    const w=wid*(1-t*t*0.92)*(0.55+0.45*Math.sin(t*3.14159));
+    const tw=twist*t;
+    const cx=Math.cos(tw),sy=Math.sin(tw);
+    for(let s=-1;s<=1;s+=2){
+      vs.push(s*w*cx,y+s*w*sy*0.15,z);
+      ns.push(0,Math.cos(tw*0.5),Math.sin(tw*0.5)*0.6+0.4);
+      uvs.push((s+1)*0.5,t);
+    }
+  }
+  for(let i=0;i<segs;i++){
+    const a=i*2,b=a+1,c=a+2,d=a+3;
+    ix.push(a,b,c, b,d,c);   // front
+    ix.push(c,b,a, c,d,b);   // back, so the ribbon is solid from either side
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(vs,3));
+  g.setAttribute('normal',new THREE.Float32BufferAttribute(ns,3));
+  g.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+  g.setIndex(ix);
+  return g;
+}
+
+/** A fern: fronds fanned around the base, each with its own droop and length. */
+function fernGeoBuild(){
+  const parts=[];
+  const n=7;
+  for(let i=0;i<n;i++){
+    const a=(i/n)*Math.PI*2+rand(-0.2,0.2);
+    const len=rand(0.78,1.25),wid=rand(0.11,0.17);
+    const g=ribbonGeo(len,wid,5,rand(0.30,0.52),rand(-0.5,0.5));
+    g.rotateX(rand(0.18,0.42));
+    g.rotateY(a);
+    parts.push(g);
+  }
+  // A short inner crown stops the fan reading as hollow from directly above.
+  const crown=ribbonGeo(0.34,0.14,3,0.1,0);
+  crown.rotateX(-0.1);
+  parts.push(crown);
+  return mergeGeos(parts);
+}
+
+/** A grass clump: blades of varying height, each bent a different way. */
+function grassGeoBuild(){
+  const parts=[];
+  const n=6;
+  for(let i=0;i<n;i++){
+    const g=ribbonGeo(rand(0.34,0.72),rand(0.035,0.06),4,rand(0.16,0.44),rand(-0.8,0.8));
+    g.rotateZ(rand(-0.26,0.26));
+    g.rotateY(rand(0,Math.PI*2));
+    g.translate(rand(-0.11,0.11),0,rand(-0.11,0.11));
+    parts.push(g);
+  }
+  return mergeGeos(parts);
+}
+
+/** A flowering shrub: a low leaf rosette under a few bright heads. */
+function flowerGeoBuild(){
+  const parts=[];
+  for(let i=0;i<5;i++){
+    const g=ribbonGeo(rand(0.2,0.32),rand(0.07,0.1),3,0.5,0);
+    g.rotateX(rand(0.5,0.9));
+    g.rotateY((i/5)*Math.PI*2);
+    parts.push(g);
+  }
+  for(let i=0;i<3;i++){
+    const head=new THREE.SphereGeometry(rand(0.055,0.085),5,4);
+    head.translate(rand(-0.1,0.1),rand(0.26,0.42),rand(-0.1,0.1));
+    parts.push(head);
+  }
+  return mergeGeos(parts);
+}
+
+/*
+ * ONE wind field, injected into whatever material is handed to it.
+ *
+ * Every plant reads the same uniform and derives its phase from its own world
+ * position, so a gust crosses the level as one event instead of each plant
+ * bobbing on a private timer. Displacement is weighted by height along the
+ * blade (h*h), which is what makes it bend rather than slide.
+ *
+ * This runs in the vertex shader on instanced geometry, so it costs no CPU
+ * per instance — the per-frame transform updates that would otherwise be
+ * needed here are exactly the thing that makes vegetation expensive.
+ */
+const WIND={time:{value:0},strength:{value:0.13}};
+function windify(mat,height){
+  mat.onBeforeCompile=function(shader){
+    shader.uniforms.uWindTime=WIND.time;
+    shader.uniforms.uWindAmt=WIND.strength;
+    shader.uniforms.uWindH=({value:height});
+    shader.vertexShader='uniform float uWindTime;\nuniform float uWindAmt;\nuniform float uWindH;\n'+
+      shader.vertexShader.replace('#include <begin_vertex>',
+        ['#include <begin_vertex>',
+         '#ifdef USE_INSTANCING',
+         '  vec3 wInst=instanceMatrix[3].xyz;',
+         '#else',
+         '  vec3 wInst=vec3(0.0);',
+         '#endif',
+         '  float wH=clamp(transformed.y/uWindH,0.0,1.0);',
+         '  float wPh=dot(wInst.xz,vec2(0.21,0.14))+uWindTime*1.7;',
+         // Two frequencies: a slow bend plus a faster flutter, so it does not
+         // read as one sine wave applied to the whole field.
+         '  float wA=uWindAmt*wH*wH*(0.75+0.25*sin(wPh*2.7));',
+         '  transformed.x+=sin(wPh)*wA;',
+         '  transformed.z+=cos(wPh*0.83)*wA*0.65;'
+        ].join('\n'));
+  };
+  // Materials that differ only by onBeforeCompile still need distinct programs.
+  mat.customProgramCacheKey=function(){return 'wind'+height;};
+  return mat;
+}
+
+const fernGeo=fernGeoBuild();
+const fernMesh=scatterInstanced(fernGeo,windify(toonMat({color:0xffffff,noCache:true}),1.2),170,0.62,1.5,true,true);
+fernMesh.castShadow=true;
+const grassGeo=grassGeoBuild();
+const grassMesh=scatterInstanced(grassGeo,windify(toonMat({color:0x4aa32c,noCache:true}),0.7),260,0.7,1.6,false,true);
+const flowerGeo=flowerGeoBuild();
+scatterInstanced(flowerGeo,windify(toonMat({color:0xff9ad0,noCache:true}),0.5),70,0.7,1.3,true,false);
 const rockGeo=new THREE.DodecahedronGeometry(0.42,0);
 const rockMesh=scatterInstanced(rockGeo,toonMat({map:TEX.stone,noCache:true}),46,0.5,1.6,true,false);
 rockMesh.castShadow=true;
+/*
+ * Ground debris (Pillar C: nothing is bare). Small, dense, and never in the
+ * player's way — this is the litter that makes ground read as ground rather
+ * than as a textured plane. Two size classes so it does not look like one
+ * object repeated.
+ */
+const pebbleGeo=new THREE.DodecahedronGeometry(0.1,0);
+pebbleGeo.scale(1,0.62,1.15);
+scatterInstanced(pebbleGeo,toonMat({map:TEX.stone,noCache:true}),420,0.5,1.7,false,false);
+const shellGeo=new THREE.SphereGeometry(0.07,6,4,0,Math.PI*1.4,0,Math.PI*0.55);
+scatterInstanced(shellGeo,toonMat({color:0xf6e2c8,noCache:true}),150,0.6,1.5,true,false);
 
 /* water ----------------------------------------------------------------- */
 const water=new THREE.Mesh(new THREE.PlaneGeometry(420,300),
@@ -2351,6 +2527,7 @@ function frameBody(){
   const t=game.t+=dt;
   game.frames++;
   audio.update(dt);
+  WIND.time.value=t;
   updateFireflies(t);
   TEX.water.offset.x=t*0.014;
   TEX.water.offset.y=Math.sin(t*0.3)*0.02;
@@ -2459,6 +2636,8 @@ window.BB={
   settle(n){return new Promise(res=>REVIEW.settles.push({left:Math.max(1,n|0),res:res}));},
   /** Pin the timestep so N settle frames always advance the world by N*dt. */
   setFixedDt(v){REVIEW.fixedDt=v>0?v:0;},
+  /** Wind strength, so "the world moves" can be A/B'd rather than asserted. */
+  setWind(v){WIND.strength.value=v;},
   setPose(pose){camRig.pose={p:pose.p,lookAt:pose.lookAt,fov:pose.fov};REVIEW.focus.set(pose.lookAt[0],pose.lookAt[1],pose.lookAt[2]);},
   clearPose(){camRig.pose=null;},
   setPlayer(p){
