@@ -129,8 +129,21 @@ comfortably inside what instanced WebGL geometry does at 60 fps.
 
 | Dimension | Floor |
 |---|---|
-| **Rendered triangles** | **≥ 220k** in ground-level hero framings, **≥ 150k** in aerials (per-frame, all composer passes, HUD-verified). Ceiling: whatever holds 60 fps on a mid GPU. |
-| **Draw calls** | ≤ 260 per frame. Growth in detail must come from instancing and merged geometry, not from more `scene.add`. |
+| **Rendered triangles** | **≥ 220k** in ground-level hero framings, **≥ 150k** in aerials. |
+| **Draw calls** | ≤ 900 per frame. Growth in detail must come from instancing and merged geometry, not from more `scene.add`. |
+
+> Both counters cover **every pass in the frame**, including the AO depth
+> prepass, which re-draws the whole scene and therefore roughly doubles both
+> numbers. That is the honest figure — it is what the GPU actually does — but
+> it means these are not comparable to a single-pass renderer's counts, and
+> the pre-AO baseline in `DELTA.md` is not comparable to anything measured
+> after it. Read them as a budget, not as a scene statistic.
+
+| Dimension | Floor |
+|---|---|
+| **Frame gate** | Every capture decodes, with mean luminance in 0.045–0.965 and luminance std dev ≥ 0.02. Enforced by `tools/_verify.mjs` on every shot. |
+| **Macro variation** | Every repeating surface carries breakup at **two scales** (roughly 3–4 m and 12 m) on top of its detail frequency, so no large surface reads as one value end to end. Single-noise albedo is banned. No texture feature under ~5 texels — it bakes to noise at mip 0. |
+| **Artifacts** | No crawling shadow edges, no shimmer on any surface under camera motion, no visible banding in a gradient. Hunt these *before* adding any new effect. |
 | Hero character | Distinct silhouette at portrait range: markings, ears, brow, muzzle, tail and paw shapes readable; a visible outline; a contact shadow under the feet in every framing. |
 | Prop geometry | Crates, TNT, totems, torches, bounce pads and the gate each carry modelled relief (bevel, trim, bracket, inset). No prop is a single untrimmed box. |
 | Ground cover | ≥ 3 plant species with real frond/blade geometry and per-instance hue, scale and lean variation; ≥ 2 debris classes (pebbles, shells, twigs, leaf litter) at ≥ 1,500 visible instances in dressed zones. |
@@ -159,6 +172,60 @@ comfortably inside what instanced WebGL geometry does at 60 fps.
 - A backdrop that is only sky and one flat water plane.
 - Triangle counts below the floors above (under-rendering the GPU).
 - Adding a build step, an external asset, or a runtime dependency.
+
+---
+
+## The method
+
+Adopted from the 3D world quality playbook (Claude of Duty, Der Koloss, Kart
+Royale). The single biggest quality lever is **how the work is judged**, not
+how it is built.
+
+1. **The bar is fixed and external** (above). "Make it better" is not a bar.
+2. **Decompose into independently judgeable pieces** — one tree, the water,
+   one prop family, the character — never "the graphics."
+3. **The builder never grades itself.** A builder makes the piece; a separate
+   critic with a fresh context window judges the rendered pixels against the
+   bar and names the single biggest remaining gap. A builder remembers why its
+   own decisions were reasonable, which is exactly the memory that stops it
+   seeing the gap.
+4. **No fixed round count.** Loop until the output wins or the run is stopped.
+5. **Coupled systems get ONE owner, worked sequentially.** Tone mapping,
+   exposure, sky, AO and indirect light are a single system. Fanning parallel
+   agents across a render pipeline measurably raises the average while making
+   frame-ruining defects *worse*; a single sequential owner does better on
+   both. Fan out independent pieces; serialise the atmosphere/exposure/grade
+   stack.
+6. **After each wave, one smoothing pass** over the whole artifact — not to
+   redesign, but to make separately-improved pieces read as one thing.
+
+### Pipeline law
+
+- **Tone map once, at the very end.** Render linear into a float buffer. AgX,
+  not ACES — highlights desaturate toward white instead of clipping to a
+  saturated hue.
+- **Author one exposure baseline as an art decision**, then re-author light
+  intensities and key colours so the palette survives the tonemapper. Naive
+  values go muddy or blow out. (They blew out here; see `DELTA.md` pass 2.)
+- **AAA is the absence of artifacts, not the presence of effects.** Shimmer is
+  the tell. Snap shadow maps to their texel grid, dither gradients, and spend
+  the time on artifacts rather than on one more effect.
+- **`?ablate=ao,bloom,grade,fxaa`** exists so any effect's contribution and
+  cost is A/B'd in seconds with `tools/diff.mjs`, not argued about.
+
+### Verification discipline
+
+Screenshots and gates lie. A render farm once delivered a structurally perfect
+PNG — right size, valid signature, matching checksum — that was solid black,
+because every check verified the *file* and none looked at the *picture*. The
+same failure happened in this repo on 2026-08-19 (`DELTA.md` pass 2).
+
+- Every capture is decoded and gated on mean luminance and non-zero variance.
+- Three verdicts: **PASS / FAIL / UNMEASURED**. Unmeasured is not a pass.
+- Negative controls that must fail run before any sheet is trusted.
+- New tests are run against the pre-fix tree and watched to fail there.
+- **Never move a threshold to make an artifact pass.**
+- Look at the picture yourself at every milestone.
 
 ---
 
