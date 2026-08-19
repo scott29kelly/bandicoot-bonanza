@@ -1000,8 +1000,13 @@ if(POST){
     // Threshold is now in LINEAR HDR terms, so 1.0 means "brighter than a
     // fully lit white surface" — i.e. only things that are actually emitting.
     // Under the old clipped chain this number was meaningless.
+    // Threshold has to clear the brightest DIFFUSE surface, not 1.0. With the
+    // key at 1.34 a white albedo lands near 1.5 linear, so a threshold of 1.0
+    // bloomed the hero's belly and every fruit into a white blob — the same
+    // failure as pass 1, arriving by a different route. Emissives (flame 2.4,
+    // gate gem 1.6) still clear this comfortably; lit white does not.
     const bloom=new THREE.UnrealBloomPass(
-      new THREE.Vector2(window.innerWidth,window.innerHeight),0.62,0.75,1.0);
+      new THREE.Vector2(window.innerWidth,window.innerHeight),0.66,0.8,1.85);
     // UnrealBloomPass builds its internal targets as UnsignedByte in r128,
     // which would re-clip everything the half-float chain just preserved.
     // The GPU textures are created lazily on first render, so setting the
@@ -1670,10 +1675,16 @@ const FRUIT_TOTAL=fruits.length,CRATE_TOTAL=crates.length;
 const fruitGeo=new THREE.SphereGeometry(0.27,12,10);
 fruitGeo.scale(1,1.18,1);
 const fruitMesh=new THREE.InstancedMesh(fruitGeo,
-  // Emissive here is a glow HINT, not the fruit's colour. Above ~0.3 it
-  // flattens the toon shading into a single value and the sphere stops
-  // reading as a sphere.
-  toonMat({color:0xffa41f,emissive:0xff8c1a,emissiveIntensity:0.26,noCache:true}),FRUIT_TOTAL);
+  // Emissive is a glow HINT, not the fruit's colour: above ~0.3 it flattens
+  // the toon shading and the sphere stops reading as a sphere.
+  //
+  // The albedo is deliberately well below the bright orange it looks like it
+  // should be. At 0xffa41f against a 1.34 key it landed around 1.3 linear,
+  // and AgX does exactly what it is supposed to with a blown highlight —
+  // rolls it toward white. The fruit came out cream. Pulled down, it stays in
+  // the range where the tonemapper preserves hue, and reads far more orange
+  // on screen than the higher value did.
+  toonMat({color:0xc9660a,emissive:0xff8c1a,emissiveIntensity:0.3,noCache:true}),FRUIT_TOTAL);
 fruitMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
 fruitMesh.frustumCulled=false;
 scene.add(fruitMesh);
@@ -1934,7 +1945,10 @@ const player={
     const M_OR=toonMat({color:0xf07818,noCache:true});
     const M_CR=toonMat({color:0xffe2b8,noCache:true});
     const M_DK=toonMat({color:0x6e3510,noCache:true});
-    const M_WH=toonMat({color:0xffffff,noCache:true});
+    // Pure white on the largest curved surface of the most-looked-at object
+    // clips before anything else in the frame does. Cream reads as white
+    // against the sand and keeps its shading.
+    const M_WH=toonMat({color:0xf2e6cf,noCache:true});
     const M_BK=toonMat({color:0x1a1a1a,noCache:true});
     const r=this.rig,P=this.parts;
     const body=new THREE.Mesh(new THREE.SphereGeometry(0.42,14,12),M_OR);
