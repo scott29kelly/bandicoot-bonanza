@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bandicoot Bonanza</title>
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:#08281a;font-family:'Trebuchet MS','Segoe UI',Verdana,sans-serif;user-select:none;-webkit-user-select:none}
+canvas{display:block}
+#ui{position:fixed;inset:0;pointer-events:none;color:#fff;z-index:10}
+.hidden{display:none!important}
+#perf{position:absolute;top:14px;right:14px;background:rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:8px 12px;font:12px/1.55 Consolas,'Courier New',monospace;color:#b8f0c0;white-space:pre;text-align:right}
+#error{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#210f0f;color:#ffb0b0;font-size:20px;padding:40px;text-align:center;pointer-events:auto}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}
+</script>
+</head>
+<body>
+<div id="ui">
+  <div id="perf" class="hidden"></div>
+  <div id="error" class="hidden"></div>
+</div>
+<script type="module">
+import*as o from"three";var F=/[?&]seed=(-?\d+)/i.exec(location.search),R=F?parseInt(F[1],10)|0:6221086,B=R>>>0;function L(){B=B+1831565813>>>0;let e=B;return e=Math.imul(e^e>>>15,e|1),e^=e+Math.imul(e^e>>>7,e|61),((e^e>>>14)>>>0)/4294967296}var H=(e,s)=>e+L()*(s-e);var k=/[?&]minfx/i.test(location.search),W=(function(){let e=/[?&]ablate=([a-z0-9,]+)/i.exec(location.search);return new Set(e?e[1].toLowerCase().split(","):[])})();var P=(function(){let e=/[?&]fixeddt=([0-9.]+)/i.exec(location.search);return e?parseFloat(e[1]):0})();var A={},S=(e,s)=>(A[e]=s,s);function C(){let e=[],s=(a,m,l,u,i,p,c=null)=>e.push({id:a,name:m,tests:l,p:u,lookAt:i,fov:p,player:c}),d=(a,m=0,l=0,u=0)=>{let i=A[a];if(!i)throw new Error(`framing anchored to unregistered landmark "${a}"`);let p=i.position||i;return[p.x+m,p.y+l,p.z+u]};s("origin-wide","Origin wide","harness proof \u2014 the instruments must go green on a build whose output is known",[6,4,8],[0,1,0],55,[0,0,0]),s("origin-close","Origin close","harness proof \u2014 close range, so a black-frame or all-one-colour failure is unmistakable",[2.2,1.6,3],[0,.9,0],42,[0,0,0]);for(let a of b)e.push(typeof a=="function"?a(d):a);return e}var b=[];function D(e){let{renderer:s,camera:d,scene:a,state:m,framings:l,hideUI:u,showPerf:i,setPlayerPos:p}=e,c=[],f={frame:0,fps:0,ms:0,triangles:0,drawCalls:0,programs:0,geometries:0,textures:0},g=0,E=0,x=0,w={version:"2.0.0-rebuild",seed:R,ready:!1,error:null,stats:f,framings:l.map(n=>({id:n.id,name:n.name,tests:n.tests,fov:n.fov})),settle(n){return new Promise(r=>c.push({left:Math.max(1,n|0),res:r}))},setFixedDt(n){g=n>0?n:0},setPose(n){e.setPose(n)},clearPose(){e.setPose(null)},setUI(n){u(!n)},perf(n){i(!!n)},review(n){let r=l.find(h=>h.id===n);if(!r)throw new Error("no such framing: "+n);return m.enterReview(),e.resetClock&&e.resetClock(),r.player&&p&&p(r.player),e.setPose(r),{id:r.id,name:r.name,tests:r.tests,p:r.p,lookAt:r.lookAt,fov:r.fov}}};function y(n){let r=s.info;f.frame++,f.triangles=r.render.triangles,f.drawCalls=r.render.calls,f.programs=r.programs?r.programs.length:0,f.geometries=r.memory.geometries,f.textures=r.memory.textures,E+=n,x++,E>=.25&&(f.fps=Math.round(x/E),f.ms=Math.round(E/x*1e4)/10,E=0,x=0);for(let h=c.length-1;h>=0;h--)if(--c[h].left<=0){let t=c[h].res;c.splice(h,1),t()}}return window.BB=w,{BB:w,tick:y,dtOverride:()=>g}}var I=document.getElementById("error"),$=document.getElementById("ui"),T=document.getElementById("perf");try{let p=function(t){i=t,t&&(c.set(t.lookAt[0],t.lookAt[1],t.lookAt[2]),a.position.set(c.x+14,c.y+26,c.z+16),a.target.position.copy(c))},r=function(){requestAnimationFrame(r);try{let t=x(),M=t>0?t:Math.min(y.getDelta(),.033);if(n+=M,e.info.reset(),u.mode!=="REVIEW"){let v=n*.25;d.position.set(Math.sin(v)*9,4.2,Math.cos(v)*9),d.lookAt(0,1,0)}l.rotation.y=n*.7,i&&(d.position.set(i.p[0],i.p[1],i.p[2]),d.lookAt(i.lookAt[0],i.lookAt[1],i.lookAt[2]),d.fov!==i.fov&&(d.fov=i.fov,d.updateProjectionMatrix())),e.render(s,d),E(M),w&&h()}catch(t){window.BB&&(window.BB.error=t.message),console.error(t)}},h=function(){let t=g.stats;T.textContent=`${t.fps} fps   ${t.ms.toFixed(1)} ms
+${(t.triangles/1e3).toFixed(1)}k tris
+${t.drawCalls} draws
+${t.geometries} geo / ${t.textures} tex
+seed ${R}   f${t.frame}`},e=new o.WebGLRenderer({antialias:!0,powerPreference:"high-performance"});e.setPixelRatio(k?1:Math.min(window.devicePixelRatio||1,2)),e.setSize(window.innerWidth,window.innerHeight),e.shadowMap.enabled=!k,e.shadowMap.type=o.PCFSoftShadowMap,e.toneMapping=o.AgXToneMapping,e.toneMappingExposure=1,e.info.autoReset=!1,document.body.appendChild(e.domElement);let s=new o.Scene;s.background=new o.Color(8898024),s.fog=new o.Fog(10473704,40,180);let d=new o.PerspectiveCamera(55,window.innerWidth/window.innerHeight,.1,400);d.position.set(6,4,8),s.add(new o.HemisphereLight(12445951,4876858,.6));let a=new o.DirectionalLight(16773840,1.3);a.position.set(14,26,16),a.castShadow=!k,a.shadow.mapSize.set(2048,2048),s.add(a,a.target);let m=new o.Mesh(new o.BoxGeometry(60,2,60),new o.MeshStandardMaterial({color:14205064,roughness:.95}));m.position.y=-1,m.receiveShadow=!0,s.add(m),S("origin",m);let l=new o.Mesh(new o.BoxGeometry(1.2,1.8,1.2),new o.MeshStandardMaterial({color:13656096,roughness:.6}));l.position.y=.9,l.castShadow=!0,s.add(l);for(let t=0;t<40;t++){let M=new o.Mesh(new o.DodecahedronGeometry(H(.15,.4),0),new o.MeshStandardMaterial({color:9079424,roughness:1}));M.position.set(H(-24,24),.1,H(-24,24)),M.castShadow=!0,s.add(M)}let u={mode:"PLAY",enterReview(){this.mode="REVIEW"}},i=null,c=new o.Vector3,f=C(),{BB:g,tick:E,dtOverride:x}=D({renderer:e,camera:d,scene:s,state:u,framings:f,setPose:p,hideUI:t=>$.classList.toggle("hidden",t),showPerf:t=>{T.classList.toggle("hidden",!t),w=t},setPlayerPos:t=>l.position.set(t[0],t[1]+.9,t[2]),resetClock:()=>{n=0}});P>0&&g.setFixedDt(P);let w=/[?&]perf/i.test(location.search);w&&T.classList.remove("hidden"),window.addEventListener("keydown",t=>{t.code==="F3"&&(w=!w,T.classList.toggle("hidden",!w))}),window.addEventListener("resize",()=>{d.aspect=window.innerWidth/window.innerHeight,d.updateProjectionMatrix(),e.setSize(window.innerWidth,window.innerHeight)});let y=new o.Clock,n=0;g.ready=!0,r()}catch(e){throw window.BB=window.BB||{},window.BB.ready=!0,window.BB.error=e.message,I.textContent="The game failed to start: "+e.message,I.classList.remove("hidden"),e}
+
+</script>
+</body>
+</html>

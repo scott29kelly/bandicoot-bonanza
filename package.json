@@ -9,9 +9,13 @@
     "shots": "node tools/shots.mjs",
     "compare": "node tools/compare.mjs",
     "diff": "node tools/diff.mjs",
-    "audio": "node tools/generate_audio_pack.mjs"
+    "audio": "node tools/generate_audio_pack.mjs",
+    "build": "node tools/build.mjs",
+    "watch": "node tools/build.mjs --watch",
+    "det": "node tools/determinism.mjs"
   },
   "devDependencies": {
+    "esbuild": "^0.28.2",
     "playwright": "^1.50.0",
     "sharp": "^0.35.0"
   }
