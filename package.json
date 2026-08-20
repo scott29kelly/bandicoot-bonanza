@@ -1,0 +1,18 @@
+{
+  "name": "bandicoot-bonanza",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "A complete 3D platformer in a single HTML file. This package.json exists ONLY for the dev tooling in tools/ — the game itself has no build step and no runtime dependencies.",
+  "scripts": {
+    "shoot": "node tools/shoot.mjs",
+    "shots": "node tools/shots.mjs",
+    "compare": "node tools/compare.mjs",
+    "diff": "node tools/diff.mjs",
+    "audio": "node tools/generate_audio_pack.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.50.0",
+    "sharp": "^0.35.0"
+  }
+}
