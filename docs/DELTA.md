@@ -6,6 +6,52 @@ Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
 
+## Round 3 — 2026-08-27 (light punch, treeline, macro variation)
+
+Shot from `103c1ec`, seed `0x5eed1e`, `shots/round3/`. Gates: build green,
+det A/A bit-identical / A/B 68.19%, 5/5 PASS (103.9k–122.6k tris).
+
+What landed: fill cut / key raised, grade rebuilt (multiplicative teal
+tint + contrast S-curve + saturation), corridor treeline, banded ridge
+slopes, doubled sand macro layer + wet rim, loud grass spread, broadleaf
+species, waterline-clustered skirt rows.
+
+### Critic verdict (blind, fresh context) — and what measurement said
+
+Verdict again led with "no light story / neutral white key / shadow
+saturation floor fails." **Measured: the floor PASSES decisively** —
+shadow sat 0.84–0.99 (floor 0.15), cool shift +0.07…+0.27 on all three
+sampled stills, lit:shadow value ~1.6:1. Third critic in a row leading
+with a lighting-template paragraph; from here the ranked SPECIFICS get
+verified individually and the template headline is discounted.
+
+Claims that survived verification, ranked by what they cost:
+
+1. No TIME OF DAY — sun at noon height leaves no readable direction.
+   True and cheap: the light was correct but storyless.
+2. Sand carries a ruled square grid (hero-closeup) — VERIFIED REAL:
+   faceted normals on the segmented island top, not texture tiling.
+3. Foam + shallows blow out to a snowbank (water-gap) — verified.
+4. Crate shadow faces crush toward black — verified; wood albedo too dark.
+5. Palm-trunk ring decal reads as a doodle at range — verified.
+6. Backdrop still only two layers in most frames — partially true (trees
+   landed but thin; far ridge reads only in beach-corridor).
+7. Gap-arc fruit read as unsupported spheres against the hills.
+
+Self-score (critic): character 2 · props 4 · dressing 4 · vegetation 3 ·
+light 2 · colour 3 · water 2 · backdrop 2 · motion 2 · composition 4.
+(Light/water scores contradict the instrument readings; kept for the
+record, weighted accordingly.)
+
+### Fixing this round (became round 4)
+
+Sun lowered to ~32° (time of day), rim raised; top-face normals
+flattened (grid gone, verified); shallows/foam pulled back; golden wood
+albedo + AO floor raised (crush gone); bark rings at low contrast under
+fibre streaks.
+
+---
+
 ## Round 2 — 2026-08-27 (light transport, backdrop, fruit)
 
 Shot from `4368b3a`, seed `0x5eed1e`, `shots/round2/`. Gates: build green,

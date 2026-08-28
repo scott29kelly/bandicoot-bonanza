@@ -72,7 +72,7 @@ export function createPipeline(){
 
   // Cool rim from behind-left, shadowless: separates every silhouette from
   // the ground the way the refs do. Tracks the focus with the sun.
-  const rim=new THREE.DirectionalLight(PALETTE.rim,0.32);
+  const rim=new THREE.DirectionalLight(PALETTE.rim,0.5);
   scene.add(rim,rim.target);
 
   const sun=new THREE.DirectionalLight(PALETTE.sunColor,3.3);
@@ -91,7 +91,10 @@ export function createPipeline(){
 
   /* Sun offset is FIXED; only the cascade centre moves. Light the subject,
      not the camera. */
-  const OFF=new THREE.Vector3(16,26,14);
+  // Lower sun = a TIME OF DAY. At noon-high elevation the frame had no
+  // readable light direction (three critics running); ~32° stretches every
+  // shadow into the story the refs tell.
+  const OFF=new THREE.Vector3(20,14,12);
   const RIM_OFF=new THREE.Vector3(-12,9,-20); // opposite the key, low
   const _right=new THREE.Vector3(),_up=new THREE.Vector3(),_dir=new THREE.Vector3(),
         _snapped=new THREE.Vector3();

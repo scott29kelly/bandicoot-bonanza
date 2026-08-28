@@ -79,11 +79,20 @@ export function islandMass({x,z,w,d,topY=0}){
       // The top stays walkable: dune drift only, and only near the rim.
       const rim=THREE.MathUtils.smoothstep(edge,0.55,0.96);
       pos.setY(i,py+fbm3((px+x)*0.3,3,(pz+z)*0.3)*0.5*rim-0.25*rim
-                  +fbm3((px+x)*0.9,5,(pz+z)*0.9)*0.08);
+                  +fbm3((px+x)*0.9,5,(pz+z)*0.9)*0.03);
     }
   }
   pos.needsUpdate=true;
   g.computeVertexNormals();
+  // Faceted normals on the segmented top paint the segment grid onto the
+  // sand as ruled seam lines (round-3 critic, verified in hero-closeup).
+  // The interior top is near-flat by construction; say so.
+  const nrmFix=g.getAttribute('normal');
+  for(let i=0;i<pos.count;i++){
+    const edge=Math.max(Math.abs(pos.getX(i))/halfW,Math.abs(pos.getZ(i))/halfD);
+    if(pos.getY(i)>yTop-0.45&&edge<0.9)nrmFix.setXYZ(i,0,1,0);
+  }
+  nrmFix.needsUpdate=true;
 
   // World-scaled UVs, projected along each face's dominant axis — a single
   // top-down projection would smear the cliff texture into vertical stripes.

@@ -126,8 +126,10 @@ export function rockTexture(){
 
 export function woodTexture(){
   return canvasTex(256,(g,s)=>{
-    g.fillStyle='#a8763e';g.fillRect(0,0,s,s);
-    blotches(g,s,8,s*0.2,s*0.4,'139,94,47',0.12,0.22);
+    // Golden, sun-struck wood — the refs' crates are bright. The round-3
+    // build's darker base collapsed every shaded crate face toward black.
+    g.fillStyle='#c98f4a';g.fillRect(0,0,s,s);
+    blotches(g,s,8,s*0.2,s*0.4,'160,108,54',0.12,0.22);
     const planks=4,ph=s/planks;
     for(let p=0;p<planks;p++){
       const y0=p*ph;
@@ -159,8 +161,14 @@ export function barkTexture(){
   return canvasTex(256,(g,s)=>{
     g.fillStyle='#8a6a48';g.fillRect(0,0,s,s);
     blotches(g,s,8,s*0.2,s*0.4,'110,82,52',0.15,0.25);
-    // Stacked frond-scar rings — the classic palm diamond banding.
-    g.strokeStyle='rgba(58,42,26,0.7)';g.lineWidth=5;
+    // Vertical fibre streaks first, then the ring banding at LOW contrast:
+    // at full contrast the rings read as a drawn-on doodle from ten metres.
+    g.strokeStyle='rgba(120,92,60,0.35)';g.lineWidth=2;
+    for(let i=0;i<40;i++){
+      const x=rand(0,s);
+      g.beginPath();g.moveTo(x,0);g.lineTo(x+rand(-6,6),s);g.stroke();
+    }
+    g.strokeStyle='rgba(70,52,32,0.4)';g.lineWidth=4;
     const rows=7;
     for(let r=0;r<rows;r++){
       const y=(r+0.5)*s/rows;

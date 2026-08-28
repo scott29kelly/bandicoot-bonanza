@@ -44,9 +44,9 @@ function depthCanvas(islands){
   // the island — a 10 m halo around a 4 m islet floods the channel between
   // islands and the "gap" stops reading as deep water at all.
   const halo=(s)=>Math.min(9,Math.min(s.maxX-s.minX,s.maxZ-s.minZ)*0.8);
-  g.filter='blur(14px)';g.fillStyle='rgba(72,190,186,0.9)';
+  g.filter='blur(14px)';g.fillStyle='rgba(64,176,178,0.82)';
   for(const s of islands)rect(s,halo(s));
-  g.filter='blur(6px)';g.fillStyle='rgba(150,224,204,0.9)';
+  g.filter='blur(6px)';g.fillStyle='rgba(130,208,192,0.7)';
   for(const s of islands)rect(s,Math.min(3,halo(s)*0.4));
   g.filter='none';
 
@@ -93,7 +93,7 @@ function foamRing(s,tex){
   // Band reach scales with the island: full-size rings off the 4 m gap
   // islets overlap each other and flood the channel solid white.
   const size=Math.min(s.maxX-s.minX,s.maxZ-s.minZ);
-  const W=Math.min(2.4,size*0.3);        // band width, metres
+  const W=Math.min(1.9,size*0.26);       // band width, metres
   // Start against the rock skirt (its bulge reaches ~2 m past the
   // footprint) and run out through it: surf breaks ON rock.
   const pts=perimeter(s,Math.min(1.5,size*0.25));
@@ -176,7 +176,7 @@ export function createWater(islands){
     for(let i=0;i<foams.length;i++){
       // The lace edge breathes in and out — surf, not a painted ribbon.
       foams[i].material.map.offset.y=Math.sin(t*1.25+i*1.3)*0.10;
-      foams[i].material.opacity=0.82+Math.sin(t*1.25+i*1.3+0.6)*0.15;
+      foams[i].material.opacity=0.62+Math.sin(t*1.25+i*1.3+0.6)*0.14;
     }
   }
   return {group,update};
