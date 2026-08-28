@@ -31,14 +31,9 @@ export function buildFramings(){
     return [q.x+dx,q.y+dy,q.z+dz];
   };
   // Framings are added by the world modules as their beats come online, via
-  // addFraming() below. The stub build registers only the origin framings so
-  // the instruments can be proven before any art exists.
-  add('origin-wide','Origin wide',
-    'harness proof — the instruments must go green on a build whose output is known',
-    [6,4,8],[0,1,0],55,[0,0,0]);
-  add('origin-close','Origin close',
-    'harness proof — close range, so a black-frame or all-one-colour failure is unmistakable',
-    [2.2,1.6,3.0],[0,0.9,0],42,[0,0,0]);
+  // addFraming() below. (The stub's hard-coded origin framings retired when
+  // the real world landed — GA3-PLAN.md round 1.)
+  void add;
   for(const f of EXTRA)F.push(typeof f==='function'?f(at):f);
   return F;
 }

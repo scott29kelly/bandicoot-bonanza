@@ -21,7 +21,7 @@ import path from 'node:path';
 import {ROOT} from './_harness.mjs';
 import {diffImages} from './_imagediff.mjs';
 
-const ID='origin-wide', W=800, H=500;
+const ID='beach-corridor', W=800, H=500;
 const shot=(dir,seed)=>{
   const a=['tools/shots.mjs','--dir',dir,'--only',ID,'--w',String(W),'--h',String(H),
            '--settle','20','--nosheet'];
