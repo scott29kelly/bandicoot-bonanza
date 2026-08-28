@@ -6,16 +6,24 @@
 import * as THREE from 'three';
 import {MINFX} from '../core/config.js';
 import {vcolor} from '../world/geo.js';
+import {createPost} from './post.js';
 
-/* The beach colour script. Jungle and temple get their own stops later. */
+/* The beach colour script. Jungle and temple get their own stops later.
+ *
+ * Round-2 lesson (measured, DELTA round 1): the ramp's cool texels were
+ * being washed back to warm by a warm hemisphere ground bounce — shadow
+ * came out the SAME hue as the light, only darker (cool shift ~0). The
+ * ambient path must be decisively cool for chromatic shadow to survive
+ * multiplication by warm sand albedo. */
 export const PALETTE={
   skyZenith:0x3d84c8,
   skyHorizon:0xbfe4ef,
   skyGlow:0xf6ead0,       // warm band right at the waterline
   fog:0xb9d9e4,
-  sunColor:0xfff0d2,
-  hemiSky:0x9fd2e8,
-  hemiGround:0xc8a878     // sand bounce — ambient shade stays warm from below
+  sunColor:0xffe2a4,      // hotter key
+  hemiSky:0x55a8d2,       // saturated teal — this is what shadow is made of
+  hemiGround:0x7f9a84,    // cool moss bounce, not warm sand
+  rim:0xcfeaff            // back light that pulls silhouettes off the ground
 };
 
 export function createPipeline(){
@@ -26,7 +34,10 @@ export function createPipeline(){
   renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   // AgX, once, at the end. Light intensities below are authored AGAINST this
   // tonemapper — change one and you re-author the other (pipeline law).
-  renderer.toneMapping=THREE.AgXToneMapping;
+  // With the post chain on, the scene renders LINEAR into the float target
+  // and the composite pass applies AgX + the grade; ?minfx keeps the direct
+  // path and lets the renderer tonemap instead.
+  renderer.toneMapping=MINFX?THREE.AgXToneMapping:THREE.NoToneMapping;
   renderer.toneMappingExposure=1.12;
   // Several passes may render per frame; with autoReset on, renderer.info
   // would only report the last one. main.js calls reset() at frame top.
@@ -52,10 +63,15 @@ export function createPipeline(){
   sky.renderOrder=-100;
   scene.add(sky);
 
-  const hemi=new THREE.HemisphereLight(PALETTE.hemiSky,PALETTE.hemiGround,0.85);
+  const hemi=new THREE.HemisphereLight(PALETTE.hemiSky,PALETTE.hemiGround,0.62);
   scene.add(hemi);
 
-  const sun=new THREE.DirectionalLight(PALETTE.sunColor,2.3);
+  // Cool rim from behind-left, shadowless: separates every silhouette from
+  // the ground the way the refs do. Tracks the focus with the sun.
+  const rim=new THREE.DirectionalLight(PALETTE.rim,0.5);
+  scene.add(rim,rim.target);
+
+  const sun=new THREE.DirectionalLight(PALETTE.sunColor,2.6);
   sun.castShadow=!MINFX;
   sun.shadow.mapSize.set(2048,2048);
   const d=26;
@@ -72,6 +88,7 @@ export function createPipeline(){
   /* Sun offset is FIXED; only the cascade centre moves. Light the subject,
      not the camera. */
   const OFF=new THREE.Vector3(16,26,14);
+  const RIM_OFF=new THREE.Vector3(-12,9,-20); // opposite the key, low
   const _right=new THREE.Vector3(),_up=new THREE.Vector3(),_dir=new THREE.Vector3(),
         _snapped=new THREE.Vector3();
   function focusSun(focus){
@@ -88,8 +105,17 @@ export function createPipeline(){
       .addScaledVector(_right,rx).addScaledVector(_up,ry).addScaledVector(_dir,rd);
     sun.target.position.copy(_snapped);
     sun.position.copy(_snapped).add(OFF);
+    rim.target.position.copy(focus);
+    rim.position.copy(focus).add(RIM_OFF);
   }
   focusSun(new THREE.Vector3(0,0,-6));
 
-  return {renderer,scene,sun,hemi,sky,focusSun};
+  const post=MINFX?null:createPost(renderer);
+  const draw=(cam)=>{post?post.render(scene,cam):renderer.render(scene,cam);};
+  const resize=()=>{
+    renderer.setSize(window.innerWidth,window.innerHeight);
+    if(post)post.setSize();
+  };
+
+  return {renderer,scene,sun,hemi,sky,focusSun,draw,resize};
 }

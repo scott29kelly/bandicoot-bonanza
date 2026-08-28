@@ -20,7 +20,7 @@ const perfEl=document.getElementById('perf');
 
 try{
 
-const {renderer,scene,focusSun}=createPipeline();
+const {renderer,scene,focusSun,draw,resize}=createPipeline();
 document.body.appendChild(renderer.domElement);
 scene.fog.near=CFG.fogNear;
 scene.fog.far=CFG.fogFar;
@@ -61,7 +61,7 @@ window.addEventListener('keydown',e=>{
 window.addEventListener('resize',()=>{
   camera.aspect=window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth,window.innerHeight);
+  resize();
 });
 
 /* ---------- loop --------------------------------------------------------- */
@@ -94,7 +94,7 @@ function frame(){
       camera.lookAt(pose.lookAt[0],pose.lookAt[1],pose.lookAt[2]);
       if(camera.fov!==pose.fov){camera.fov=pose.fov;camera.updateProjectionMatrix();}
     }
-    renderer.render(scene,camera);
+    draw(camera);
     tick(dt);
     if(perfOn)paintPerf();
   }catch(err){

@@ -10,11 +10,13 @@ import * as THREE from 'three';
 import {rand} from '../core/rng.js';
 import {mark,addFraming} from '../review/framings.js';
 import {toonMat} from '../art/materials.js';
+import {mergeGeoms} from './geo.js';
 import {islandMass} from './masses.js';
 import {createWater} from './water.js';
 import {createBackdrop} from './backdrop.js';
 import {makeCrate,makeTNT} from './props.js';
 import {makePalm,makeFern,makeGrassField,makePebbles,makeShells,makeTwigs} from './flora.js';
+import {contactBlob} from './contact.js';
 
 /** Seeded scatter over an island top, thinning toward the corridor centre. */
 function scatter(n,s,inset=0.8,avoid=[]){
@@ -54,12 +56,18 @@ export function buildBeach(scene){
 
   /* ---------- palms ----------------------------------------------------- */
   const avoid=[]; // grass keeps clear of every prop footprint
+  const ground=(x,z,r,y=0,op=1)=>{
+    const b=contactBlob(r,op);
+    b.position.set(x,y+0.05,z);
+    scene.add(b);
+  };
   for(const [x,z,h] of [[-5.5,-4,4.5],[5.8,-9,5],[-5.2,-18,5.4],[6,-24,4.2],
                         [-6,-27.5,3.6],[-5.4,-49,4.8],[5.6,-58,5.2],[4.6,-61,3.9]]){
     const p=makePalm(x,0,z,h);
     scene.add(p.group);
     updates.push(p.update);
     avoid.push({x,z,r:1.0});
+    ground(x,z,0.85);
   }
 
   /* ---------- crates + the first TNT ----------------------------------- */
@@ -68,6 +76,7 @@ export function buildBeach(scene){
     scene.add(c.mesh);
     solids.push(c.solid);
     avoid.push({x,z,r:1.15});
+    ground(x,z,1.0,y,y>0?0.55:1); // stacked crates shade the crate below
     return c;
   };
   crateAt(-1.4,0,-14);crateAt(0,0,-14);crateAt(1.4,0,-14);
@@ -77,6 +86,7 @@ export function buildBeach(scene){
   scene.add(tnt.mesh);
   solids.push(tnt.solid);
   avoid.push({x:0,z:-52,r:1.15});
+  ground(0,-52,0.95);
   mark('tnt1',tnt.mesh);
 
   /* ---------- ground cover --------------------------------------------- */
@@ -84,6 +94,7 @@ export function buildBeach(scene){
                         [-5.2,-46.5,1.0],[5.3,-52,1.1],[-5.6,-60,0.9],[2.8,-62,0.7]]){
     scene.add(makeFern(x,0,z,s));
     avoid.push({x,z,r:0.8});
+    ground(x,z,0.55*s,0,0.7);
   }
 
   const grassSpots=[
@@ -105,16 +116,41 @@ export function buildBeach(scene){
 
   /* ---------- fruit ----------------------------------------------------- */
   const fruitPos=[];
-  const fruitRow=(x,y,z0,z1,n)=>{for(let i=0;i<n;i++)fruitPos.push([x,y+0.55,z0+(z1-z0)*i/(n-1)]);};
+  const fruitRow=(x,y,z0,z1,n)=>{
+    for(let i=0;i<n;i++){
+      const z=z0+(z1-z0)*i/(n-1);
+      fruitPos.push([x,y+0.55,z]);
+      ground(x,z,0.24,y,0.5); // hovering fruit still throws a soft pool
+    }
+  };
   fruitRow(0,0,-5,-11,5);
   fruitPos.push([0,1.6,-31.5],[0,1.8,-39.2],[0,1.8,-47.3]); // arcs over the gaps
   fruitRow(3,0,-49,-55,4);
-  const fruitGeo=new THREE.SphereGeometry(0.27,12,10);
-  fruitGeo.scale(1,1.18,1);
+  // A wumpa is a DESIGNED object, not a sphere (round-1 verdict, gap 3):
+  // squashed body + stem + two leaves, two materials via geometry groups.
+  const body=new THREE.SphereGeometry(0.27,12,10);
+  body.scale(1,1.14,1);
+  const stem=new THREE.CylinderGeometry(0.02,0.035,0.09,6);
+  stem.translate(0,0.33,0);
+  const leaf=(rot)=>{
+    const l=new THREE.SphereGeometry(0.09,6,4);
+    l.scale(1.6,0.28,0.7);
+    l.translate(0.13,0.34,0);
+    const m=new THREE.Matrix4().makeRotationY(rot);
+    l.applyMatrix4(new THREE.Matrix4().makeRotationZ(0.45).premultiply(m));
+    return l;
+  };
+  const bodyGeo=body.toNonIndexed();
+  const greenGeo=mergeGeoms([stem,leaf(0.4),leaf(2.8)]);
+  const fruitGeo=mergeGeoms([bodyGeo,greenGeo]);
+  fruitGeo.addGroup(0,bodyGeo.getAttribute('position').count,0);
+  fruitGeo.addGroup(bodyGeo.getAttribute('position').count,
+    greenGeo.getAttribute('position').count,1);
   // Albedo deliberately below "orange you'd pick": AgX rolls hot values to
   // cream. Emissive is a glow hint, not the colour (old DELTA, pass 3).
-  const fruitMesh=new THREE.InstancedMesh(fruitGeo,
-    toonMat({color:0xc9660a,emissive:0xff8c1a,emissiveIntensity:0.3}),fruitPos.length);
+  const fruitMesh=new THREE.InstancedMesh(fruitGeo,[
+    toonMat({color:0xd45a0e,emissive:0xff7a1a,emissiveIntensity:0.32}),
+    toonMat({color:0x4e7d2a})],fruitPos.length);
   const _m=new THREE.Matrix4(),_e=new THREE.Euler(),_q=new THREE.Quaternion(),
         _v=new THREE.Vector3(),_s=new THREE.Vector3(1,1,1);
   const phases=fruitPos.map(()=>rand(0,Math.PI*2));

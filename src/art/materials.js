@@ -27,9 +27,9 @@ function makeRamp(stops){
   return t;
 }
 export const RAMP=makeRamp([
-  [64,92,104],   // deep shade — blue-green, saturation well above the 0.15 floor
-  [116,138,132], // mid shade — cooler green
-  [212,200,168], // lit — warming up
+  [46,82,112],   // deep shade — decisively blue; warm albedo will pull it teal
+  [88,126,142],  // mid shade — cool green-blue
+  [214,200,168], // lit — warming up
   [255,250,238]  // full sun
 ]);
 
@@ -213,6 +213,26 @@ export function rippleTexture(){
       g.restore();
     }
   });
+}
+
+/**
+ * Contact-shadow blob: the occlusion darkening every prop needs where it
+ * meets the ground. Deep teal, not black — Pillar B applies to occlusion
+ * too. One shared texture; meshes scale it per prop.
+ */
+let _contactTex=null;
+export function contactTexture(){
+  if(_contactTex)return _contactTex;
+  _contactTex=canvasTex(128,(g,s)=>{
+    g.clearRect(0,0,s,s);
+    const grad=g.createRadialGradient(s/2,s/2,0,s/2,s/2,s/2);
+    grad.addColorStop(0,'rgba(16,42,52,0.78)');
+    grad.addColorStop(0.55,'rgba(16,42,52,0.5)');
+    grad.addColorStop(1,'rgba(16,42,52,0)');
+    g.fillStyle=grad;g.fillRect(0,0,s,s);
+  });
+  _contactTex.wrapS=_contactTex.wrapT=THREE.ClampToEdgeWrapping;
+  return _contactTex;
 }
 
 /** Foam band: solid at the shore edge (v=0), breaking up as it leaves it. */

@@ -10,6 +10,7 @@ import * as THREE from 'three';
 import {CFG} from '../game/cfg.js';
 import {toonMat} from '../art/materials.js';
 import {windAt} from '../world/wind.js';
+import {contactBlob} from '../world/contact.js';
 
 export function createHero(scene,solids,spawn){
   /* ---------- placeholder body ----------------------------------------- */
@@ -35,6 +36,10 @@ export function createHero(scene,solids,spawn){
   group.add(body,belly,muzzle,nose,earL,earR,tail);
   group.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=false;}});
   scene.add(group);
+  // Dynamic contact blob: the floor demands a shadow under the feet in
+  // EVERY framing, and the cascade alone won't ground a jump.
+  const blob=contactBlob(0.5);
+  scene.add(blob);
 
   /* ---------- input ----------------------------------------------------- */
   const keys={};
@@ -125,6 +130,15 @@ export function createHero(scene,solids,spawn){
     earL.rotation.z=0.25+windAt(pos.x,pos.z,t)*0.06;
     earR.rotation.z=-0.25+windAt(pos.x,pos.z,t*1.05)*0.06;
     tail.rotation.x=1.1+Math.sin(t*2.2)*0.1;
+    const gy=groundAt(pos.x,pos.z);
+    if(gy>-Infinity){
+      const h=Math.max(0,pos.y-gy);
+      const k=THREE.MathUtils.clamp(1-h/3.5,0.25,1);
+      blob.position.set(pos.x,gy+0.06,pos.z);
+      blob.scale.setScalar(k);
+      blob.material.opacity=k;
+      blob.visible=true;
+    }else blob.visible=false;
   }
 
   function setPos(p){

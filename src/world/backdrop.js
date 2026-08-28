@@ -61,8 +61,11 @@ function jungleRidge(x,z,len,w,h,dir){
       mp.setXYZ(j,mp.getX(j)*k,mp.getY(j)*k*0.75,mp.getZ(j)*k);
     }
     mound.computeVertexNormals();
-    const hue=0.27+rand(0,0.08);
-    vcolor(mound,(px,py)=>_c.setHSL(hue,0.5,0.16+Math.max(0,py*0.06)+fbm3(px,py,i)*0.05));
+    // Real hue/value spread mound to mound — one green end to end is the
+    // "two smooth blobs" verdict (round 1, gap 2).
+    const hue=0.24+rand(0,0.13),sat=rand(0.42,0.62),base=rand(0.10,0.20);
+    vcolor(mound,(px,py)=>_c.setHSL(hue+fbm3(px*0.6,py*0.6,i)*0.03,sat,
+      base+Math.max(0,py*0.10)+fbm3(px*1.4,py*1.4,i+40)*0.06));
     // Keep every mound buried in the crest: the ridge surface at t is about
     // h*cos(t*2.4) before noise, so centring below 0.62 of it can't float.
     xform(mound,{p:[t*len,h*Math.cos(t*2.4)*rand(0.38,0.62),rand(-w*0.28,w*0.28)]});
@@ -84,15 +87,19 @@ export function createBackdrop(){
   parts.push(jungleRidge(-37,-105,80,24,16,Math.PI/2+0.15));
   parts.push(jungleRidge(37,2,36,14,7,Math.PI/2-0.2));
 
-  // Mid layer, seaward: stacks scattered off both flanks.
+  // Mid layer, seaward: stacks scattered off both flanks — two of them
+  // planted INSIDE the corridor's sight lines so the framed shots always
+  // carry a mid-distance silhouette, not just flank walls.
   for(const [x,z,h,r] of [[-52,-58,16,5],[-64,-24,10,3.4],[58,-88,20,6],
-                          [48,-30,9,3],[-58,-130,14,4.5],[70,-140,11,3.6]])
+                          [48,-30,9,3],[-58,-130,14,4.5],[70,-140,11,3.6],
+                          [-21,-76,9,3],[24,-95,13,4]])
     parts.push(seaStack(x,z,h,r));
 
-  // Far layer: a haze ridge band across the horizon of the corridor, still
-  // inside the fog range so it silhouettes instead of vanishing.
-  parts.push(jungleRidge(-40,-175,150,40,24,0.25));
-  parts.push(jungleRidge(60,-165,120,36,20,-0.3));
+  // Far layer: a haze ridge band across the horizon of the corridor, tall
+  // enough to read OVER the mid flanks, still inside the fog range so it
+  // silhouettes instead of vanishing.
+  parts.push(jungleRidge(-40,-182,150,40,30,0.25));
+  parts.push(jungleRidge(60,-172,120,36,26,-0.3));
 
   const mesh=new THREE.Mesh(mergeGeoms(parts),mat);
   mesh.castShadow=false;   // far out of the cascade; shadows would just crawl

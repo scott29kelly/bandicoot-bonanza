@@ -42,12 +42,15 @@ export function makeCrate(x,y,z){
   mats();
   const beam=0.13;
   const parts=[];
+  // Baked crevice AO: everything darkens toward the crate's base, so a
+  // stack shades itself instead of floating (Pillar B: grounded).
+  const ao=(y)=>0.72+0.28*THREE.MathUtils.clamp(y/S+0.5,0,1);
   // Plank core, inset behind the frame so the faces read as panels.
   const core=new THREE.BoxGeometry(S-beam*0.9,S-beam*0.9,S-beam*0.9);
-  vcolor(core,()=>_c.setHSL(0.075,0.5,rand(0.5,0.6)));
+  vcolor(core,(px,py)=>_c.setHSL(0.075,0.5,rand(0.5,0.6)*ao(py)));
   parts.push(core);
   for(const g of frameGeoms(S,beam))
-    parts.push(vcolor(g,()=>_c.setHSL(0.07,0.45,0.33)));
+    parts.push(vcolor(g,(px,py)=>_c.setHSL(0.07,0.45,0.33*ao(py))));
   const geo=mergeGeoms(parts.map(g=>g.toNonIndexed()));
   const mesh=new THREE.Mesh(geo,crateMat);
   mesh.position.set(x,y+S/2-0.02,z);
@@ -61,11 +64,12 @@ export function makeCrate(x,y,z){
 export function makeTNT(x,y,z){
   mats();
   const parts=[];
+  const ao=(y)=>0.72+0.28*THREE.MathUtils.clamp(y/S+0.5,0,1);
   const core=new THREE.BoxGeometry(S*0.92,S*0.92,S*0.92);
-  vcolor(core,()=>_c.set(0xffffff));
+  vcolor(core,(px,py)=>_c.setScalar(ao(py)));
   parts.push(core);
   for(const g of frameGeoms(S*0.92,0.11))
-    parts.push(vcolor(g,()=>_c.setHSL(0.0,0.55,0.30)));
+    parts.push(vcolor(g,(px,py)=>_c.setHSL(0.0,0.55,0.30*ao(py))));
   const body=new THREE.Mesh(mergeGeoms(parts.map(g=>g.toNonIndexed())),tntMat);
 
   // The fuse: a little pot and a bent wick. The prop's job is to promise a
