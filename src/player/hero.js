@@ -2,39 +2,19 @@
  * The hero and his controller. Physics values are the old game's proven CFG
  * (docs/GA3-PLAN.md) — the feel is not up for redesign, only the pixels.
  *
- * The MODEL here is a declared round-1 placeholder: a dressed capsule so the
- * framings have a subject and a contact shadow. The real character is its own
- * workstream. The CONTROLLER is meant to be final.
+ * The model lives in model.js (articulated pivot hierarchy); this file owns
+ * input, physics, the camera-facing pose, and the procedural animation that
+ * keeps the character out of the "frozen jelly" failure (Pillar F).
  */
 import * as THREE from 'three';
 import {CFG} from '../game/cfg.js';
-import {toonMat} from '../art/materials.js';
 import {windAt} from '../world/wind.js';
 import {contactBlob} from '../world/contact.js';
+import {createHeroModel} from './model.js';
 
 export function createHero(scene,solids,spawn){
-  /* ---------- placeholder body ----------------------------------------- */
-  const group=new THREE.Group();
-  const furMat=toonMat({color:0xd2622a});
-  const bellyMat=toonMat({color:0xe8c690});
-  const body=new THREE.Mesh(new THREE.CapsuleGeometry(0.34,0.5,6,12),furMat);
-  body.position.y=0.62;
-  const belly=new THREE.Mesh(new THREE.CapsuleGeometry(0.30,0.42,5,10),bellyMat);
-  belly.position.set(0,0.60,0.09);
-  belly.scale.set(0.72,0.8,0.6);
-  const muzzle=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.16,0.26),bellyMat);
-  muzzle.position.set(0,0.98,0.3);
-  const nose=new THREE.Mesh(new THREE.SphereGeometry(0.06,8,6),toonMat({color:0x2a1c14}));
-  nose.position.set(0,1.0,0.45);
-  const earGeo=new THREE.ConeGeometry(0.1,0.3,7);
-  const earL=new THREE.Mesh(earGeo,furMat);
-  earL.position.set(-0.17,1.34,0.02);earL.rotation.z=0.25;
-  const earR=new THREE.Mesh(earGeo,furMat);
-  earR.position.set(0.17,1.34,0.02);earR.rotation.z=-0.25;
-  const tail=new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.05,0.55,6),furMat);
-  tail.position.set(0,0.5,-0.4);tail.rotation.x=1.1;
-  group.add(body,belly,muzzle,nose,earL,earR,tail);
-  group.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=false;}});
+  const model=createHeroModel();
+  const group=model.root;
   scene.add(group);
   // Dynamic contact blob: the floor demands a shadow under the feet in
   // EVERY framing, and the cascade alone won't ground a jump.
@@ -54,7 +34,7 @@ export function createHero(scene,solids,spawn){
   /* ---------- state ------------------------------------------------------ */
   const pos=new THREE.Vector3(...spawn);
   const vel=new THREE.Vector3();
-  let onGround=false,coyote=0,jumpBuf=0,canDouble=false,facing=0;
+  let onGround=false,coyote=0,jumpBuf=0,canDouble=false,facing=0,runPhase=0;
 
   function groundAt(x,z){
     let top=-Infinity;
@@ -117,19 +97,46 @@ export function createHero(scene,solids,spawn){
     }
 
     if(pos.y<CFG.killY)respawn();
+    runPhase+=dt*(4+sp*1.5);
     place(t,sp);
   }
 
-  /** Idle/locomotion dressing on the placeholder — never frozen (Pillar F). */
+  /* ---------- procedural animation --------------------------------------- */
   function place(t,sp=0){
     group.position.copy(pos);
     group.rotation.y=facing;
-    const breathe=1+Math.sin(t*3.1)*0.015;
-    body.scale.set(1,breathe,1);
-    group.position.y=pos.y+(onGround?Math.abs(Math.sin(t*sp*1.4))*0.05*Math.min(1,sp/4):0);
-    earL.rotation.z=0.25+windAt(pos.x,pos.z,t)*0.06;
-    earR.rotation.z=-0.25+windAt(pos.x,pos.z,t*1.05)*0.06;
-    tail.rotation.x=1.1+Math.sin(t*2.2)*0.1;
+
+    const {hips,head,ears,arms,legs,tailPivot}=model;
+    const run=THREE.MathUtils.clamp(sp/CFG.runSpeed,0,1);
+
+    if(!onGround){
+      // Airborne: legs trail, arms up, a light forward tuck.
+      const up=THREE.MathUtils.clamp(vel.y/CFG.jumpVel,-1,1);
+      legs.L.rotation.x=0.5-up*0.3;
+      legs.R.rotation.x=0.15-up*0.3;
+      arms.L.rotation.z=0.9;arms.R.rotation.z=-0.9;
+      arms.L.rotation.x=arms.R.rotation.x=-0.5-up*0.4;
+      hips.rotation.x=0.18-up*0.12;
+      hips.position.y=0.42;
+    }else{
+      // Grounded: run cycle scaled by speed, breathing at rest.
+      const swing=Math.sin(runPhase)*run;
+      legs.L.rotation.x=swing*0.85;
+      legs.R.rotation.x=-swing*0.85;
+      arms.L.rotation.x=-swing*0.7;
+      arms.R.rotation.x=swing*0.7;
+      arms.L.rotation.z=0.55+run*0.15;
+      arms.R.rotation.z=-0.55-run*0.15;
+      hips.rotation.x=run*0.22;
+      hips.position.y=0.42+Math.abs(Math.sin(runPhase))*0.05*run
+        +(1-run)*Math.sin(t*3.1)*0.008;
+    }
+    head.rotation.x=-hips.rotation.x*0.7; // eyes stay level while leaning
+    ears.L.rotation.z=0.28+windAt(pos.x,pos.z,t)*0.08;
+    ears.R.rotation.z=-0.28-windAt(pos.x,pos.z,t*1.05)*0.08;
+    tailPivot.rotation.x=Math.sin(t*2.2+runPhase*0.5)*0.16;
+    tailPivot.rotation.z=Math.sin(t*1.7)*0.12;
+
     const gy=groundAt(pos.x,pos.z);
     if(gy>-Infinity){
       const h=Math.max(0,pos.y-gy);
@@ -146,6 +153,10 @@ export function createHero(scene,solids,spawn){
     const top=groundAt(pos.x,pos.z);
     if(top>-Infinity&&Math.abs(pos.y-top)<1.5)pos.y=top;
     vel.set(0,0,0);onGround=true;facing=0;
+    // The run cycle accumulates across however many PLAY frames elapsed
+    // before review() — wall-clock-dependent, so it must reset with the
+    // world clock or A/A captures differ by a limb pose (det gate caught it).
+    runPhase=0;
     place(0);
   }
 
