@@ -176,7 +176,7 @@ export function createWater(islands){
     for(let i=0;i<foams.length;i++){
       // The lace edge breathes in and out — surf, not a painted ribbon.
       foams[i].material.map.offset.y=Math.sin(t*1.25+i*1.3)*0.10;
-      foams[i].material.opacity=0.72+Math.sin(t*1.25+i*1.3+0.6)*0.18;
+      foams[i].material.opacity=0.82+Math.sin(t*1.25+i*1.3+0.6)*0.15;
     }
   }
   return {group,update};

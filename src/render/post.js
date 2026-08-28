@@ -47,14 +47,19 @@ export function createPost(renderer){
         c=AgXToneMapping(c);
         if(uGrade>0.5){
           float l=dot(c,vec3(0.2126,0.7152,0.0722));
-          // Shadow split-tone: the dark end slides toward teal, the lit end
-          // stays warm. This is where "shadow is blue-green" actually comes
-          // from at this bar — not from the light rig.
+          // Shadow split-tone: MULTIPLICATIVE only. The round-2 version
+          // added a lift, which fixed shadow hue by paying with the key
+          // contrast two critics then flagged. Tint, never lift.
           float sh=pow(1.0-l,2.2);
-          c=mix(c,c*vec3(0.80,1.02,1.22)+vec3(0.0,0.018,0.045),sh*0.6);
-          // Mild vibrance: boost muted pixels, spare the saturated ones.
+          c=mix(c,c*vec3(0.70,1.0,1.34),sh*0.65);
+          // Contrast S-curve: AgX alone is deliberately flat; the refs are
+          // not. Applied after the split-tone so shadows deepen INTO teal.
+          c=mix(c,c*c*(3.0-2.0*c),0.42);
+          // Saturation: global push, then extra for muted pixels.
+          l=dot(c,vec3(0.2126,0.7152,0.0722));
+          c=mix(vec3(l),c,1.22);
           float mx=max(c.r,max(c.g,c.b)),mn=min(c.r,min(c.g,c.b));
-          c=mix(vec3(dot(c,vec3(0.2126,0.7152,0.0722))),c,1.0+0.14*(1.0-(mx-mn)));
+          c=mix(vec3(dot(c,vec3(0.2126,0.7152,0.0722))),c,1.0+0.18*(1.0-(mx-mn)));
         }
         c=clamp(c,0.0,1.0);
         // Manual sRGB OETF — this pass owns the canvas, nothing runs after.

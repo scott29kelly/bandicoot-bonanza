@@ -191,17 +191,57 @@ export function makeGrassField(spots){
   const m=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler();
   for(let i=0;i<spots.length;i++){
     const [x,y,z]=spots[i];
-    e.set(rand(-0.1,0.1),rand(0,Math.PI*2),rand(-0.1,0.1));
+    // LOUD per-instance spread — round-2 verdict: subtle variation reads
+    // as clones after the tonemapper compresses it.
+    e.set(rand(-0.28,0.28),rand(0,Math.PI*2),rand(-0.28,0.28));
     m.compose(new THREE.Vector3(x,y-0.02,z),q.setFromEuler(e),
-      new THREE.Vector3(rand(0.7,1.3),rand(0.6,1.4),rand(0.7,1.3)));
+      new THREE.Vector3(rand(0.6,1.4),rand(0.5,1.6),rand(0.6,1.4)));
     mesh.setMatrixAt(i,m);
-    mesh.setColorAt(i,_c.setHSL(rand(0.2,0.32),rand(0.45,0.6),rand(0.4,0.55)));
+    mesh.setColorAt(i,_c.setHSL(rand(0.16,0.36),rand(0.5,0.75),rand(0.32,0.62)));
   }
   mesh.castShadow=true;
   function update(t){
     if(mat.userData.shader)mat.userData.shader.uniforms.uTime.value=t;
   }
   return {mesh,update};
+}
+
+/** Second ground species: broadleaf clumps — wide bent blades, not spikes. */
+function broadleafGeom(){
+  const parts=[];
+  for(let i=0;i<4;i++){
+    const a=i/4*Math.PI*2+rand(-0.4,0.4),len=rand(0.4,0.7),w=rand(0.09,0.15);
+    const droop=len*rand(0.5,0.8);
+    const g=new THREE.BufferGeometry();
+    g.setAttribute('position',new THREE.Float32BufferAttribute([
+      0,0.02,-w, 0,0.02,w,
+      len*0.55,len*0.5,-w*1.3, len*0.55,len*0.5,w*1.3,
+      len*1.05,len*0.5-droop*0.35,0],3));
+    g.setIndex([0,1,2, 1,3,2, 2,3,4]);
+    g.computeVertexNormals();
+    const g2=g.toNonIndexed();
+    g2.setAttribute('uv',new THREE.BufferAttribute(new Float32Array(g2.getAttribute('position').count*2),2));
+    xform(g2,{r:[0,a,0]});
+    parts.push(g2);
+  }
+  return mergeGeoms(parts);
+}
+
+export function makeBroadleafField(spots){
+  const geo=broadleafGeom();
+  const mat=toonMat({color:0x5e8f3c,side:THREE.DoubleSide});
+  const mesh=new THREE.InstancedMesh(geo,mat,spots.length);
+  const m=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler();
+  for(let i=0;i<spots.length;i++){
+    const [x,y,z]=spots[i];
+    e.set(rand(-0.15,0.15),rand(0,Math.PI*2),rand(-0.15,0.15));
+    m.compose(new THREE.Vector3(x,y-0.02,z),q.setFromEuler(e),
+      new THREE.Vector3(rand(0.7,1.5),rand(0.7,1.5),rand(0.7,1.5)));
+    mesh.setMatrixAt(i,m);
+    mesh.setColorAt(i,_c.setHSL(rand(0.22,0.38),rand(0.5,0.7),rand(0.35,0.6)));
+  }
+  mesh.castShadow=true;
+  return mesh;
 }
 
 /* ---------- debris (instanced) ------------------------------------------ */

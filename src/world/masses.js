@@ -35,7 +35,9 @@ export function islandMass({x,z,w,d,topY=0}){
   const {sandMat,cliffMat}=mats();
   const yTop=topY,yBot=topY-1.2-SKIRT_DEPTH;
   const height=yTop-yBot;
-  const seg=(len)=>Math.max(4,Math.round(len*0.8));
+  // Enough segments to CARVE: at 0.8/m a 4 m islet gets 3 slices and its
+  // skirt comes out as smooth cake no matter what the noise says.
+  const seg=(len)=>Math.max(7,Math.round(len*1.3));
   const g=new THREE.BoxGeometry(w+1.6,height,d+1.6,seg(w),seg(height),seg(d));
   g.translate(0,yTop-height/2,0);
 
@@ -45,10 +47,20 @@ export function islandMass({x,z,w,d,topY=0}){
   // wavelengths comes out as a smooth pancake with ~0.5 m of freeboard.
   const freq=0.55*THREE.MathUtils.clamp(12/Math.min(w,d),1,2.4);
   for(let i=0;i<pos.count;i++){
-    const px=pos.getX(i),py=pos.getY(i),pz=pos.getZ(i);
+    const px=pos.getX(i);
+    let py=pos.getY(i);
+    const pz=pos.getZ(i);
+    const edge=Math.max(Math.abs(px)/halfW,Math.abs(pz)/halfD); // 1 on the side walls
+    if(edge>0.96&&py<yTop-0.01){
+      // Cluster the side rows toward the waterline. Uniform rows put ONE
+      // row in the visible freeboard, so every carve happened underwater
+      // and the shore read as smooth cake (round-3 finding).
+      const t=THREE.MathUtils.clamp((yTop-py)/height,0,1);
+      py=yTop-Math.pow(t,1.7)*height;
+      pos.setY(i,py);
+    }
     // 0 at the walkable rim, 1 at the bottom of the skirt.
     const down=THREE.MathUtils.clamp((yTop-py)/height,0,1);
-    const edge=Math.max(Math.abs(px)/halfW,Math.abs(pz)/halfD); // 1 on the side walls
     if(edge>0.96){
       // Rock skirt: carve and bulge with two-scale noise, more as it
       // descends, pushed RADIALLY so corners round off — an axis-aligned
@@ -86,7 +98,12 @@ export function islandMass({x,z,w,d,topY=0}){
   uv.needsUpdate=true;
 
   vcolor(g,(px,py,pz)=>{
-    if(py>yTop-0.35)return _c.copy(cSand).lerp(cSandLow,fbm3((px+x)*0.2,11,(pz+z)*0.2));
+    if(py>yTop-0.35){
+      _c.copy(cSand).lerp(cSandLow,fbm3((px+x)*0.2,11,(pz+z)*0.2));
+      // Wet-sand band where the top meets the rim — the tide got here.
+      const rim=Math.max(Math.abs(px)/halfW,Math.abs(pz)/halfD);
+      return _c.lerp(cWet,THREE.MathUtils.smoothstep(rim,0.78,0.98)*0.45);
+    }
     if(py>WATER_Y+0.55)return _c.copy(cSandLow).lerp(cRockHi,Math.min(1,(yTop-py)/0.9));
     if(py>WATER_Y-0.8)return _c.copy(cWet); // the tide-wet band
     return _c.copy(cRockLo).lerp(cWet,THREE.MathUtils.clamp((py-yBot)/3,0,1)*0.5);

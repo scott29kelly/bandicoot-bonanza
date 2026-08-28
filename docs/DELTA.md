@@ -6,6 +6,51 @@ Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
 
+## Round 2 — 2026-08-27 (light transport, backdrop, fruit)
+
+Shot from `4368b3a`, seed `0x5eed1e`, `shots/round2/`. Gates: build green,
+det A/A bit-identical / A/B 63.78%, 5/5 PASS (89.5k–104.7k tris, 121–191
+draws).
+
+What landed: the post chain (linear HDR target, AgX + teal split-tone
+grade + vibrance, `?ablate=grade`), cool ambient path + rim light, contact
+blobs under every prop and the hero, baked crevice AO on crates, wumpa
+stem+leaves, backdrop hue spread, sea stacks in sight lines. Measured:
+sand cool shift −0.097 → **+0.258** (crate-cluster), +0.059 (title-hero).
+
+### Critic verdict (blind, fresh context — did not see round 1)
+
+**Biggest gap: "the image has no light in it"** — same verdict as round 1
+from an independent critic. Uniform milky ambient, no hot key, weak
+warm/cool split, desaturating haze; flat lighting erases the crates'
+modelled relief. Measured lit-vs-shadow sand value: 0.72 vs 0.61 — the
+fill (hemi + rim) plus AgX's native flatness plus the shadow-LIFTING
+grade compress key contrast to ~15%. The grade fixed shadow hue but paid
+for it in contrast.
+
+Ranked (condensed): 1 flat keyless light · 2 backdrop hills still
+featureless blobs (second round at #2 — mound hue spread did not read;
+they need silhouette events, i.e. trees) · 3 zero macro variation on
+large surfaces · 4 island sides still read slab-like · 5 cloned starburst
+grass (instance hue variation too subtle to read) · 6 water flow/foam too
+weak in a still · 7 fruit still read spherical, low glow · 8 palm fronds
+flat zigzag · 9 "nothing is grounded" (measurably overstated — contact
+blobs exist in the stills; too subtle) · 10 empty sky, no scripted mood.
+
+Self-score: character 1 · props 5 · dressing 4 · vegetation 3 · light 2 ·
+colour 3 · water 3 · backdrop 3 · motion 2 · composition 4.
+
+### Fixing this round (top three)
+
+#1 light punch (owner): cut fill, hotter key, contrast S-curve after AgX,
+real saturation boost — stop letting the grade lift shadows brighter.
+#2 backdrop: strong per-mound value contrast + low-poly tree silhouettes
+on the near flanks so "jungle" reads as trees, not pudding. #3 macro
+variation: stronger sand macro layer + wet rim band; grass gets loud
+per-instance hue/lean/scale spread + a second species.
+
+---
+
 ## Round 1 — 2026-08-27 (vertical slice: beats 1–3)
 
 Shot from `da827df`, seed `0x5eed1e`, 1280×800, 30 settle frames,

@@ -15,7 +15,8 @@ import {islandMass} from './masses.js';
 import {createWater} from './water.js';
 import {createBackdrop} from './backdrop.js';
 import {makeCrate,makeTNT} from './props.js';
-import {makePalm,makeFern,makeGrassField,makePebbles,makeShells,makeTwigs} from './flora.js';
+import {makePalm,makeFern,makeGrassField,makeBroadleafField,
+        makePebbles,makeShells,makeTwigs} from './flora.js';
 import {contactBlob} from './contact.js';
 
 /** Seeded scatter over an island top, thinning toward the corridor centre. */
@@ -105,6 +106,10 @@ export function buildBeach(scene){
   scene.add(grass.mesh);
   updates.push(grass.update);
 
+  scene.add(makeBroadleafField([
+    ...scatter(90,beach.solid,0.9,avoid),
+    ...scatter(45,yard.solid,0.9,avoid)]));
+
   const spots=(n)=>[
     ...scatter(Math.round(n*0.62),beach.solid,0.4),
     ...scatter(Math.round(n*0.07),gapA.solid,0.3),
@@ -119,7 +124,7 @@ export function buildBeach(scene){
   const fruitRow=(x,y,z0,z1,n)=>{
     for(let i=0;i<n;i++){
       const z=z0+(z1-z0)*i/(n-1);
-      fruitPos.push([x,y+0.55,z]);
+      fruitPos.push([x,y+0.62,z]);
       ground(x,z,0.24,y,0.5); // hovering fruit still throws a soft pool
     }
   };
@@ -149,7 +154,7 @@ export function buildBeach(scene){
   // Albedo deliberately below "orange you'd pick": AgX rolls hot values to
   // cream. Emissive is a glow hint, not the colour (old DELTA, pass 3).
   const fruitMesh=new THREE.InstancedMesh(fruitGeo,[
-    toonMat({color:0xd45a0e,emissive:0xff7a1a,emissiveIntensity:0.32}),
+    toonMat({color:0xd45a0e,emissive:0xff7a1a,emissiveIntensity:0.42}),
     toonMat({color:0x4e7d2a})],fruitPos.length);
   const _m=new THREE.Matrix4(),_e=new THREE.Euler(),_q=new THREE.Quaternion(),
         _v=new THREE.Vector3(),_s=new THREE.Vector3(1,1,1);

@@ -20,7 +20,7 @@ export const PALETTE={
   skyHorizon:0xbfe4ef,
   skyGlow:0xf6ead0,       // warm band right at the waterline
   fog:0xb9d9e4,
-  sunColor:0xffe2a4,      // hotter key
+  sunColor:0xffdd96,      // hotter key
   hemiSky:0x55a8d2,       // saturated teal — this is what shadow is made of
   hemiGround:0x7f9a84,    // cool moss bounce, not warm sand
   rim:0xcfeaff            // back light that pulls silhouettes off the ground
@@ -63,15 +63,19 @@ export function createPipeline(){
   sky.renderOrder=-100;
   scene.add(sky);
 
-  const hemi=new THREE.HemisphereLight(PALETTE.hemiSky,PALETTE.hemiGround,0.62);
+  // Round-3 rebalance (DELTA round 2): two critics called the frame
+  // keyless. Fill was eating the key — lit:shadow was ~7:1 in linear but
+  // AgX + a lifting grade compressed it to ~15% on screen. Cut fill, raise
+  // the key, and let the grade add contrast back instead of lifting.
+  const hemi=new THREE.HemisphereLight(PALETTE.hemiSky,PALETTE.hemiGround,0.48);
   scene.add(hemi);
 
   // Cool rim from behind-left, shadowless: separates every silhouette from
   // the ground the way the refs do. Tracks the focus with the sun.
-  const rim=new THREE.DirectionalLight(PALETTE.rim,0.5);
+  const rim=new THREE.DirectionalLight(PALETTE.rim,0.32);
   scene.add(rim,rim.target);
 
-  const sun=new THREE.DirectionalLight(PALETTE.sunColor,2.6);
+  const sun=new THREE.DirectionalLight(PALETTE.sunColor,3.3);
   sun.castShadow=!MINFX;
   sun.shadow.mapSize.set(2048,2048);
   const d=26;

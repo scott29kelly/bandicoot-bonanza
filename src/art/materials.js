@@ -87,9 +87,10 @@ function blotches(g,size,n,rMin,rMax,color,aMin,aMax){
 export function sandTexture(){
   return canvasTex(512,(g,s)=>{
     g.fillStyle='#dcc186';g.fillRect(0,0,s,s);
-    blotches(g,s,10,s*0.25,s*0.45,'176,142,88',0.10,0.20);   // ~12 m scale
-    blotches(g,s,26,s*0.06,s*0.14,'238,214,158',0.10,0.22);  // ~3 m scale
-    blotches(g,s,20,s*0.05,s*0.12,'168,128,84',0.06,0.14);
+    blotches(g,s,10,s*0.25,s*0.45,'170,132,78',0.18,0.32);   // ~12 m scale
+    blotches(g,s,26,s*0.06,s*0.14,'240,216,160',0.16,0.3);   // ~3 m scale
+    blotches(g,s,20,s*0.05,s*0.12,'160,120,76',0.10,0.2);
+    blotches(g,s,6,s*0.3,s*0.5,'132,150,120',0.05,0.1);      // faint cool drift
     // Wind-ripple bands, broken and jittered so they never read as stripes.
     g.strokeStyle='rgba(150,116,70,0.13)';g.lineWidth=3;
     for(let i=0;i<38;i++){
