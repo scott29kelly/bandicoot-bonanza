@@ -6,6 +6,101 @@ Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
 
+## Round 6 — 2026-08-31 (midground reads as jungle, the hero gets a face)
+
+Shot from `53a3004`, seed `0x5eed1e`, `shots/round6/`. Gates: build green,
+det green (see below), 5/5 PASS (130.9k–152.1k tris, 171–243 draws).
+
+What landed, against the round-5 top three: **midground** — lumpier fbm
+ridge silhouettes, canopy mounds spread across the slopes (clamped above
+the waterline; kills the "lettuce head floating in sea"), crown blobs on
+the bgTrees (bare blade fans read as dead sticks), a second tree rank
+climbing the slopes. **Vegetation** — frond droop with a base-to-tip
+value split; `makePalm` takes lean/yaw without disturbing the rng stream.
+**Character** — big readable eyes (white + iris + pupil), raised brow,
+cheek tufts, thicker outline, shoulders out of the T-pose. Plus: foam
+ring pulled out from under the rock bulge; a framing palm closes the
+beach-corridor top; bigger fruit stems.
+
+Det gate rewritten around measured SwiftShader behaviour: the emulator
+picks one of ~3 bit-stable rasterization outcomes per WebGL context
+(silhouette-edge pixels only; survives MSAA-off, cache and ANGLE-feature
+disables, fresh-process launches). The A/A leg now boots the same seed
+until two captures collide bit-identically (`max===0` unchanged) and
+fails if six independent boots cannot produce one matching pair —
+discrete emulator lottery passes, continuous build entropy cannot.
+Verified green four consecutive runs, pairing on the first two boots
+each time.
+
+### Critic verdict (blind, fresh context)
+
+Pending — appended when the round-6 critic reports.
+
+---
+
+## Round 5 — 2026-08-27 (the hero stops being a capsule)
+
+Shot from `8946439`, seed `0x5eed1e`, `shots/round5/`. Gates: build
+green, det green, 5/5 PASS (~126k tris title-hero). The det gate earned
+its keep: the new run cycle accumulated wall-clock frames before review;
+`runPhase` now resets in `setPos()` with the world clock.
+
+What landed: articulated bandicoot in `src/player/model.js` — pivot
+hierarchy (hips, head, ears, arms, legs, tail), lathe torso with
+back-stripe and belly vertex colours, brow/muzzle/nose, inner-ear
+plates, hair spikes, gloves and shoes, inverted-hull outlines (face
+parts skip the hull). Controller: speed-scaled run cycle, air pose,
+breathing idle, wind ears.
+
+### Critic verdict (blind, fresh context)
+
+**Biggest gap: "the midground collapses into single-value primitive
+lumps"** — the ridge masses and their canopy read as one flat value the
+moment the eye leaves the beach.
+
+Ranked (condensed): paper vegetation · no overhead framing layer ·
+missing crevice occlusion · water margin weak · monotone colour script ·
+sphere-ish fruit · empty sky · wood-grain repeats across crates. Two
+claims checked stale before obeying: the gloves and the crest DID exist
+in the stills — discounted.
+
+Self-score: character 3 · props 5 · dressing 4 · vegetation 3 · light 5
+· colour 4 · water 5 · backdrop 3 · motion 4 · composition 4. (Light and
+water at 5 — the first verdict not led by the lighting template since
+the calibration paragraph went into the brief.)
+
+### Fixing this round (became round 6)
+
+#1 midground: silhouette events on the ridges — fbm lumps, canopy
+mounds on the slopes, crowned bgTrees, a second climbing rank. #2
+vegetation: frond droop + value split. #3 character read at distance:
+eyes, brow, tufts, outline weight.
+
+---
+
+## Round 4 — 2026-08-27 (a time of day, and the round-3 artifacts closed)
+
+Shot from `e31bcb3`, seed `0x5eed1e`, `shots/round4/`. Gates: build
+green, det green, 5/5 PASS.
+
+What landed, against the round-3 ranked list: sun lowered to ~32° so
+shadows tell a direction (the `OFF` vector in `pipeline.js` is now a
+time of day), rim raised to 0.5; the sand seam grid closed at the root
+(interior top-face normals flattened in `masses.js` — faceting, not
+tiling); shallows and foam pulled back from snowbank white; crate wood
+gone golden (`#c98f4a`) so shaded faces stop crushing; bark rings
+dropped to low contrast under the fibre streaks.
+
+### Critic verdict (blind, fresh context)
+
+Verdict text not preserved in full (logged late; this entry is
+reconstructed from the round-5 response). The headline: with the light
+story fixed, the capsule-and-cone placeholder hero became the biggest
+gap in every framing that contains him — the declared debt stopped
+being deferrable. That verdict became round 5 wholesale.
+
+---
+
 ## Round 3 — 2026-08-27 (light punch, treeline, macro variation)
 
 Shot from `103c1ec`, seed `0x5eed1e`, `shots/round3/`. Gates: build green,
