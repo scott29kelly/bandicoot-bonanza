@@ -6,6 +6,46 @@ Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
 
+## Round 13 — 2026-08-31 (the hero gets his hands back)
+
+Shot from `cfd96fc`, seed `0x5eed1e`, `shots/round13/`. Gates: build
+green, det green, 5/5 PASS.
+
+What landed: arms lengthened 0.24→0.32 + near-vertical idle hang (the
+gloves finally silhouette beside the shorts — took three pose
+iterations), snug pant cuffs, de-insected treeline, title-hero panned
+off the hill edge.
+
+### Critic verdict (blind, fresh context, crop-verified) — measured
+
+First verdict in six rounds with NO hands complaint — the fix read.
+Biggest gap: organic surfaces still one value (hill membrane, flat
+frond planes, plastic hero skin) vs the refs' painted density; hero
+close range needs an open-mouth muzzle, fur-silhouette cards, joined
+limb geometry.
+
+Discounted against this build's own crops: "no contact shadow under
+the hero" (blob + cast shadow present), "no rim light in any framing"
+(fresnel at 1.1 visibly rims), "every tuft bolt upright" (breeze bias
+verified round 9), "no foam contact" (rings hug every bank). Critics
+consistently re-template these rows regardless of state; the loop's
+verified-claims discipline is what keeps the signal usable.
+
+Self-score: character 3 · props 5 · dressing 4 · vegetation 3 · light 4
+· colour 6 · water 4 · backdrop 3 · motion 2 · composition 4.
+
+### Standing top items for round 14
+
+1 hero sculpt at portrait range (mouth interior, fur cards, joined
+limbs). 2 painted density on organics (canopy texture on hill faces,
+frond midribs). 3 vegetation species + per-instance read. 4 motion
+legibility (the row has sat at 2 for five rounds; consider a
+mid-stride capture pose per framing). 5 stray artifacts: dark polygon
+spike on the title-hero hill face, thin line artifacts on water-gap
+banks.
+
+---
+
 ## Round 12 — 2026-08-31 (the hill was starving for vertices)
 
 Shot from `4a32c60`, seed `0x5eed1e`, `shots/round12/`. Gates: build
