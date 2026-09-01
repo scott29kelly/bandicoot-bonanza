@@ -33,8 +33,10 @@ function seaStack(x,z,h,r){
     if(t<0.2)return _c.setHSL(0.1,0.22,0.18);                     // wet base
     // Strata bands wobbled by noise — a smooth grey-to-tan gradient was
     // the round-8 "single flat value" call on every stack in water-gap.
-    const strata=Math.sin(wy*1.35+fbm3(wx*0.8,wy*0.8,5)*3.2)*0.055;
-    return _c.setHSL(0.09,0.26,0.26+fbm3(wx*0.5,wy*0.5,2)*0.13+strata);
+    // Doubled round 11: at ±0.055 the bands vanished at framing distance.
+    const strata=Math.sin(wy*1.8+fbm3(wx*0.8,wy*0.8,5)*3.2)*0.10;
+    return _c.setHSL(0.09+fbm3(wy*0.5,wx*0.5,8)*0.05,0.26,
+      0.26+fbm3(wx*0.5,wy*0.5,2)*0.13+strata);
   });
   return xform(g,{p:[x,h/2+WATER_Y-1.5,z]});
 }
@@ -85,6 +87,8 @@ function jungleRidge(x,z,len,w,h,dir){
     // h*cos(t*2.4) before noise, so centring below 0.62 of it can't float.
     // Spread across the slope, but never down to the waterline — a mound
     // dipped to y~0 reads as a lettuce head floating in the sea.
+    // ±0.6 is the measured limit: at ±0.75 the lateral offset walks mounds
+    // clear off the noise-shrunk ridge surface and they float (round 11).
     const zs=rand(-0.6,0.6);
     xform(mound,{p:[t*len,
       Math.max(3.2,h*Math.cos(t*2.4)*rand(0.38,0.62)*(1-Math.abs(zs)*0.8)),
@@ -162,11 +166,13 @@ function makeClouds(){
     const cy=rand(38,95),S=rand(9,20);
     const puffs=Math.floor(rand(3,6));
     for(let p=0;p<puffs;p++){
-      const puff=new THREE.SphereGeometry(S*rand(0.45,0.8),8,6);
+      const puff=new THREE.SphereGeometry(S*rand(0.45,0.8),10,8);
       puff.scale(rand(1.2,1.9),rand(0.35,0.5),1);
       const pp=puff.getAttribute('position');
       for(let j=0;j<pp.count;j++){
-        const k=0.85+hash3(pp.getX(j)*0.5+i,pp.getY(j)*0.5,pp.getZ(j)*0.5+p)*0.3;
+        // fbm, not hash: per-vertex hash at this amplitude crumpled every
+        // puff into faceted paper (round-10, crop-verified)
+        const k=0.9+fbm3(pp.getX(j)*0.12+i*9,pp.getY(j)*0.12,pp.getZ(j)*0.12+p*4)*0.2;
         pp.setXYZ(j,pp.getX(j)*k,Math.max(pp.getY(j)*k,-S*0.28),pp.getZ(j)*k);
       }
       puff.computeVertexNormals();

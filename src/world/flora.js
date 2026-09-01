@@ -98,16 +98,22 @@ export function makePalm(x,y,z,h,opts={}){
   trunkMesh.castShadow=true;
 
   // Crown: fronds merged into ONE geometry, swayed as a group by the wind.
+  // Yaw is drawn BEFORE the fronds so the crown can be built windswept in
+  // world space: downwind fronds run longer and droop harder ("perfectly
+  // symmetric star" — three motion verdicts running).
+  const yaw=(r=>opts.yaw??r)(rand(0,Math.PI*2));
   const crownParts=[];
   const N=randInt(8,10);
   const hue=rand(0.26,0.34),tipL=rand(0.5,0.62);
   for(let i=0;i<N;i++){
     // Heavier droop and stronger base-to-tip value split: flat bright
     // fronds read as paper shards (round-5 verdict).
-    const g=frondGeom(rand(2.4,3.3),rand(1.4,2.2));
+    const a=i/N*Math.PI*2+rand(-0.2,0.2);
+    const dw=Math.cos(a+yaw); // wind blows +x in world
+    const g=frondGeom(rand(2.4,3.3)*(1+dw*0.12),rand(1.4,2.2)+dw*0.45);
     const fh=hue+rand(-0.025,0.025);
     vcolor(g,(px)=>_c.setHSL(fh+fbm3(px,i,0)*0.02,0.62,0.15+px/3.3*tipL*0.6));
-    xform(g,{r:[0,i/N*Math.PI*2+rand(-0.2,0.2),0]});
+    xform(g,{r:[0,a,0]});
     xform(g,{r:[0,0,rand(-0.12,0.12)],p:[0,rand(-0.06,0.10),0]});
     crownParts.push(g);
   }
@@ -128,7 +134,7 @@ export function makePalm(x,y,z,h,opts={}){
   const group=new THREE.Group();
   group.add(trunkMesh,crownPivot);
   group.position.set(x,y-0.15,z);
-  group.rotation.y=(r=>opts.yaw??r)(rand(0,Math.PI*2));
+  group.rotation.y=yaw;
 
   const stiff=rand(0.8,1.2);
   function update(t){

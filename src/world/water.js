@@ -7,7 +7,7 @@
  * around them, so a moved island moves its own shallows.
  */
 import * as THREE from 'three';
-import {rand} from '../core/rng.js';
+import {rand,rnd} from '../core/rng.js';
 import {rippleTexture,foamTexture} from '../art/materials.js';
 import {WATER_Y} from './masses.js';
 
@@ -46,10 +46,24 @@ function depthCanvas(islands){
   // Halo held to 5 m and the inner band thinned hard: at 9 m the pale
   // shallows flooded half of every channel as a milky ice shelf and drowned
   // the foam ring in same-value white (water row scored 3 three rounds
-  // running — this was why).
+  // running — this was why). The outer edge is SCALLOPED with perimeter
+  // circles: the plain rounded rect printed a hard straight diagonal
+  // "shelf edge" across the water-gap channel (round-10, crop-verified).
+  const PPM=SZ/(X1-X0); // canvas px per metre (both axes span 600 m)
+  const scallop=(s,e,rMin,rMax)=>{
+    for(const [wx,wz] of perimeter(s,e,2.2))
+      if(rnd()<0.85){
+        g.beginPath();
+        g.arc(px(wx),pz(wz),rand(rMin,rMax)*PPM,0,7);
+        g.fill();
+      }
+  };
   const halo=(s)=>Math.min(5,Math.min(s.maxX-s.minX,s.maxZ-s.minZ)*0.5);
-  g.filter='blur(12px)';g.fillStyle='rgba(52,168,172,0.75)';
-  for(const s of islands)rect(s,halo(s));
+  g.filter='blur(10px)';g.fillStyle='rgba(52,168,172,0.75)';
+  for(const s of islands){
+    rect(s,halo(s)*0.45);
+    scallop(s,halo(s)*0.45,halo(s)*0.35,halo(s)*0.85);
+  }
   g.filter='blur(4px)';g.fillStyle='rgba(168,214,190,0.5)';
   for(const s of islands)rect(s,Math.min(1.8,halo(s)*0.35));
   g.filter='none';

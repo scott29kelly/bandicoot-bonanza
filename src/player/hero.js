@@ -122,19 +122,22 @@ export function createHero(scene,solids,spawn){
       hips.rotation.x=0.18-up*0.12;
       hips.position.y=0.42;
     }else{
-      // Grounded: run cycle scaled by speed, breathing at rest.
-      const swing=Math.sin(runPhase)*run;
+      // Grounded: run cycle scaled by speed, breathing at rest. The rest
+      // pose is ASYMMETRIC — head turned, arms unequal, one heel eased —
+      // an even A-pose read as "paused forever" in three verdicts.
+      const swing=Math.sin(runPhase)*run,idle=1-run;
       legs.L.rotation.x=swing*0.85;
-      legs.R.rotation.x=-swing*0.85;
-      arms.L.rotation.x=-swing*0.7;
-      arms.R.rotation.x=swing*0.7;
-      arms.L.rotation.z=0.55+run*0.15;
-      arms.R.rotation.z=-0.55-run*0.15;
+      legs.R.rotation.x=-swing*0.85+idle*0.09;
+      arms.L.rotation.x=-swing*0.7+idle*0.14;
+      arms.R.rotation.x=swing*0.7-idle*0.05;
+      arms.L.rotation.z=0.55+run*0.15+idle*0.05;
+      arms.R.rotation.z=-0.55-run*0.15+idle*0.08;
       hips.rotation.x=run*0.22;
       hips.position.y=0.42+Math.abs(Math.sin(runPhase))*0.05*run
-        +(1-run)*Math.sin(t*3.1)*0.008;
+        +idle*Math.sin(t*3.1)*0.008;
     }
     head.rotation.x=-hips.rotation.x*0.7; // eyes stay level while leaning
+    head.rotation.y=onGround?(1-run)*0.24:0; // idle: looking slightly aside
     ears.L.rotation.z=0.28+windAt(pos.x,pos.z,t)*0.08;
     ears.R.rotation.z=-0.28-windAt(pos.x,pos.z,t*1.05)*0.08;
     tailPivot.rotation.x=Math.sin(t*2.2+runPhase*0.5)*0.16;
@@ -155,7 +158,9 @@ export function createHero(scene,solids,spawn){
     pos.set(p[0],p[1],p[2]);
     const top=groundAt(pos.x,pos.z);
     if(top>-Infinity&&Math.abs(pos.y-top)<1.5)pos.y=top;
-    vel.set(0,0,0);onGround=true;facing=0;
+    // Optional 4th element: facing yaw, so a composed framing can aim the
+    // hero at its interest instead of always down +z.
+    vel.set(0,0,0);onGround=true;facing=p.length>3?p[3]:0;
     // The run cycle accumulates across however many PLAY frames elapsed
     // before review() — wall-clock-dependent, so it must reset with the
     // world clock or A/A captures differ by a limb pose (det gate caught it).

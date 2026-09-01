@@ -6,6 +6,49 @@ Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
 
+## Round 10 — 2026-08-31 (the channel becomes water)
+
+Shot from `1a49f58`, seed `0x5eed1e`, `shots/round10/`. Gates: build
+green, det green, 5/5 PASS.
+
+What landed: shallows halo 9→5 m + thinned inner band (the milky ice
+shelf), anisotropic ripple stretch, blue shorts band, spine fur fins,
+fruit row off the centreline, corridor camera off-axis.
+
+### Critic verdict (blind, fresh context, crop-verified) — measured
+
+First critic given crop tooling; most claims survived. **Biggest: flat
+surfaces + character fidelity (scored 2)** — crop-verified: no mouth
+at all, crest shards intersecting the brow, belly shading creases,
+rim compressed below legibility by the grade (0.32 was not enough
+through the S-curve), shorts reading as briefs. Water: a hard straight
+diagonal "shelf edge" where the shallows rounded-rect meets deep water
+— verified in the round-10 channel. Clouds crumpled into faceted paper
+(per-vertex hash noise). Stacks' round-9 strata too subtle to read.
+Discounted: "no rim anywhere" as absolute (it exists, under-strength),
+"outline width doesn't scale with distance" (inverted hull is
+world-space — it scales), "fruit is a smooth sphere" (lobes present at
+crop scale in most orientations).
+
+Self-score: character 2 · props 4 · dressing 4 · vegetation 3 · light 3
+· colour 5 · water 4 · backdrop 3 · motion 2 · composition 4.
+
+### Fixing this round (became round 11)
+
+Hero: mouth arc under the muzzle, crest tilted up the crown, rim
+0.32→0.5, torso lathe 30 segments, pant-leg cuffs (sized twice —
+first pass read as blue wellies), shorts to y<0.20, idle pose made
+asymmetric (turned head, unequal arms, eased heel). Water: shallows
+edge SCALLOPED with perimeter circles (kills the shelf-edge seam).
+Clouds: fbm displacement instead of per-vertex hash. Stacks: strata
+doubled + hue drift. Palms: crowns built windswept in world space
+(downwind fronds longer, heavier). Framings: player spec gains an
+optional 4th element (facing yaw); title-hero poses the hero 3/4-front
+into the frame. Mound spread ±0.75 tried and measured floating —
+held at ±0.6.
+
+---
+
 ## Round 9 — 2026-08-31 (the sun gets its shadows back)
 
 Shot from `6154d99`, seed `0x5eed1e`, `shots/round9/`. Gates: build
