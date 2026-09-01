@@ -54,7 +54,11 @@ function jungleRidge(x,z,len,w,h,dir){
   for(let i=0;i<rp.count;i++){
     // Deep lumps: the smooth ellipsoid was every critic's "gumdrop". Two
     // octaves, big amplitude, so the SILHOUETTE undulates, not just the paint.
-    const k=0.68+fbm3(rp.getX(i)*0.07+x,rp.getY(i)*0.13,rp.getZ(i)*0.07+z)*0.75;
+    // Third, canopy-scale octave (needs the 48×30 mesh): ~2 m lumps that
+    // give the SURFACE leafy relief, not just the paint — "smooth green
+    // membrane" survived six verdicts on paint alone.
+    const k=0.68+fbm3(rp.getX(i)*0.07+x,rp.getY(i)*0.13,rp.getZ(i)*0.07+z)*0.75
+             +(fbm3(rp.getX(i)*0.9+x*2,rp.getY(i)*1.1,rp.getZ(i)*0.9+z*2)-0.5)*0.09;
     rp.setXYZ(i,rp.getX(i)*k,rp.getY(i)*k,rp.getZ(i)*k);
   }
   ridge.computeVertexNormals();

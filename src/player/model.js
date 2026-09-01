@@ -20,7 +20,7 @@ const FUR=0xe0661e, FUR_DARK=0xa8440f, BELLY=0xf5d9a4, GLOVE=0xefe3c8,
       CUFF=0xb98a4e, SHOE=0xa03418, EAR_IN=0xe8a06a, NOSE=0x241812,
       MUZZLE=0xf0cf9a, SHORTS=0x2f5d8a;
 
-const _c=new THREE.Color();
+const _c=new THREE.Color(),_c2=new THREE.Color();
 let outlineMat=null;
 
 /** Inverted hull: same geometry, pushed out along normals, backfaces only. */
@@ -71,6 +71,9 @@ function torsoGeom(){
     if(y<0.20)return _c.set(SHORTS);
     // darker saturated stripe down the back (-z), cream toward the chest
     if(z<-0.12)return _c.set(FUR_DARK);
+    // dorsal-to-flank gradient under everything else: single-tone fur was
+    // the round-14 "blow-molded plastic" read — real fur darkens dorsally
+    const dorsal=THREE.MathUtils.clamp((0.06-z)/0.35,0,1);
     // Belly bib, cut by ANGLE off the chest centreline, not by depth: a
     // z-cut only reads dead-on, and every framing sees the hero in 3/4 —
     // the round-6 "egg torso" was an invisible belly plus its hard rim.
@@ -86,7 +89,7 @@ function torsoGeom(){
     // white and the fur painted here — cream × orange material rendered as
     // orange, which is why the round-5 belly and stripe never once read
     // (found by painting the belly magenta).
-    return _c.set(FUR);
+    return _c.set(FUR).lerp(_c2.set(FUR_DARK),dorsal*0.55);
   });
   return g;
 }

@@ -119,7 +119,10 @@ function foamRing(s,tex){
   const posArr=[],uvArr=[],idx=[];
   for(let i=0;i<pts.length;i++){
     const [x,z,nx,nz,l]=pts[i];
-    posArr.push(x,0,z, x+nx*W,0,z+nz*W);
+    // Scalloped outer edge: a constant-width band reads as an airbrushed
+    // ribbon, not surf (round-14 verdict — "no scallops, no edge break").
+    const w=W*(0.7+0.55*Math.abs(Math.sin(l*0.53+x*0.7+z*0.4)));
+    posArr.push(x,0,z, x+nx*w,0,z+nz*w);
     uvArr.push(l/3.2,0, l/3.2,1);
     if(i<pts.length-1){
       const a=i*2;

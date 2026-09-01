@@ -23,9 +23,33 @@ ground species in coral/cream/gold riding instanceColor; frond midribs
 darken the rib line so palms stop reading as flat planes. **Backdrop**
 — a third paint octave on the ridges, sampleable since the 48×30 mesh.
 
-### Critic verdict (blind, fresh context)
+### Critic verdict (blind, fresh context, crop-verified) — measured
 
-Pending — appended when the round-14 critic reports.
+The hardened calibration paragraph (crop before claiming absence)
+worked: this critic crop-CONFIRMED fruit lobes, glove fingers and the
+hero contact shadow instead of claiming them missing. Verdict: large
+single-value masses still dominate frame area (jungle hill, stacks);
+hero body reads single-tone "blow-molded plastic"; foam an airbrushed
+ribbon with no scallops; sand carries a woven repeat.
+
+Discounted against the pixels: "hero in a symmetric A-pose in all
+five shots" — title-hero is unmistakably mid-stride in the official
+still. "Fruit on a bare peg" traced to a beach blossom reading as a
+pin at distance (acceptable). "Crate shadow faces crush toward black"
+re-templated (measured mid-brown, round 9).
+
+Self-score: character 3 · props 5 · dressing 4 · vegetation 3 · light 3
+· colour 5 · water 3 · backdrop 3 · motion 2 · composition 4.
+
+### Fixing this round (became round 15)
+
+Ridge SURFACE gains canopy-scale displacement (~2 m lumps at ±0.35 m
+— six verdicts of "smooth green membrane" were fought with paint; the
+silhouette needed the relief). Hero torso gains a dorsal-to-flank fur
+gradient under the stripe/belly/shorts paint. Foam band width
+scalloped along the perimeter. Sand speckle: fewer, larger, fainter —
+the 2–3 px grains at 1700/tile were what the mip chain wove into the
+"halftone/mat" pattern three critics reported.
 
 ---
 

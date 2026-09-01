@@ -125,11 +125,13 @@ export function sandTexture(){
       const y=rand(0,s),ph=rand(0,7),len=rand(s*0.3,s*0.8),x0=rand(0,s);
       wavyLine(g,x0,y,len,ph,s,0.045,5);
     }
-    // Grain speckle — kept >=2px so it survives mip 0 without baking to noise.
-    for(let i=0;i<1700;i++){
+    // Grain speckle — fewer, LARGER, fainter: at 2–3 px and 1700 count the
+    // mip chain wove them into a repeating mat pattern readable across the
+    // crate yard (rounds 12–14, "halftone/weave" claims traced here).
+    for(let i=0;i<900;i++){
       const v=rand(0,1);
-      g.fillStyle=v>0.5?`rgba(246,226,178,${rand(0.15,0.38)})`:`rgba(140,104,66,${rand(0.12,0.3)})`;
-      g.fillRect(rand(0,s),rand(0,s),rand(2,3.4),rand(2,3.4));
+      g.fillStyle=v>0.5?`rgba(246,226,178,${rand(0.12,0.3)})`:`rgba(140,104,66,${rand(0.1,0.24)})`;
+      g.fillRect(rand(0,s),rand(0,s),rand(2.6,4.6),rand(2.6,4.6));
     }
   },{repeat:1});
 }
