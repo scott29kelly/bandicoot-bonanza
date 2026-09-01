@@ -203,7 +203,7 @@ export function buildBeach(scene){
   // by fruit. Now he owns the lower third and the corridor leads past him.
   addFraming(at=>({id:'title-hero',name:'Title hero',
     tests:'Pillar E — the first frame a player sees: the hero is the subject, palms frame it, three distance layers hold',
-    p:at('beach',-2.7,1.7,7.6),lookAt:at('beach',2.4,0.7,-5),fov:46,player:[0,0,-8,-0.5]}));
+    p:at('beach',-2.7,1.7,7.6),lookAt:at('beach',3.1,0.7,-5),fov:46,player:[0,0,-8,-0.5]}));
   // Nudged off the centreline: the dead-centre one-point shot was ranked
   // by two critics as symmetry for its own sake.
   addFraming(at=>({id:'beach-corridor',name:'Beach corridor',

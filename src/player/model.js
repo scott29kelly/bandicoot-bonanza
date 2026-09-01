@@ -203,8 +203,10 @@ export function createHeroModel(){
     // a fur ball at the pivot bridges torso and arm — without it the arm
     // floats beside the narrow chest (round-6 verdict: detached tubes)
     const ball=part(new THREE.SphereGeometry(0.08,9,8),FUR,{line:false});
-    const arm=part(new THREE.CapsuleGeometry(0.055,0.24,4,8),FUR);
-    arm.position.y=-0.14;
+    // Long enough that the hands clear the belly: at 0.24 the gloves hung
+    // exactly behind the torso's widest band and no pose could show them.
+    const arm=part(new THREE.CapsuleGeometry(0.055,0.32,4,8),FUR);
+    arm.position.y=-0.18;
     // cream glove: palm + three proud knuckles + a THUMB — "arms end in
     // smooth rounded stumps" survived two verdicts because the old bumps
     // hid inside the palm silhouette. The thumb breaks it.
@@ -221,9 +223,9 @@ export function createHeroModel(){
     thumb.translate(-s*0.085,-0.02,0.055);
     knuckles.push(thumb.toNonIndexed());
     const glove=part(mergeGeoms([handG.toNonIndexed(),...knuckles]),GLOVE);
-    glove.position.y=-0.31;
+    glove.position.y=-0.39;
     const cuff=part(new THREE.CylinderGeometry(0.072,0.082,0.06,9),CUFF,{line:false});
-    cuff.position.y=-0.232;
+    cuff.position.y=-0.312;
     shoulder.add(ball,arm,glove,cuff);
     shoulder.rotation.z=s*0.55; // clear of the torso silhouette
     hips.add(shoulder);
@@ -260,7 +262,9 @@ export function createHeroModel(){
     const leg=part(new THREE.CapsuleGeometry(0.06,0.2,4,8),FUR_DARK);
     leg.position.y=-0.16;
     // pant leg over the thigh — the bare torso band alone read as briefs
-    const pant=part(new THREE.CylinderGeometry(0.075,0.07,0.09,9),SHORTS,{line:false});
+    // Top snug on the leg: a loose ring read as looking down INTO an open
+    // boot at the orange leg (round-12, crop-verified).
+    const pant=part(new THREE.CylinderGeometry(0.063,0.072,0.09,9),SHORTS,{line:false});
     pant.position.y=-0.055; // hugs the thigh — longer read as blue wellies
     const shoe=part(new THREE.SphereGeometry(0.1,10,8),SHOE);
     shoe.position.set(0,-0.32,0.05);

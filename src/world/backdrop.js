@@ -116,7 +116,7 @@ function bgTree(x,z,h){
   const SEG=4;
   for(let s=0;s<SEG;s++){
     const t0=s/SEG,t1=(s+1)/SEG;
-    const seg=new THREE.CylinderGeometry(0.16*(1-t1*0.5)*h/6,0.16*(1-t0*0.5)*h/6,h/SEG,5);
+    const seg=new THREE.CylinderGeometry(0.21*(1-t1*0.5)*h/6,0.21*(1-t0*0.5)*h/6,h/SEG,5);
     xform(seg,{p:[Math.cos(leanD)*lean*((t0+t1)/2)**1.6,(t0+0.5/SEG)*h,
                   Math.sin(leanD)*lean*((t0+t1)/2)**1.6]});
     vcolor(seg,()=>_c.setHSL(0.08,0.3,rand(0.16,0.24)));
@@ -135,10 +135,12 @@ function bgTree(x,z,h){
   vcolor(crown,(px,py)=>_c.setHSL(rand(0.26,0.34),0.55,0.15+Math.max(0,py)*0.12));
   xform(crown,{p:[tipX,h*0.98,tipZ]});
   parts.push(crown);
-  const N=randInt2(5,7);
+  // Blades short and few: long splayed fans on a thin leaning trunk read
+  // as INSECT LEGS at treeline distance (round-12, crop-verified).
+  const N=randInt2(4,6);
   for(let i=0;i<N;i++){
     const a=i/N*Math.PI*2+rand(-0.3,0.3);
-    const L=h*rand(0.32,0.45);
+    const L=h*rand(0.24,0.34);
     const blade=new THREE.BufferGeometry();
     const w=L*0.16,droop=L*rand(0.25,0.5);
     blade.setAttribute('position',new THREE.Float32BufferAttribute([

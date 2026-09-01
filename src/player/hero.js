@@ -128,10 +128,16 @@ export function createHero(scene,solids,spawn){
       const swing=Math.sin(runPhase)*run,idle=1-run;
       legs.L.rotation.x=swing*0.85;
       legs.R.rotation.x=-swing*0.85+idle*0.09;
-      arms.L.rotation.x=-swing*0.7+idle*0.14;
-      arms.R.rotation.x=swing*0.7-idle*0.05;
-      arms.L.rotation.z=0.55+run*0.15+idle*0.05;
-      arms.R.rotation.z=-0.55-run*0.15+idle*0.08;
+      // Idle arms hang WIDE at the sides so the gloves silhouette clear of
+      // the belly: tipped back they hid behind it (shoulder balls read as
+      // stub hands); tipped forward they met at the crotch as a fig leaf.
+      // Idle: arms nearly vertical, so the long gloves hang beside the blue
+      // shorts where cream contrasts, instead of crossing to the centreline
+      // (the run-pose ±0.55 tips them inward, which short arms hid).
+      arms.L.rotation.x=-swing*0.7-idle*0.05;
+      arms.R.rotation.x=swing*0.7-idle*0.08;
+      arms.L.rotation.z=0.55+run*0.15-idle*0.42;
+      arms.R.rotation.z=-0.55-run*0.15+idle*0.44;
       hips.rotation.x=run*0.22;
       hips.position.y=0.42+Math.abs(Math.sin(runPhase))*0.05*run
         +idle*Math.sin(t*3.1)*0.008;

@@ -6,6 +6,45 @@ Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
 
+## Round 12 — 2026-08-31 (the hill was starving for vertices)
+
+Shot from `4a32c60`, seed `0x5eed1e`, `shots/round12/`. Gates: build
+green, det green, 5/5 PASS.
+
+What landed: ridge mesh 48×30 (the five-round "flat hill" verdict was
+a vertex-sampling failure — the octaves finally read), fresnel rim
+reshaped (exponent 4.5, strength 1.1, proven live by a strength-5
+flood test), mound noise eased, per-crate hue drift.
+
+### Critic verdict (blind, fresh context, crop-verified) — measured
+
+Mixed quality. STALE/contradicted: "hands are bare orange spheres, no
+gloves" (gloves+thumb exist since round 9 — but see below), "TNT has
+no fuse" (it does), "fruit are smooth spheres" (lobes verified at crop
+in earlier rounds). But three NEW claims verified TRUE in my own
+crops, all one root cause: in the idle pose the arms tipped back, so
+the cream gloves hid exactly behind the torso's widest band — the
+shoulder balls READ as stub orange hands from the front, and the real
+gloves peeked out between the legs as "an unexplained cluster of cream
+blobs". Also true: the pant cuffs' loose top ring read as looking down
+into an open boot; treeline bgTrees read as INSECTS (long splayed
+blade fans on thin leaning trunks).
+
+Self-score: character 3 · props 5 · dressing 4 · vegetation 4 · light 5
+· colour 6 · water 5 · backdrop 4 · motion 2 · composition 4.
+(Colour at 6 — first row past 5 in the loop.)
+
+### Fixing this round (became round 13)
+
+Arms LENGTHENED (0.24→0.32 capsule — at the old length no pose could
+clear the belly) and the idle hang brought near vertical, so the
+gloves finally silhouette beside the blue shorts; took three pose
+iterations (behind-the-belly → fig leaf → wide → vertical). Pant top
+snug on the leg. bgTree blades short and few, trunks thicker.
+Title-hero panned right so the hero clears the hill edge.
+
+---
+
 ## Round 11 — 2026-08-31 (a mouth, a breeze, and an organic shoreline)
 
 Shot from `1aa741e`, seed `0x5eed1e`, `shots/round11/`. Gates: build
