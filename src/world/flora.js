@@ -192,7 +192,7 @@ export function makeGrassField(spots){
         vec4 bbWp=instanceMatrix*vec4(transformed,1.0);
         float bbW=sin(uTime*1.6+bbWp.x*0.13+bbWp.z*0.09)*0.6
                  +sin(uTime*0.7+bbWp.x*0.045-bbWp.z*0.06+1.7)*0.3;
-        transformed.x+=bbW*0.22*smoothstep(0.0,0.9,transformed.y);`);
+        transformed.x+=(bbW*0.22+0.12)*smoothstep(0.0,0.9,transformed.y);`);
   };
   const mesh=new THREE.InstancedMesh(geo,mat,spots.length);
   const m=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler();

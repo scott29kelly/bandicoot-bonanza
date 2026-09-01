@@ -50,13 +50,15 @@ function part(geo,color,{shadow=true,line=true}={}){
 /** Pear-shaped torso via lathe, back stripe painted in vertex colors. */
 function torsoGeom(){
   const pts=[];
-  for(let i=0;i<=10;i++){
-    const t=i/10;
+  for(let i=0;i<=14;i++){
+    const t=i/14;
     // radius profile: narrow shoulders, full hips
     const r=0.30*Math.sin(t*Math.PI)*(0.72+t*0.42);
     pts.push(new THREE.Vector2(Math.max(0.001,r),t*0.62));
   }
-  const g=new THREE.LatheGeometry(pts,14);
+  // 24 segments: at 14 the belly showed polygonal shading facets at
+  // portrait range, and the fresnel rim amplifies every facet edge.
+  const g=new THREE.LatheGeometry(pts,24);
   vcolor(g,(x,y,z)=>{
     // darker saturated stripe down the back (-z), cream toward the chest
     if(z<-0.12)return _c.set(FUR_DARK);
@@ -183,19 +185,25 @@ export function createHeroModel(){
     const ball=part(new THREE.SphereGeometry(0.08,9,8),FUR,{line:false});
     const arm=part(new THREE.CapsuleGeometry(0.055,0.24,4,8),FUR);
     arm.position.y=-0.14;
-    // cream glove with knuckle bumps + a leather cuff — reads as a GLOVE
-    const handG=new THREE.SphereGeometry(0.085,10,8);
-    handG.scale(1,0.85,1.15);
+    // cream glove: palm + three proud knuckles + a THUMB — "arms end in
+    // smooth rounded stumps" survived two verdicts because the old bumps
+    // hid inside the palm silhouette. The thumb breaks it.
+    const handG=new THREE.SphereGeometry(0.09,10,8);
+    handG.scale(1.05,0.85,1.2);
     const knuckles=[];
     for(let k=-1;k<=1;k++){
-      const b=new THREE.SphereGeometry(0.032,7,6);
-      b.translate(k*0.045,-0.055,0.075);
+      const b=new THREE.SphereGeometry(0.04,7,6);
+      b.translate(k*0.05,-0.065,0.095);
       knuckles.push(b.toNonIndexed());
     }
+    const thumb=new THREE.SphereGeometry(0.038,7,6);
+    thumb.scale(1,0.9,1.4);
+    thumb.translate(-s*0.085,-0.02,0.055);
+    knuckles.push(thumb.toNonIndexed());
     const glove=part(mergeGeoms([handG.toNonIndexed(),...knuckles]),GLOVE);
     glove.position.y=-0.31;
-    const cuff=part(new THREE.CylinderGeometry(0.065,0.072,0.055,9),CUFF,{line:false});
-    cuff.position.y=-0.235;
+    const cuff=part(new THREE.CylinderGeometry(0.072,0.082,0.06,9),CUFF,{line:false});
+    cuff.position.y=-0.232;
     shoulder.add(ball,arm,glove,cuff);
     shoulder.rotation.z=s*0.55; // clear of the torso silhouette
     hips.add(shoulder);

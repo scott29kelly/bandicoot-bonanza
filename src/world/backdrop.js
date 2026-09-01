@@ -31,7 +31,10 @@ function seaStack(x,z,h,r){
     const t=(wy+h/2)/h;
     if(t>0.72)return _c.setHSL(0.30,0.5,0.17+fbm3(wx,wy,1)*0.09); // green cap
     if(t<0.2)return _c.setHSL(0.1,0.22,0.18);                     // wet base
-    return _c.setHSL(0.09,0.26,0.26+fbm3(wx*0.5,wy*0.5,2)*0.09);
+    // Strata bands wobbled by noise — a smooth grey-to-tan gradient was
+    // the round-8 "single flat value" call on every stack in water-gap.
+    const strata=Math.sin(wy*1.35+fbm3(wx*0.8,wy*0.8,5)*3.2)*0.055;
+    return _c.setHSL(0.09,0.26,0.26+fbm3(wx*0.5,wy*0.5,2)*0.13+strata);
   });
   return xform(g,{p:[x,h/2+WATER_Y-1.5,z]});
 }
@@ -63,7 +66,7 @@ function jungleRidge(x,z,len,w,h,dir){
   parts.push(ridge);
   // Canopy mounds over crest AND slopes — clustered on the crest alone they
   // hide inside the ridge and the visible inner wall stays bare.
-  const N=Math.round(len*0.7);
+  const N=Math.round(len*0.85);
   for(let i=0;i<N;i++){
     const t=i/N-0.5;
     const mound=new THREE.SphereGeometry(rand(2.2,4.6),8,6);
@@ -82,7 +85,7 @@ function jungleRidge(x,z,len,w,h,dir){
     // h*cos(t*2.4) before noise, so centring below 0.62 of it can't float.
     // Spread across the slope, but never down to the waterline — a mound
     // dipped to y~0 reads as a lettuce head floating in the sea.
-    const zs=rand(-0.4,0.4);
+    const zs=rand(-0.6,0.6);
     xform(mound,{p:[t*len,
       Math.max(3.2,h*Math.cos(t*2.4)*rand(0.38,0.62)*(1-Math.abs(zs)*0.8)),
       w/2*zs]});

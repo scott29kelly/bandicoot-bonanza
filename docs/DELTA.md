@@ -6,6 +6,53 @@ Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
 
+## Round 8 — 2026-08-31 (surfaces get their paint)
+
+Shot from `08c6d99`, seed `0x5eed1e`, `shots/round8/`. Gates: build
+green, det green (pair in 2 boots), 5/5 PASS.
+
+What landed: second value octave on ridges and mounds; two world-space
+vcolor octaves on beach tops; sand tile quieted (grid gone); baked
+fresnel rim on the hero (toonMat opts.rim); fruit emissive 0.42→0.16;
+horizon stacks pulled closer + fog far 215.
+
+### Critic verdict (blind, fresh context) — and what measurement said
+
+**Biggest gap: still the far field** — water-gap's left hill and sea
+stacks one flat value; the split "at about ten metres". Partially
+verified: the corridor flanks DID gain mottle, but the ridge END CAPS
+(what water-gap faces) and the stack bodies stayed smooth.
+
+The big find: **"cast-shadow coverage is sparse — four corridor palms
+put no shadow on the sand, nothing in water-gap casts at all, the
+sun's direction is unreadable."** Measured against round 6: REAL, and
+a regression this loop introduced. VSM (adopted round 7 for penumbra)
+erases every THIN caster — fronds, grass and hero limbs are
+double-sided sheets whose two faces land in one shadow texel, so their
+variance wipes their own shadows. Reverted to PCFSoft; crisp edges
+cost less than no shadows. Logged in pipeline.js: do not retry VSM or
+PCF+radius.
+
+Also ranked: hero has no hands (gloves exist, knuckles hid inside the
+palm silhouette — thumb needed) · belly shading facets (14-segment
+lathe + fresnel rim amplifying edges) · no aerial perspective · flat
+foam sheet · sphere-ish fruit (lobes at 0.055 vanish under the
+two-step toon ramp) · cloned upright grass · bare island sides ·
+title-hero still a found frame (third verdict running).
+
+Self-score: character 3 · props 5 · dressing 5 · vegetation 4 · light 3
+· colour 5 · water 3 · backdrop 3 · motion 3 · composition 4.
+
+### Fixing this round (became round 9)
+
+Shadows back (PCFSoft revert). Thumb + proud knuckles + bigger cuff.
+Torso lathe 14→24 segments. Fruit lobes 0.055→0.09. Sea-stack strata
+banding; mounds spread wider down the slopes. Grass gains a constant
++0.12 breeze lean under its wobble. Title-hero recomposed: camera in
+and low, hero owns the lower third.
+
+---
+
 ## Round 7 — 2026-08-31 (the hero was never wearing his colors)
 
 Shot from `4d49165`, seed `0x5eed1e`, `shots/round7/`. Gates: build

@@ -31,10 +31,14 @@ export function createPipeline(){
   renderer.setPixelRatio(MINFX?1:Math.min(window.devicePixelRatio||1,2));
   renderer.setSize(window.innerWidth,window.innerHeight);
   renderer.shadowMap.enabled=!MINFX;
-  // VSM over PCFSoft: PCFSoft ignores shadow.radius and left every cast
-  // edge a hard polygon line (round-6 verdict — the one lighting claim that
-  // survived the pixel probe). PCF+radius dithers; VSM blurs the map itself.
-  renderer.shadowMap.type=THREE.VSMShadowMap;
+  // PCFSoft, tried and returned to. The round-6 penumbra claim sent this
+  // through PCF+radius (dither stipple on every receiver) and then VSM
+  // (round 7-8): VSM's blurred variance erases every THIN caster's shadow —
+  // fronds, grass, hero limbs are double-sided sheets, and their two faces
+  // land in one texel, so the palms stopped shadowing the corridor and the
+  // sun's direction became unreadable (round-8 verdict, measured against
+  // round 6). Crisp edges cost less than no shadows. Do not retry either.
+  renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   // AgX, once, at the end. Light intensities below are authored AGAINST this
   // tonemapper — change one and you re-author the other (pipeline law).
   // With the post chain on, the scene renders LINEAR into the float target
@@ -88,10 +92,8 @@ export function createPipeline(){
   sun.shadow.camera.left=-d;sun.shadow.camera.right=d;
   sun.shadow.camera.top=d;sun.shadow.camera.bottom=-d;
   sun.shadow.camera.near=4;sun.shadow.camera.far=90;
-  sun.shadow.bias=-0.0001;
-  sun.shadow.normalBias=0.02;
-  sun.shadow.radius=4;      // penumbra: VSM blur radius (PCFSoft ignored it)
-  sun.shadow.blurSamples=12;
+  sun.shadow.bias=-0.0004;
+  sun.shadow.normalBias=0.03;
   // Changing the ortho bounds does nothing until the projection is rebuilt —
   // without this the cascade silently stays the 10 m default box.
   sun.shadow.camera.updateProjectionMatrix();

@@ -146,7 +146,9 @@ export function buildBeach(scene){
     for(let i=0;i<bp.count;i++){
       const x=bp.getX(i),y=bp.getY(i),z=bp.getZ(i);
       const rxz=Math.hypot(x,z);
-      const lobe=1+0.055*Math.cos(Math.atan2(z,x)*5)*(rxz/0.27);
+      // 0.09: at 0.055 the lobes vanished under the toon ramp's two-step
+      // shading and the fruit still read as spheres (round-8 verdict).
+      const lobe=1+0.09*Math.cos(Math.atan2(z,x)*5)*(rxz/0.27);
       let ny=y*1.1;
       if(y>0)ny-=Math.exp(-Math.pow(rxz/0.09,2))*0.09; // dimple seats the stem
       bp.setXYZ(i,x*lobe,ny,z*lobe);
@@ -194,9 +196,12 @@ export function buildBeach(scene){
   updates.push(fruitUpdate);
 
   /* ---------- framings — one per clause this slice can be judged on ----- */
+  // Camera pulled in and dropped: three critics running called the old
+  // frame "found, not composed" — hero small, right of centre, outweighed
+  // by fruit. Now he owns the lower third and the corridor leads past him.
   addFraming(at=>({id:'title-hero',name:'Title hero',
-    tests:'Pillar E — the first frame a player sees: palms frame it, the corridor leads away, three distance layers hold',
-    p:at('beach',-4.6,2.8,11.5),lookAt:at('beach',2,1.2,-11.5),fov:48,player:[0,0,-8]}));
+    tests:'Pillar E — the first frame a player sees: the hero is the subject, palms frame it, three distance layers hold',
+    p:at('beach',-2.7,1.7,7.6),lookAt:at('beach',2.4,0.7,-5),fov:46,player:[0,0,-8]}));
   addFraming(at=>({id:'beach-corridor',name:'Beach corridor',
     tests:'Pillars D/E — the opening holds depth; no bare slab, no empty frame',
     p:at('beach',0,3.4,17.5),lookAt:at('crateYard',0,0.5,20),fov:52,player:[0,0,-7]}));
