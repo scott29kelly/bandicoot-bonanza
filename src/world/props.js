@@ -45,12 +45,14 @@ export function makeCrate(x,y,z){
   // Baked crevice AO: everything darkens toward the crate's base, so a
   // stack shades itself instead of floating (Pillar B: grounded).
   const ao=(y)=>0.8+0.2*THREE.MathUtils.clamp(y/S+0.5,0,1);
+  // Per-crate hue drift — a stack of one identical wood reads machine-made
+  const hueJ=rand(-0.012,0.016);
   // Plank core, inset behind the frame so the faces read as panels.
   const core=new THREE.BoxGeometry(S-beam*0.9,S-beam*0.9,S-beam*0.9);
-  vcolor(core,(px,py)=>_c.setHSL(0.08,0.55,rand(0.55,0.66)*ao(py)));
+  vcolor(core,(px,py)=>_c.setHSL(0.08+hueJ,0.55,rand(0.55,0.66)*ao(py)));
   parts.push(core);
   for(const g of frameGeoms(S,beam))
-    parts.push(vcolor(g,(px,py)=>_c.setHSL(0.07,0.5,0.4*ao(py))));
+    parts.push(vcolor(g,(px,py)=>_c.setHSL(0.07+hueJ,0.5,0.4*ao(py))));
   const geo=mergeGeoms(parts.map(g=>g.toNonIndexed()));
   const mesh=new THREE.Mesh(geo,crateMat);
   mesh.position.set(x,y+S/2-0.02,z);

@@ -56,7 +56,7 @@ void main() {`)
 {
   vec3 rimN=normalize(normal);
   vec3 rimV=normalize(vViewPosition);
-  float rimF=pow(1.0-clamp(dot(rimN,rimV),0.0,1.0),3.0);
+  float rimF=pow(1.0-clamp(dot(rimN,rimV),0.0,1.0),4.5);
   totalEmissiveRadiance+=uRimColor*rimF*uRimK;
 }`);
     };

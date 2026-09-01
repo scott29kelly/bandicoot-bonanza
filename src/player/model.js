@@ -39,9 +39,11 @@ function outline(mesh,px=0.011){
 // Every body part carries a warm fresnel rim: the rig's directional rim
 // light never separated the hero (round-6 AND round-7 verdicts) because it
 // only fires when the camera opposes it; a fresnel rims every framing.
-// 0.5: at 0.32 the grade's contrast S-curve compressed the rim below
-// legibility — two more critics called the hero rimless (crop-verified).
-const RIM={color:0xffe4b8,strength:0.5};
+// Tuned by aliveness test (strength 5 floods the whole body, so the
+// injection works): exponent 4.5 narrows the band to the silhouette edge
+// and 1.1 survives AgX + the grade's S-curve, which ate 0.32 and 0.5 —
+// three critics running called the hero rimless before this.
+const RIM={color:0xffe4b8,strength:1.1};
 
 function part(geo,color,{shadow=true,line=true}={}){
   const m=new THREE.Mesh(geo,toonMat({color,rim:RIM}));

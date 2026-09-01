@@ -6,6 +6,44 @@ Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
 
+## Round 11 — 2026-08-31 (a mouth, a breeze, and an organic shoreline)
+
+Shot from `1aa741e`, seed `0x5eed1e`, `shots/round11/`. Gates: build
+green, det green, 5/5 PASS.
+
+What landed: mouth arc, crest up the crown, rim 0.5, 30-segment torso,
+pant cuffs, asymmetric idle, scalloped shallows, fbm clouds, doubled
+stack strata, windswept palm crowns, framing facing yaw (title-hero
+poses 3/4-front).
+
+### Critic verdict (blind, fresh context, crop-verified) — measured
+
+Same #1 for the fifth round: the NEAR hill one gradient. This time the
+root cause fell out of measurement: the ridge sphere was 22×14
+segments scaled to ~36 m — vertices 2–3 m apart — so both vcolor
+octaves interpolated away across giant triangles. A sampling failure,
+not a painting one; every earlier "paint it louder" fix was fighting
+mesh resolution.
+
+Also measured: "no rim light" (third verdict running) — aliveness test
+at strength 5 FLOODED the hero, so the injection works; 0.32 and 0.5
+simply died under AgX + the grade. Fixed by shape, not just gain:
+exponent 3→4.5 narrows the band to the silhouette, strength 1.1.
+Stale/discounted: "TNT has no fuse" (it does — occluded), "grass
+perfectly vertical" (breeze lean landed round 9), "nose is a blurry
+decal" (it is a mesh).
+
+Self-score: character 3 · props 5 · dressing 4 · vegetation 3 · light 4
+· colour 5 · water 4 · backdrop 4 · motion 2 · composition 5.
+
+### Fixing this round (became round 12)
+
+Ridge mesh 48×30 (the octaves finally sample), fresnel rim reshaped,
+mound noise eased (rim slivers read as floating leaf shards), per-crate
+hue drift.
+
+---
+
 ## Round 10 — 2026-08-31 (the channel becomes water)
 
 Shot from `1a49f58`, seed `0x5eed1e`, `shots/round10/`. Gates: build

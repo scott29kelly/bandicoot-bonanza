@@ -44,7 +44,11 @@ function seaStack(x,z,h,r){
 /** A jungle flank: a ridge mass buried under overlapping canopy mounds. */
 function jungleRidge(x,z,len,w,h,dir){
   const parts=[];
-  const ridge=new THREE.SphereGeometry(1,22,14);
+  // 48×30, not 22×14: scaled to a ~36 m ridge, the coarse mesh spaced
+  // vertices 2–3 m apart and the vcolor octaves interpolated away across
+  // giant triangles — four rounds of "the near hill is one flat value"
+  // were a sampling failure, not a painting one.
+  const ridge=new THREE.SphereGeometry(1,48,30);
   xform(ridge,{s:[len/2,h,w/2]});
   const rp=ridge.getAttribute('position');
   for(let i=0;i<rp.count;i++){
@@ -74,7 +78,9 @@ function jungleRidge(x,z,len,w,h,dir){
     const mound=new THREE.SphereGeometry(rand(2.2,4.6),8,6);
     const mp=mound.getAttribute('position');
     for(let j=0;j<mp.count;j++){
-      const k=0.75+hash3(mp.getX(j)*3+i,mp.getY(j)*3,mp.getZ(j)*3)*0.5;
+      // amplitude eased: at ±0.25 the noise tore thin slivers off the
+      // mound rims that read as detached leaf shards over the crest
+      const k=0.8+hash3(mp.getX(j)*3+i,mp.getY(j)*3,mp.getZ(j)*3)*0.4;
       mp.setXYZ(j,mp.getX(j)*k,mp.getY(j)*k*0.75,mp.getZ(j)*k);
     }
     mound.computeVertexNormals();
