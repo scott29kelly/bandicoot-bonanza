@@ -16,7 +16,7 @@ import {createWater} from './water.js';
 import {createBackdrop} from './backdrop.js';
 import {makeCrate,makeTNT} from './props.js';
 import {makePalm,makeFern,makeGrassField,makeBroadleafField,
-        makePebbles,makeShells,makeTwigs} from './flora.js';
+        makeFlowerField,makePebbles,makeShells,makeTwigs} from './flora.js';
 import {contactBlob} from './contact.js';
 
 /** Seeded scatter over an island top, thinning toward the corridor centre. */
@@ -116,6 +116,10 @@ export function buildBeach(scene){
     ...scatter(90,beach.solid,0.9,avoid),
     ...scatter(45,yard.solid,0.9,avoid)]));
 
+  scene.add(makeFlowerField([
+    ...scatter(110,beach.solid,0.7,avoid),
+    ...scatter(50,yard.solid,0.7,avoid)]));
+
   const spots=(n)=>[
     ...scatter(Math.round(n*0.62),beach.solid,0.4),
     ...scatter(Math.round(n*0.07),gapA.solid,0.3),
@@ -203,7 +207,7 @@ export function buildBeach(scene){
   // by fruit. Now he owns the lower third and the corridor leads past him.
   addFraming(at=>({id:'title-hero',name:'Title hero',
     tests:'Pillar E — the first frame a player sees: the hero is the subject, palms frame it, three distance layers hold',
-    p:at('beach',-2.7,1.7,7.6),lookAt:at('beach',3.1,0.7,-5),fov:46,player:[0,0,-8,-0.5]}));
+    p:at('beach',-2.7,1.7,7.6),lookAt:at('beach',3.1,0.7,-5),fov:46,player:[0,0,-8,-0.5,0.85]}));
   // Nudged off the centreline: the dead-centre one-point shot was ranked
   // by two critics as symmetry for its own sake.
   addFraming(at=>({id:'beach-corridor',name:'Beach corridor',

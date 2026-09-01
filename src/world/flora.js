@@ -112,7 +112,10 @@ export function makePalm(x,y,z,h,opts={}){
     const dw=Math.cos(a+yaw); // wind blows +x in world
     const g=frondGeom(rand(2.4,3.3)*(1+dw*0.12),rand(1.4,2.2)+dw*0.45);
     const fh=hue+rand(-0.025,0.025);
-    vcolor(g,(px)=>_c.setHSL(fh+fbm3(px,i,0)*0.02,0.62,0.15+px/3.3*tipL*0.6));
+    // |z|<0.035 is the rib line — darkened, it reads as a midrib and the
+    // frond stops being "a flat green plane" (three verdicts running).
+    vcolor(g,(px,py,pz)=>_c.setHSL(fh+fbm3(px,i,0)*0.02,0.62,
+      (0.15+px/3.3*tipL*0.6)*(Math.abs(pz)<0.035?0.55:1)));
     xform(g,{r:[0,a,0]});
     xform(g,{r:[0,0,rand(-0.12,0.12)],p:[0,rand(-0.06,0.10),0]});
     crownParts.push(g);
@@ -217,6 +220,41 @@ export function makeGrassField(spots){
     if(mat.userData.shader)mat.userData.shader.uniforms.uTime.value=t;
   }
   return {mesh,update};
+}
+
+/**
+ * Third ground species: beach blossoms — coral/cream sphere clusters on a
+ * leaf base. Warm accents against sand and green ("monotone colour script",
+ * "two species readable in-frame" — both recurring verdicts).
+ */
+export function makeFlowerField(spots){
+  const parts=[];
+  for(let i=0;i<3;i++){
+    const b=new THREE.SphereGeometry(0.035,6,5);
+    b.translate(Math.cos(i*2.1)*0.035,0.14+(i%2)*0.02,Math.sin(i*2.1)*0.035);
+    parts.push(b.toNonIndexed());
+  }
+  const stem=new THREE.CylinderGeometry(0.008,0.012,0.14,5);
+  stem.translate(0,0.07,0);
+  parts.push(stem.toNonIndexed());
+  const geo=mergeGeoms(parts);
+  const uv=new Float32Array(geo.getAttribute('position').count*2);
+  geo.setAttribute('uv',new THREE.BufferAttribute(uv,2));
+  vcolor(geo,(px,py)=>py>0.12?_c.set(0xffffff):_c.setHSL(0.30,0.5,0.22));
+  const mat=toonMat({vertexColors:true});
+  const mesh=new THREE.InstancedMesh(geo,mat,spots.length);
+  const m=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler();
+  for(let i=0;i<spots.length;i++){
+    const [x,y,z]=spots[i];
+    e.set(rand(-0.2,0.2),rand(0,Math.PI*2),rand(-0.2,0.2));
+    m.compose(new THREE.Vector3(x,y,z),q.setFromEuler(e),
+      new THREE.Vector3(rand(0.8,1.5),rand(0.8,1.4),rand(0.8,1.5)));
+    mesh.setMatrixAt(i,m);
+    // blossom tint rides instanceColor: coral to cream to gold
+    mesh.setColorAt(i,_c.setHSL(rand(-0.02,0.12),rand(0.55,0.8),rand(0.55,0.75)));
+  }
+  mesh.castShadow=true;
+  return mesh;
 }
 
 /** Second ground species: broadleaf clumps — wide bent blades, not spikes. */

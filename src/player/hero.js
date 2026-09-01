@@ -38,6 +38,9 @@ export function createHero(scene,solids,spawn){
   const pos=new THREE.Vector3(...spawn);
   const vel=new THREE.Vector3();
   let onGround=false,coyote=0,jumpBuf=0,canDouble=false,facing=0,runPhase=0;
+  // Review-only pose pin: a framing can ask for a mid-stride capture
+  // (player[4] = 0..1 run weight). Frozen while pinned, cleared by input.
+  let posePin=0;
 
   function groundAt(x,z){
     let top=-Infinity;
@@ -54,6 +57,7 @@ export function createHero(scene,solids,spawn){
   function update(dt,t){
     const ix=(keys.ArrowRight||keys.KeyD?1:0)-(keys.ArrowLeft||keys.KeyA?1:0);
     const iz=(keys.ArrowDown||keys.KeyS?1:0)-(keys.ArrowUp||keys.KeyW?1:0);
+    if(ix||iz||jumpQueued)posePin=0; // real input ends the capture pose
     const acc=onGround?CFG.accel:CFG.airAccel;
     if(ix||iz){
       const inv=1/Math.hypot(ix,iz);
@@ -100,7 +104,7 @@ export function createHero(scene,solids,spawn){
     }
 
     if(pos.y<CFG.killY)respawn();
-    runPhase+=dt*(4+sp*1.5);
+    if(!posePin)runPhase+=dt*(4+sp*1.5); // pinned pose keeps its phase
     place(t,sp);
   }
 
@@ -110,7 +114,7 @@ export function createHero(scene,solids,spawn){
     group.rotation.y=facing;
 
     const {hips,head,ears,arms,legs,tailPivot}=model;
-    const run=THREE.MathUtils.clamp(sp/CFG.runSpeed,0,1);
+    const run=Math.max(posePin,THREE.MathUtils.clamp(sp/CFG.runSpeed,0,1));
 
     if(!onGround){
       // Airborne: legs trail, arms up, a light forward tuck.
@@ -165,12 +169,16 @@ export function createHero(scene,solids,spawn){
     const top=groundAt(pos.x,pos.z);
     if(top>-Infinity&&Math.abs(pos.y-top)<1.5)pos.y=top;
     // Optional 4th element: facing yaw, so a composed framing can aim the
-    // hero at its interest instead of always down +z.
+    // hero at its interest instead of always down +z. Optional 5th: a
+    // mid-stride capture weight — the motion row sat at 2 for five rounds
+    // because every framing caught the same standing rest.
     vel.set(0,0,0);onGround=true;facing=p.length>3?p[3]:0;
+    posePin=p.length>4?p[4]:0;
     // The run cycle accumulates across however many PLAY frames elapsed
     // before review() — wall-clock-dependent, so it must reset with the
     // world clock or A/A captures differ by a limb pose (det gate caught it).
-    runPhase=0;
+    // A pinned stride gets a fixed phase with the legs split mid-cycle.
+    runPhase=posePin?2.2:0;
     place(0);
   }
 

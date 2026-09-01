@@ -63,12 +63,15 @@ function jungleRidge(x,z,len,w,h,dir){
   // Two octaves of VALUE, not just hue: the round-7 verdict measured the
   // inner slopes at near-zero variance over 200 px ("vector-art toy set").
   // The second octave is canopy-clump scale so the wall reads as foliage.
+  // Third octave earns its keep only since the 48×30 mesh — before that,
+  // vertices 2–3 m apart interpolated everything above the first away.
   vcolor(ridge,(px,py,pz)=>_c.setHSL(
     0.27+fbm3(px*0.10,py*0.3,3)*0.09,
     0.42+fbm3(px*0.23,py*0.5,9)*0.18,
     Math.max(0.05,0.12+Math.max(0,py)/h*0.12
       +(fbm3(px*0.16,py*0.35,(pz+7)*0.16)-0.5)*0.24
-      +(fbm3(px*0.55,py*0.9,(pz+3)*0.55)-0.5)*0.13)));
+      +(fbm3(px*0.55,py*0.9,(pz+3)*0.55)-0.5)*0.13
+      +(fbm3(px*1.3,py*1.7,(pz+11)*1.3)-0.5)*0.08)));
   parts.push(ridge);
   // Canopy mounds over crest AND slopes — clustered on the crest alone they
   // hide inside the ridge and the visible inner wall stays bare.

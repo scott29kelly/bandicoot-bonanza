@@ -6,6 +6,29 @@ Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
 
+## Round 14 — 2026-09-01 (mid-stride, blossoms, midribs)
+
+Shot from (this commit), seed `0x5eed1e`, `shots/round14/`. Gates:
+build green, det green, 5/5 PASS — and the ground framings crossed
+the 220k-tris floor for the first time (216.9k–239.9k).
+
+What landed, against the standing round-13 list: **motion** — framings
+gain an optional mid-stride capture weight (player[5]); title-hero now
+catches the hero mid-run (split legs, counterswing, forward lean),
+with the pose pinned against settle frames and cleared by real input.
+**Character** — the mouth gains an open grin corner (the hairline arc
+read as "a crease with no interior"), hip fur tufts break the widest
+band of the silhouette. **Vegetation** — beach blossoms, a third
+ground species in coral/cream/gold riding instanceColor; frond midribs
+darken the rib line so palms stop reading as flat planes. **Backdrop**
+— a third paint octave on the ridges, sampleable since the 48×30 mesh.
+
+### Critic verdict (blind, fresh context)
+
+Pending — appended when the round-14 critic reports.
+
+---
+
 ## Round 13 — 2026-08-31 (the hero gets his hands back)
 
 Shot from `cfd96fc`, seed `0x5eed1e`, `shots/round13/`. Gates: build

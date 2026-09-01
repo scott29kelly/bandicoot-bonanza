@@ -131,15 +131,20 @@ export function createHeroModel(){
   nose.position.set(0,-0.015,0.375);
   nose.scale.set(1.2,0.85,0.9);
   head.add(nose);
-  // mouth: a thin dark smile arc under the muzzle — "no mouth at all from
-  // a three-quarter view" (round-10, crop-verified). A line, not a cavity.
+  // mouth: a dark smile arc plus an open grin corner — the bare hairline
+  // read as "a crease with no interior" (round-13). Still a drawing, not
+  // modelled dentition.
   const mouth=new THREE.Mesh(
-    new THREE.TorusGeometry(0.052,0.0085,5,12,Math.PI*0.75),
+    new THREE.TorusGeometry(0.052,0.010,5,12,Math.PI*0.75),
     toonMat({color:NOSE}));
   mouth.position.set(0,-0.075,0.30);
   mouth.rotation.set(1.25,0,Math.PI/2+Math.PI*0.375);
   mouth.castShadow=false;
-  head.add(mouth);
+  const grin=new THREE.Mesh(new THREE.SphereGeometry(0.024,8,6),toonMat({color:0x30201a}));
+  grin.scale.set(1.5,0.7,0.6);
+  grin.position.set(0.035,-0.095,0.315);
+  grin.castShadow=false;
+  head.add(mouth,grin);
   // eyes: big whites + iris + pupil — they must READ at portrait range,
   // not hide as slits under the brow (round-5 verdict).
   for(const s of[-1,1]){
@@ -237,6 +242,15 @@ export function createHeroModel(){
     const tuft=new THREE.ConeGeometry(0.038,0.11,6);
     xform(tuft,{r:[2.6,0,ta],p:[tx,0.40,0.20]});
     const m=new THREE.Mesh(tuft,toonMat({color:BELLY}));
+    m.castShadow=true;
+    hips.add(m);
+  }
+
+  /* hip fur tufts — silhouette breaks where the torso is widest */
+  for(const s of[-1,1]){
+    const tuft=new THREE.ConeGeometry(0.045,0.14,6);
+    xform(tuft,{r:[0.4,0,s*2.1],p:[s*0.27,0.16,-0.04]});
+    const m=new THREE.Mesh(tuft,toonMat({color:FUR,rim:RIM}));
     m.castShadow=true;
     hips.add(m);
   }
