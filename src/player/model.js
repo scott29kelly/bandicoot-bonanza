@@ -36,8 +36,13 @@ function outline(mesh,px=0.011){
   return mesh;
 }
 
+// Every body part carries a warm fresnel rim: the rig's directional rim
+// light never separated the hero (round-6 AND round-7 verdicts) because it
+// only fires when the camera opposes it; a fresnel rims every framing.
+const RIM={color:0xffe4b8,strength:0.32};
+
 function part(geo,color,{shadow=true,line=true}={}){
-  const m=new THREE.Mesh(geo,toonMat({color}));
+  const m=new THREE.Mesh(geo,toonMat({color,rim:RIM}));
   m.castShadow=shadow;
   return line?outline(m):m;
 }
@@ -82,7 +87,7 @@ export function createHeroModel(){
   root.add(hips);
 
   /* torso */
-  const torso=new THREE.Mesh(torsoGeom(),toonMat({color:0xffffff,vertexColors:true}));
+  const torso=new THREE.Mesh(torsoGeom(),toonMat({color:0xffffff,vertexColors:true,rim:RIM}));
   torso.castShadow=true;
   outline(torso);
   torso.position.y=-0.06;

@@ -170,9 +170,11 @@ export function buildBeach(scene){
   fruitGeo.addGroup(bodyGeo.getAttribute('position').count,
     greenGeo.getAttribute('position').count,1);
   // Albedo deliberately below "orange you'd pick": AgX rolls hot values to
-  // cream. Emissive is a glow hint, not the colour (old DELTA, pass 3).
+  // cream. Emissive is a glow hint, not the colour — and at 0.42 it FLOODED
+  // the shading: the round-7 sculpted lobes rendered as flat discs because
+  // the glow erased the light side / shade side split. 0.16 keeps the hint.
   const fruitMesh=new THREE.InstancedMesh(fruitGeo,[
-    toonMat({color:0xd45a0e,emissive:0xff7a1a,emissiveIntensity:0.42}),
+    toonMat({color:0xd45a0e,emissive:0xff7a1a,emissiveIntensity:0.16}),
     toonMat({color:0x4e7d2a})],fruitPos.length);
   const _m=new THREE.Matrix4(),_e=new THREE.Euler(),_q=new THREE.Quaternion(),
         _v=new THREE.Vector3(),_s=new THREE.Vector3(1,1,1);

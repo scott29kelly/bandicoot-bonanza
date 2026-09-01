@@ -47,7 +47,10 @@ export function createPipeline(){
   renderer.info.autoReset=false;
 
   const scene=new THREE.Scene();
-  scene.fog=new THREE.Fog(PALETTE.fog,70,190);
+  // Far pushed 190 -> 215: the mid sea stacks were surfacing at ~80% fog
+  // and reading as translucent ghosts, which is the banned "fog as the
+  // reason there is nothing there". The haze ridge still silhouettes.
+  scene.fog=new THREE.Fog(PALETTE.fog,70,215);
 
   /* Sky dome: vertex-colored so it rides the same AgX + fog-free path as
      everything else. A flat background color is a banned outcome. */

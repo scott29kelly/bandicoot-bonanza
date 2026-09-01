@@ -6,6 +6,60 @@ Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
 
+## Round 7 — 2026-08-31 (the hero was never wearing his colors)
+
+Shot from `4d49165`, seed `0x5eed1e`, `shots/round7/`. Gates: build
+green, det green (boots 0 and 2 paired bit-identically around a lottery
+miss on boot 1 — the sampling gate doing its job), 5/5 PASS
+(170.1k–191.5k tris; VSM's two-sided shadow pass roughly doubles
+counted shadow tris).
+
+What landed: the vertex-color multiply bug fixed (torso material white,
+fur painted — the round-5 belly and stripe render for the first time),
+angular belly bib, cream gloves + cuffs + knuckles, thicker ears,
+4-spike crest, shoulder balls, chest tufts, tail tip; five-lobed wumpa
+with stem dimple; cloud layer + corridor horizon stacks; VSM shadows
+with real penumbra; rim 0.65; hero blob r=0.68.
+
+### Critic verdict (blind, fresh context) — and what measurement said
+
+**Biggest gap: "geometry-level dressing but zero surface-level art"** —
+every large surface one flat value end to end (hero-closeup hill,
+water-gap left half, crate-cluster sand). Verified: real, and the
+biggest by frame area.
+
+Claims measured before obeying: "fruit are raw spheres" STALE as
+stated — the lobed mesh landed this round — but true in effect: 0.42
+emissive flooded the light/shade split, so the lobes rendered as flat
+discs. "Sand shows a square grid" VERIFIED — the ripple strokes and
+speckle tile at the 9 m UV period. "Far layer is translucent ghost
+slabs" verified — the horizon stacks surfaced at ~80% fog. "No rim
+light separating hero" verified again (second critic running). "Palms
+perfectly symmetric / no per-instance grass hue" partially stale —
+lean and hue spread exist, but do not read at framing distance.
+
+Ranked (condensed): 1 macro variation absent · 2 hero fidelity (paws,
+expression, outline-style mismatch) · 3 ghost far layer · 4 cloned
+vegetation · 5 frozen frame · 6 no hero rim · 7 water flat · 8 nothing
+grounded · 9 sphere fruit (stale, see above) · 10 sand grid.
+
+Self-score: character 3 · props 5 · dressing 4 · vegetation 3 · light 4
+· colour 5 · water 3 · backdrop 3 · motion 2 · composition 5.
+
+### Fixing this round (became round 8)
+
+#1 macro: second value octave on ridges and canopy mounds; two
+world-space vcolor octaves on the beach tops (damp + pale patches);
+ripple-stroke alpha halved and speckle thinned so the 9 m tile stops
+printing a grid. #6 hero rim: baked fresnel rim in toonMat (a
+directional rim dies whenever the camera swings off its axis) — first
+attempt rendered the hero black: injected GLSL referenced undeclared
+uniforms; declarations added. #3 ghosts: horizon stacks pulled to
+z≈-130 and fog far 190→215. #9 fruit emissive 0.42→0.16 so the lobes
+shade.
+
+---
+
 ## Round 6 — 2026-08-31 (midground reads as jungle, the hero gets a face)
 
 Shot from `53a3004`, seed `0x5eed1e`, `shots/round6/`. Gates: build green,

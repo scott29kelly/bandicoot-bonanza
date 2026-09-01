@@ -24,6 +24,7 @@ function mats(){
 }
 
 const cSand=new THREE.Color(0xffffff),cSandLow=new THREE.Color(0xd8c49a),
+      cSandDamp=new THREE.Color(0xb59a6c),cSandPale=new THREE.Color(0xfff3d8),
       cWet=new THREE.Color(0x7d6448),cRockHi=new THREE.Color(0xa89478),
       cRockLo=new THREE.Color(0x5c685e),_c=new THREE.Color();
 
@@ -108,7 +109,12 @@ export function islandMass({x,z,w,d,topY=0}){
 
   vcolor(g,(px,py,pz)=>{
     if(py>yTop-0.35){
+      // Two world-space octaves so the beach never repeats with the 9 m
+      // texture tile — the tile carries grain, THIS carries the macro
+      // (round-7 gap 1: large surfaces one value end to end).
       _c.copy(cSand).lerp(cSandLow,fbm3((px+x)*0.2,11,(pz+z)*0.2));
+      _c.lerp(cSandDamp,Math.max(0,fbm3((px+x)*0.09,23,(pz+z)*0.09)-0.5)*1.1);
+      _c.lerp(cSandPale,Math.max(0,fbm3((px+x)*0.45,31,(pz+z)*0.45)-0.55)*0.9);
       // Wet-sand band where the top meets the rim — the tide got here.
       const rim=Math.max(Math.abs(px)/halfW,Math.abs(pz)/halfD);
       return _c.lerp(cWet,THREE.MathUtils.smoothstep(rim,0.78,0.98)*0.45);

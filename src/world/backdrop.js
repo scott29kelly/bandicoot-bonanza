@@ -51,11 +51,15 @@ function jungleRidge(x,z,len,w,h,dir){
   ridge.computeVertexNormals();
   // The inner slope is the single biggest surface in most framings — it
   // needs banded canopy-scale breakup, not one lightness ramp.
+  // Two octaves of VALUE, not just hue: the round-7 verdict measured the
+  // inner slopes at near-zero variance over 200 px ("vector-art toy set").
+  // The second octave is canopy-clump scale so the wall reads as foliage.
   vcolor(ridge,(px,py,pz)=>_c.setHSL(
     0.27+fbm3(px*0.10,py*0.3,3)*0.09,
     0.42+fbm3(px*0.23,py*0.5,9)*0.18,
-    Math.max(0.06,0.12+Math.max(0,py)/h*0.12
-      +(fbm3(px*0.16,py*0.35,(pz+7)*0.16)-0.5)*0.16)));
+    Math.max(0.05,0.12+Math.max(0,py)/h*0.12
+      +(fbm3(px*0.16,py*0.35,(pz+7)*0.16)-0.5)*0.24
+      +(fbm3(px*0.55,py*0.9,(pz+3)*0.55)-0.5)*0.13)));
   parts.push(ridge);
   // Canopy mounds over crest AND slopes — clustered on the crest alone they
   // hide inside the ridge and the visible inner wall stays bare.
@@ -73,7 +77,7 @@ function jungleRidge(x,z,len,w,h,dir){
     // "two smooth blobs" verdict (round 1, gap 2).
     const hue=0.24+rand(0,0.13),sat=rand(0.45,0.68),base=rand(0.07,0.24);
     vcolor(mound,(px,py)=>_c.setHSL(hue+fbm3(px*0.6,py*0.6,i)*0.03,sat,
-      Math.max(0.05,base+py*0.12+fbm3(px*1.4,py*1.4,i+40)*0.07)));
+      Math.max(0.05,base+py*0.12+(fbm3(px*1.4,py*1.4,i+40)-0.5)*0.16)));
     // Keep every mound buried in the crest: the ridge surface at t is about
     // h*cos(t*2.4) before noise, so centring below 0.62 of it can't float.
     // Spread across the slope, but never down to the waterline — a mound
@@ -218,8 +222,11 @@ export function createBackdrop(){
                           [-21,-76,9,3],[30,-108,13,4],
                           // horizon pair dead in the corridor sightline —
                           // the far layer must read from beach-corridor too,
-                          // not only from title-hero (round-6 verdict, gap 3)
-                          [-13,-152,22,6],[17,-162,27,7]])
+                          // not only from title-hero (round-6 verdict, gap 3).
+                          // Close enough to keep body through the fog: at
+                          // z≈-160 they rendered as translucent ghost slabs
+                          // (round-7 gap 3, "fog as the reason").
+                          [-14,-128,20,6],[18,-140,25,7]])
     parts.push(seaStack(x,z,h,r));
 
   // Far layer: a haze ridge band across the horizon of the corridor, tall
