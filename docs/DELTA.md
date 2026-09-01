@@ -6,6 +6,44 @@ Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
 
+## Round 16 — 2026-09-01 (twelve rounds of clones were one multiply)
+
+Shot from `ab0cdf9`, seed `0x5eed1e`, `shots/round16/`. Gates: build
+green, det green, 5/5 PASS.
+
+What landed: grass/broadleaf materials WHITE (the multiply bug — the
+per-instance hue spread renders for the first time since round 2),
+shadow map 4096 (penumbra checker gone), title camera re-aimed.
+
+### Critic verdict (blind, fresh context, crop-verified) — measured
+
+The vegetation-clone complaint is GONE — the fix read; the veg row's
+complaint legitimately shifted to blade SHAPE. Scores keep climbing:
+motion 3→4, water 5, colour 6, composition 5. The critic's summary is
+the loop's most honest yet: "passes its measured floors — the
+distance to the refs is now almost entirely surface language:
+texture, fur, strata, rim light."
+
+New, crop-verified: the crate top beams carry a dark SAWTOOTH strip —
+traced to the full 0–1 UV mapping compressing the wood texture's
+plank-border strokes across each thin beam face. Mid-stride, the
+raised knee shows the pant cylinder's flat cap and the leg reads
+amputated. Sea stacks still read as smooth lathe primitives (third
+verdict) — the carving is strong but smooth normals erase it.
+
+Self-score: character 4 · props 5 · dressing 4 · vegetation 3 · light 4
+· colour 6 · water 5 · backdrop 3 · motion 4 · composition 5.
+
+### Fixing this round (became round 17)
+
+Beam UVs shrunk to a plain patch (sawtooth gone). Knee cap sphere.
+Sea stacks FLAT-shaded — normals recomputed after unsharing vertices,
+so the carve reads as hewn facets instead of polished lathe. Corridor
+restaged: camera low and off-axis, hero captured mid-run down the
+corridor (second framing with a motion cue).
+
+---
+
 ## Round 15 — 2026-09-01 (relief for the membrane, fur for the vinyl)
 
 Shot from `1f936e6`, seed `0x5eed1e`, `shots/round15/`. Gates: build

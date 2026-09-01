@@ -24,7 +24,15 @@ const S=1.15;   // crate size — matches the old game's collision feel
 function frameGeoms(size,beam){
   const parts=[];
   const h=size/2;
-  const beamBox=(sx,sy,sz,p)=>parts.push(xform(new THREE.BoxGeometry(sx,sy,sz),{p}));
+  const beamBox=(sx,sy,sz,p)=>{
+    const g=new THREE.BoxGeometry(sx,sy,sz);
+    // Shrink beam UVs to a small patch: default 0..1 mapping compresses
+    // the texture's plank-border strokes across each thin face into a
+    // dark sawtooth strip along every top edge (round-16, crop-verified).
+    const uv=g.getAttribute('uv');
+    for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)*0.16+0.3,uv.getY(i)*0.16+0.55);
+    parts.push(xform(g,{p}));
+  };
   // 12 edge beams…
   for(const y of[-h,h])for(const z of[-h,h])beamBox(size,beam,beam,[0,y,z]);
   for(const y of[-h,h])for(const x of[-h,h])beamBox(beam,beam,size,[x,y,0]);

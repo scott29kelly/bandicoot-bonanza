@@ -26,7 +26,6 @@ function seaStack(x,z,h,r){
     p.setX(i,wx*cut*n);
     p.setZ(i,wz*cut*n);
   }
-  g.computeVertexNormals();
   vcolor(g,(wx,wy)=>{
     const t=(wy+h/2)/h;
     if(t>0.72)return _c.setHSL(0.30,0.5,0.17+fbm3(wx,wy,1)*0.09); // green cap
@@ -38,7 +37,12 @@ function seaStack(x,z,h,r){
     return _c.setHSL(0.09+fbm3(wy*0.5,wx*0.5,8)*0.05,0.26,
       0.26+fbm3(wx*0.5,wy*0.5,2)*0.13+strata);
   });
-  return xform(g,{p:[x,h/2+WATER_Y-1.5,z]});
+  // FLAT normals (recomputed after unsharing vertices): smooth-shaded, the
+  // carved stacks still read as untouched lathe primitives — three critics
+  // running. Faceted, they read as hewn rock.
+  const g2=g.toNonIndexed();
+  g2.computeVertexNormals();
+  return xform(g2,{p:[x,h/2+WATER_Y-1.5,z]});
 }
 
 /** A jungle flank: a ridge mass buried under overlapping canopy mounds. */

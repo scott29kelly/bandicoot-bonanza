@@ -208,11 +208,12 @@ export function buildBeach(scene){
   addFraming(at=>({id:'title-hero',name:'Title hero',
     tests:'Pillar E — the first frame a player sees: the hero is the subject, palms frame it, three distance layers hold',
     p:at('beach',-2.7,1.7,7.6),lookAt:at('beach',3.7,0.7,-5),fov:46,player:[0,0,-8,-0.5,0.85]}));
-  // Nudged off the centreline: the dead-centre one-point shot was ranked
-  // by two critics as symmetry for its own sake.
+  // Low and off-axis, hero running AWAY down the corridor: the high
+  // centered survey shot read as "40% empty sand foreground" and the
+  // standing hero as frozen (rounds 15–16).
   addFraming(at=>({id:'beach-corridor',name:'Beach corridor',
     tests:'Pillars D/E — the opening holds depth; no bare slab, no empty frame',
-    p:at('beach',1.7,3.2,17.5),lookAt:at('crateYard',-0.9,0.5,20),fov:52,player:[0.6,0,-7]}));
+    p:at('beach',1.9,2.2,16.5),lookAt:at('crateYard',-1.1,1.1,20),fov:52,player:[0.6,0,-7,0,0.6]}));
   addFraming(at=>({id:'hero-closeup',name:'Hero close-up',
     tests:'Pillars A/B — character silhouette and chromatic shadow at portrait range',
     p:at('beach',2.9,1.5,5.7),lookAt:at('beach',1.2,1.0,3.5),fov:38,player:[1.2,0,-9]}));

@@ -283,10 +283,15 @@ export function createHeroModel(){
     // boot at the orange leg (round-12, crop-verified).
     const pant=part(new THREE.CylinderGeometry(0.063,0.072,0.09,9),SHORTS,{line:false});
     pant.position.y=-0.055; // hugs the thigh — longer read as blue wellies
+    // rounded cap: mid-stride the raised knee showed the cylinder's flat
+    // top disc and the leg read amputated (round-16, crop-verified)
+    const knee=part(new THREE.SphereGeometry(0.065,8,7),SHORTS,{line:false});
+    knee.position.y=-0.02;
+    knee.scale.set(1,0.8,1);
     const shoe=part(new THREE.SphereGeometry(0.1,10,8),SHOE);
     shoe.position.set(0,-0.32,0.05);
     shoe.scale.set(0.95,0.7,1.6);
-    hip.add(leg,pant,shoe);
+    hip.add(leg,pant,knee,shoe);
     hips.add(hip);
     legs[s<0?'L':'R']=hip;
   }
