@@ -39,11 +39,13 @@ function seaStack(x,z,h,r){
 /** A jungle flank: a ridge mass buried under overlapping canopy mounds. */
 function jungleRidge(x,z,len,w,h,dir){
   const parts=[];
-  const ridge=new THREE.SphereGeometry(1,14,10);
+  const ridge=new THREE.SphereGeometry(1,22,14);
   xform(ridge,{s:[len/2,h,w/2]});
   const rp=ridge.getAttribute('position');
   for(let i=0;i<rp.count;i++){
-    const k=0.8+fbm3(rp.getX(i)*0.08+x,rp.getY(i)*0.15,rp.getZ(i)*0.08+z)*0.5;
+    // Deep lumps: the smooth ellipsoid was every critic's "gumdrop". Two
+    // octaves, big amplitude, so the SILHOUETTE undulates, not just the paint.
+    const k=0.68+fbm3(rp.getX(i)*0.07+x,rp.getY(i)*0.13,rp.getZ(i)*0.07+z)*0.75;
     rp.setXYZ(i,rp.getX(i)*k,rp.getY(i)*k,rp.getZ(i)*k);
   }
   ridge.computeVertexNormals();
@@ -55,8 +57,9 @@ function jungleRidge(x,z,len,w,h,dir){
     Math.max(0.06,0.12+Math.max(0,py)/h*0.12
       +(fbm3(px*0.16,py*0.35,(pz+7)*0.16)-0.5)*0.16)));
   parts.push(ridge);
-  // Canopy mounds along the crest — each hashed into its own shape.
-  const N=Math.round(len*0.45);
+  // Canopy mounds over crest AND slopes — clustered on the crest alone they
+  // hide inside the ridge and the visible inner wall stays bare.
+  const N=Math.round(len*0.7);
   for(let i=0;i<N;i++){
     const t=i/N-0.5;
     const mound=new THREE.SphereGeometry(rand(2.2,4.6),8,6);
@@ -73,7 +76,12 @@ function jungleRidge(x,z,len,w,h,dir){
       Math.max(0.05,base+py*0.12+fbm3(px*1.4,py*1.4,i+40)*0.07)));
     // Keep every mound buried in the crest: the ridge surface at t is about
     // h*cos(t*2.4) before noise, so centring below 0.62 of it can't float.
-    xform(mound,{p:[t*len,h*Math.cos(t*2.4)*rand(0.38,0.62),rand(-w*0.28,w*0.28)]});
+    // Spread across the slope, but never down to the waterline — a mound
+    // dipped to y~0 reads as a lettuce head floating in the sea.
+    const zs=rand(-0.4,0.4);
+    xform(mound,{p:[t*len,
+      Math.max(3.2,h*Math.cos(t*2.4)*rand(0.38,0.62)*(1-Math.abs(zs)*0.8)),
+      w/2*zs]});
     parts.push(mound);
   }
   const g=mergeGeoms(parts.map(p=>p.toNonIndexed()));
@@ -98,6 +106,18 @@ function bgTree(x,z,h){
     parts.push(seg);
   }
   const tipX=Math.cos(leanD)*lean,tipZ=Math.sin(leanD)*lean;
+  // A crown blob under the blades — bare blade fans vanish at distance and
+  // the tree reads as a dead stick.
+  const crown=new THREE.SphereGeometry(h*0.2,8,6);
+  const cp=crown.getAttribute('position');
+  for(let j=0;j<cp.count;j++){
+    const k=0.75+hash3(cp.getX(j)*4,cp.getY(j)*4,cp.getZ(j)*4)*0.5;
+    cp.setXYZ(j,cp.getX(j)*k,cp.getY(j)*k*0.7,cp.getZ(j)*k);
+  }
+  crown.computeVertexNormals();
+  vcolor(crown,(px,py)=>_c.setHSL(rand(0.26,0.34),0.55,0.15+Math.max(0,py)*0.12));
+  xform(crown,{p:[tipX,h*0.98,tipZ]});
+  parts.push(crown);
   const N=randInt2(5,7);
   for(let i=0;i<N;i++){
     const a=i/N*Math.PI*2+rand(-0.3,0.3);
@@ -134,6 +154,13 @@ export function createBackdrop(){
     if(rand(0,1)<0.25)return;
     const x=side*(rand(20,30));
     list.push(bgTree(x,z+rand(-2,2),rand(4.5,9)));
+    // A second rank climbs the slope, half-buried, so the ridge inner wall
+    // reads as forested terrain and not a painted backdrop.
+    if(rand(0,1)<0.6){
+      const g=bgTree(side*rand(26,34),z+rand(-2,2),rand(5,10));
+      g.translate(0,rand(2,7),0);
+      list.push(g);
+    }
   }
 
   // Mid layer: jungle flanks RUNNING ALONG the corridor (a ridge's long

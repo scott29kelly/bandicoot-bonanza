@@ -81,8 +81,8 @@ export function createHeroModel(){
   // Inner face parts skip the hull: stacked outlines on the snout read as
   // an ink tangle, not a drawing.
   const brow=part(new THREE.SphereGeometry(0.115,10,8),FUR,{line:false});
-  brow.position.set(0,0.09,0.13);
-  brow.scale.set(1.55,0.55,0.9);
+  brow.position.set(0,0.115,0.115);
+  brow.scale.set(1.5,0.48,0.85);
   head.add(brow);
   // long muzzle
   const muzzle=part(new THREE.SphereGeometry(0.105,10,8),MUZZLE);
@@ -97,16 +97,28 @@ export function createHeroModel(){
   nose.position.set(0,-0.015,0.375);
   nose.scale.set(1.2,0.85,0.9);
   head.add(nose);
-  // eyes: whites + pupils, set under the brow
+  // eyes: big whites + iris + pupil — they must READ at portrait range,
+  // not hide as slits under the brow (round-5 verdict).
   for(const s of[-1,1]){
-    const white=new THREE.Mesh(new THREE.SphereGeometry(0.055,10,8),
+    const white=new THREE.Mesh(new THREE.SphereGeometry(0.072,12,10),
       toonMat({color:0xf8f4e8}));
-    white.position.set(s*0.075,0.035,0.155);
-    white.scale.set(0.9,1.15,0.7);
-    const pupil=new THREE.Mesh(new THREE.SphereGeometry(0.024,8,6),
-      toonMat({color:0x1c4620}));
-    pupil.position.set(s*0.078,0.035,0.196);
-    head.add(white,pupil);
+    white.position.set(s*0.082,0.045,0.152);
+    white.scale.set(0.85,1.25,0.7);
+    const iris=new THREE.Mesh(new THREE.SphereGeometry(0.034,10,8),
+      toonMat({color:0x2e7a34}));
+    iris.position.set(s*0.086,0.04,0.204);
+    const pupil=new THREE.Mesh(new THREE.SphereGeometry(0.017,8,6),
+      toonMat({color:0x120c08}));
+    pupil.position.set(s*0.088,0.04,0.228);
+    head.add(white,iris,pupil);
+  }
+  // cheek fur tufts frame the face
+  for(const s of[-1,1]){
+    const tuft=new THREE.ConeGeometry(0.045,0.13,6);
+    xform(tuft,{r:[0,0,s*1.9],p:[s*0.2,-0.05,0.06]});
+    const m=new THREE.Mesh(tuft,toonMat({color:FUR}));
+    m.castShadow=true;
+    head.add(m);
   }
   // big ears with inner-ear plates
   const ears={};

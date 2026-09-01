@@ -85,9 +85,13 @@ function frondGeom(len,droop){
 /**
  * @returns {{group:THREE.Group, update:(t:number)=>void}}
  */
-export function makePalm(x,y,z,h){
+export function makePalm(x,y,z,h,opts={}){
   palmMats();
-  const lean=rand(0.5,1.4),leanDir=rand(0,Math.PI*2);
+  // Overrides exist for composition-critical palms (a crown hung over a
+  // review camera is a framing device, not a random draw). The rng draws
+  // still happen so the seeded stream stays aligned either way.
+  const lean=(r=>opts.lean??r)(rand(0.5,1.4));
+  const leanDir=(r=>opts.leanDir??r)(rand(0,Math.PI*2));
   const trunk=trunkGeom(h,lean,leanDir);
   vcolor(trunk,(px,py)=>_c.setHSL(0.08,0.35,0.32+py/h*0.12+fbm3(px*2,py*2,0)*0.06));
   const trunkMesh=new THREE.Mesh(trunk,barkMat);
@@ -98,8 +102,11 @@ export function makePalm(x,y,z,h){
   const N=randInt(8,10);
   const hue=rand(0.26,0.34),tipL=rand(0.5,0.62);
   for(let i=0;i<N;i++){
-    const g=frondGeom(rand(2.4,3.3),rand(1.0,1.7));
-    vcolor(g,(px)=>_c.setHSL(hue+fbm3(px,i,0)*0.02,0.62,0.20+px/3.3*tipL*0.45));
+    // Heavier droop and stronger base-to-tip value split: flat bright
+    // fronds read as paper shards (round-5 verdict).
+    const g=frondGeom(rand(2.4,3.3),rand(1.4,2.2));
+    const fh=hue+rand(-0.025,0.025);
+    vcolor(g,(px)=>_c.setHSL(fh+fbm3(px,i,0)*0.02,0.62,0.15+px/3.3*tipL*0.6));
     xform(g,{r:[0,i/N*Math.PI*2+rand(-0.2,0.2),0]});
     xform(g,{r:[0,0,rand(-0.12,0.12)],p:[0,rand(-0.06,0.10),0]});
     crownParts.push(g);
@@ -121,7 +128,7 @@ export function makePalm(x,y,z,h){
   const group=new THREE.Group();
   group.add(trunkMesh,crownPivot);
   group.position.set(x,y-0.15,z);
-  group.rotation.y=rand(0,Math.PI*2);
+  group.rotation.y=(r=>opts.yaw??r)(rand(0,Math.PI*2));
 
   const stiff=rand(0.8,1.2);
   function update(t){

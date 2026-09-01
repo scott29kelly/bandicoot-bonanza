@@ -93,10 +93,11 @@ function foamRing(s,tex){
   // Band reach scales with the island: full-size rings off the 4 m gap
   // islets overlap each other and flood the channel solid white.
   const size=Math.min(s.maxX-s.minX,s.maxZ-s.minZ);
-  const W=Math.min(1.9,size*0.26);       // band width, metres
-  // Start against the rock skirt (its bulge reaches ~2 m past the
-  // footprint) and run out through it: surf breaks ON rock.
-  const pts=perimeter(s,Math.min(1.5,size*0.25));
+  const W=Math.min(2.2,0.9+size*0.12);   // band width, metres
+  // Start against the rock skirt (its bulge + lip reach ~1.4 m past the
+  // footprint) and run out through it: surf breaks ON rock. Starting
+  // inside the bulge buries the band and leaves a bare polygon shoreline.
+  const pts=perimeter(s,Math.min(2.0,1.2+size*0.06));
   const posArr=[],uvArr=[],idx=[];
   for(let i=0;i<pts.length;i++){
     const [x,z,nx,nz,l]=pts[i];

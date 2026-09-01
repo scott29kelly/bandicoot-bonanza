@@ -70,6 +70,12 @@ export function buildBeach(scene){
     avoid.push({x,z,r:1.0});
     ground(x,z,0.85);
   }
+  // A composed palm: leans its crown over the beach-corridor camera so the
+  // framing's top is closed by canopy, not empty sky (Pillar E).
+  const framePalm=makePalm(2.6,0,4.6,6.5,{lean:2.3,leanDir:-Math.PI/2,yaw:0});
+  scene.add(framePalm.group);
+  updates.push(framePalm.update);
+  ground(2.6,4.6,0.85);
 
   /* ---------- crates + the first TNT ----------------------------------- */
   const crateAt=(x,y,z)=>{
@@ -135,12 +141,12 @@ export function buildBeach(scene){
   // squashed body + stem + two leaves, two materials via geometry groups.
   const body=new THREE.SphereGeometry(0.27,12,10);
   body.scale(1,1.14,1);
-  const stem=new THREE.CylinderGeometry(0.02,0.035,0.09,6);
+  const stem=new THREE.CylinderGeometry(0.03,0.05,0.11,6);
   stem.translate(0,0.33,0);
   const leaf=(rot)=>{
     const l=new THREE.SphereGeometry(0.09,6,4);
-    l.scale(1.6,0.28,0.7);
-    l.translate(0.13,0.34,0);
+    l.scale(2.1,0.32,0.9);
+    l.translate(0.16,0.35,0);
     const m=new THREE.Matrix4().makeRotationY(rot);
     l.applyMatrix4(new THREE.Matrix4().makeRotationZ(0.45).premultiply(m));
     return l;
