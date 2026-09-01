@@ -87,7 +87,10 @@ export function createPipeline(){
 
   const sun=new THREE.DirectionalLight(PALETTE.sunColor,3.3);
   sun.castShadow=!MINFX;
-  sun.shadow.mapSize.set(2048,2048);
+  // 4096: at 2048 the ~2.5 cm texels printed a checkered step pattern into
+  // every penumbra on sand ("ordered dither in shadow gradients" — three
+  // critics, finally traced here and not to the texture speckle).
+  sun.shadow.mapSize.set(4096,4096);
   const d=26;
   sun.shadow.camera.left=-d;sun.shadow.camera.right=d;
   sun.shadow.camera.top=d;sun.shadow.camera.bottom=-d;
@@ -114,7 +117,7 @@ export function createPipeline(){
     _dir.copy(OFF).normalize();
     _right.set(1,0,0).cross(_dir).normalize();
     _up.copy(_dir).cross(_right).normalize();
-    const texel=(2*d)/2048*4; // 4-texel grid: PCF taps stay stable too
+    const texel=(2*d)/4096*4; // 4-texel grid: PCF taps stay stable too
     const rx=Math.round(focus.dot(_right)/texel)*texel;
     const ry=Math.round(focus.dot(_up)/texel)*texel;
     const rd=focus.dot(_dir);

@@ -190,7 +190,11 @@ function tuftGeom(){
 
 export function makeGrassField(spots){
   const geo=tuftGeom();
-  const mat=toonMat({color:0x7aa04a,side:THREE.DoubleSide});
+  // WHITE material: instance colors MULTIPLY it, so a green base filtered
+  // every per-instance hue back toward green — the round-2 "loud spread"
+  // never actually rendered. Same bug class as the hero's cream×orange
+  // torso (round 7). The instance HSL values below ARE the blade colors.
+  const mat=toonMat({color:0xffffff,side:THREE.DoubleSide});
   // Wind rides the same field as the palms: same frequencies, same phases.
   mat.onBeforeCompile=(sh)=>{
     sh.uniforms.uTime={value:0};
@@ -280,7 +284,7 @@ function broadleafGeom(){
 
 export function makeBroadleafField(spots){
   const geo=broadleafGeom();
-  const mat=toonMat({color:0x5e8f3c,side:THREE.DoubleSide});
+  const mat=toonMat({color:0xffffff,side:THREE.DoubleSide}); // see grass note
   const mesh=new THREE.InstancedMesh(geo,mat,spots.length);
   const m=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler();
   for(let i=0;i<spots.length;i++){

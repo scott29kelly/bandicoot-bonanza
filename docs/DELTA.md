@@ -6,6 +6,43 @@ Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
 
+## Round 15 — 2026-09-01 (relief for the membrane, fur for the vinyl)
+
+Shot from `1f936e6`, seed `0x5eed1e`, `shots/round15/`. Gates: build
+green, det green, 5/5 PASS.
+
+What landed: canopy-scale ridge surface displacement, hero dorsal fur
+gradient, scalloped foam width, sand speckle rebuilt (fewer, larger,
+fainter).
+
+### Critic verdict (blind, fresh context, crop-verified) — measured
+
+Most disciplined verdict yet — crop-confirmed gloves, contact shadows,
+foam and flow before writing. First score RISES in nine rounds:
+character 3→4, motion 2→3; dressing 5, composition 5.
+
+Two claims triggered root-cause finds. "Vegetation is single-hue —
+darker faces are shading, not hue": TRUE, and the cause is the same
+multiply bug class as the round-7 torso — instance colors MULTIPLY
+the material color, and the grass/broadleaf materials were saturated
+greens, so twelve rounds of "loud per-instance hue spread" never
+rendered: every hue was filtered back toward green. "Ordered dither
+in sand shadow gradients" (third report): finally traced to the
+2048 shadow map — ~2.5 cm texels print a checkered step pattern into
+every penumbra; it was never the texture speckle.
+
+Self-score: character 4 · props 5 · dressing 5 · vegetation 3 · light 4
+· colour 5 · water 4 · backdrop 4 · motion 3 · composition 5.
+
+### Fixing this round (became round 16)
+
+Grass and broadleaf materials WHITE (the instance HSL values are now
+the actual blade colors — the corridor finally reads as mixed ground
+cover). Shadow map 2048→4096 with the focusSun texel snap updated to
+match. Title camera re-aimed toward a thirds placement.
+
+---
+
 ## Round 14 — 2026-09-01 (mid-stride, blossoms, midribs)
 
 Shot from (this commit), seed `0x5eed1e`, `shots/round14/`. Gates:
