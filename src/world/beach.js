@@ -134,7 +134,9 @@ export function buildBeach(scene){
       ground(x,z,0.24,y,0.5); // hovering fruit still throws a soft pool
     }
   };
-  fruitRow(0,0,-5,-11,5);
+  // Off the centreline: on it, the corridor and title framings stack the
+  // bobbing row visually ONTO the hero ("oddly clutching a fruit").
+  fruitRow(-1.6,0,-5,-11,5);
   fruitPos.push([0,1.6,-31.5],[0,1.8,-39.2],[0,1.8,-47.3]); // arcs over the gaps
   fruitRow(3,0,-49,-55,4);
   // A wumpa is a DESIGNED object, not a sphere. Round 6 ranked the sphere
@@ -202,9 +204,11 @@ export function buildBeach(scene){
   addFraming(at=>({id:'title-hero',name:'Title hero',
     tests:'Pillar E — the first frame a player sees: the hero is the subject, palms frame it, three distance layers hold',
     p:at('beach',-2.7,1.7,7.6),lookAt:at('beach',2.4,0.7,-5),fov:46,player:[0,0,-8]}));
+  // Nudged off the centreline: the dead-centre one-point shot was ranked
+  // by two critics as symmetry for its own sake.
   addFraming(at=>({id:'beach-corridor',name:'Beach corridor',
     tests:'Pillars D/E — the opening holds depth; no bare slab, no empty frame',
-    p:at('beach',0,3.4,17.5),lookAt:at('crateYard',0,0.5,20),fov:52,player:[0,0,-7]}));
+    p:at('beach',1.7,3.2,17.5),lookAt:at('crateYard',-0.9,0.5,20),fov:52,player:[0.6,0,-7]}));
   addFraming(at=>({id:'hero-closeup',name:'Hero close-up',
     tests:'Pillars A/B — character silhouette and chromatic shadow at portrait range',
     p:at('beach',2.9,1.5,5.7),lookAt:at('beach',1.2,1.0,3.5),fov:38,player:[1.2,0,-9]}));

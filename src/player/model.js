@@ -18,7 +18,7 @@ import {vcolor,xform,mergeGeoms} from '../world/geo.js';
 // as nothing. A glove has to contrast the fur or it isn't there.
 const FUR=0xe0661e, FUR_DARK=0xa8440f, BELLY=0xf5d9a4, GLOVE=0xefe3c8,
       CUFF=0xb98a4e, SHOE=0xa03418, EAR_IN=0xe8a06a, NOSE=0x241812,
-      MUZZLE=0xf0cf9a;
+      MUZZLE=0xf0cf9a, SHORTS=0x2f5d8a;
 
 const _c=new THREE.Color();
 let outlineMat=null;
@@ -60,6 +60,10 @@ function torsoGeom(){
   // portrait range, and the fresnel rim amplifies every facet edge.
   const g=new THREE.LatheGeometry(pts,24);
   vcolor(g,(x,y,z)=>{
+    // Shorts band over the hips: at portrait range a naked capsule pelvis
+    // was the round-9 "bath toy" read — clothing is the cheapest thing
+    // that makes a mascot a CHARACTER instead of an assembly of volumes.
+    if(y<0.17)return _c.set(SHORTS);
     // darker saturated stripe down the back (-z), cream toward the chest
     if(z<-0.12)return _c.set(FUR_DARK);
     // Belly bib, cut by ANGLE off the chest centreline, not by depth: a
@@ -215,6 +219,19 @@ export function createHeroModel(){
     const tuft=new THREE.ConeGeometry(0.038,0.11,6);
     xform(tuft,{r:[2.6,0,ta],p:[tx,0.40,0.20]});
     const m=new THREE.Mesh(tuft,toonMat({color:BELLY}));
+    m.castShadow=true;
+    hips.add(m);
+  }
+
+  /* spine fur fins — the egg silhouette needs breaks from the SIDE too */
+  {
+    const fins=[];
+    for(const [fy,fz,fh] of [[0.22,-0.245,0.10],[0.36,-0.235,0.13],[0.49,-0.19,0.11]]){
+      const fin=new THREE.ConeGeometry(0.042,fh,5);
+      xform(fin,{r:[-2.2,0,0],p:[0,fy,fz]});
+      fins.push(fin.toNonIndexed());
+    }
+    const m=new THREE.Mesh(mergeGeoms(fins),toonMat({color:FUR_DARK,rim:RIM}));
     m.castShadow=true;
     hips.add(m);
   }

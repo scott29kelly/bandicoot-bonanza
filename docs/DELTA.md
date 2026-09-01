@@ -6,6 +6,51 @@ Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
 
+## Round 9 — 2026-08-31 (the sun gets its shadows back)
+
+Shot from `6154d99`, seed `0x5eed1e`, `shots/round9/`. Gates: build
+green, det green, 5/5 PASS.
+
+What landed: PCFSoft revert (VSM erased thin-caster shadows), glove
+thumb + proud knuckles, torso lathe 24 segments, fruit lobes 0.09,
+stack strata, wider mound spread, grass breeze lean, title-hero
+recomposed.
+
+### Critic verdict (blind, fresh context) — and what measurement said
+
+Led with **"zero-texture flat materials — no-noise albedo anywhere"**.
+Measured FALSE as stated: the sand carries a two-scale canvas texture
+plus two world-space vcolor octaves, visible in any crop; "no contact
+shadow under the hero in title-hero" is contradicted by the long cast
+shadow plus blob in those pixels; "hundreds of tufts perfectly
+vertical" missed the breeze lean that landed this round; "crate shadow
+faces near-black" measured mid-brown. This verdict's headline is
+discounted as template — but its direction (more surface information)
+matches rounds 7–8 and stays on the list.
+
+What survived verification: the WATER — the pale shallows halo (9 m,
+milky mint) flooded half of every channel as an ice shelf, drowned the
+foam ring in same-value white, and hid the depth grade; water has
+scored 3 for three rounds and had never been addressed head-on. Also
+survived: corridor composition (dead-centre symmetry; the bobbing
+fruit row stacked onto the hero — "oddly clutching a fruit"), and the
+portrait-range "capsule assembly" read (naked pelvis, unbroken egg
+silhouette from the side).
+
+Self-score: character 3 · props 5 · dressing 4 · vegetation 4 · light 4
+· colour 5 · water 3 · backdrop 4 · motion 2 · composition 4.
+
+### Fixing this round (became round 10)
+
+Water: halo 9→5 m, inner band thinned and warmed, deep base kept rich
+so the foam ring reads against it; ripple sheets stretched
+anisotropically along their scroll heading (flow you can point at).
+Hero: blue shorts band over the hips, spine fur fins. Composition:
+fruit row moved off the centreline, corridor camera nudged
+off-axis.
+
+---
+
 ## Round 8 — 2026-08-31 (surfaces get their paint)
 
 Shot from `08c6d99`, seed `0x5eed1e`, `shots/round8/`. Gates: build

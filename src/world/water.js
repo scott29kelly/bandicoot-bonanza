@@ -43,11 +43,15 @@ function depthCanvas(islands){
   // so depth reads as a gradient rather than a decal. Halo width scales with
   // the island — a 10 m halo around a 4 m islet floods the channel between
   // islands and the "gap" stops reading as deep water at all.
-  const halo=(s)=>Math.min(9,Math.min(s.maxX-s.minX,s.maxZ-s.minZ)*0.8);
-  g.filter='blur(14px)';g.fillStyle='rgba(64,176,178,0.82)';
+  // Halo held to 5 m and the inner band thinned hard: at 9 m the pale
+  // shallows flooded half of every channel as a milky ice shelf and drowned
+  // the foam ring in same-value white (water row scored 3 three rounds
+  // running — this was why).
+  const halo=(s)=>Math.min(5,Math.min(s.maxX-s.minX,s.maxZ-s.minZ)*0.5);
+  g.filter='blur(12px)';g.fillStyle='rgba(52,168,172,0.75)';
   for(const s of islands)rect(s,halo(s));
-  g.filter='blur(6px)';g.fillStyle='rgba(130,208,192,0.7)';
-  for(const s of islands)rect(s,Math.min(3,halo(s)*0.4));
+  g.filter='blur(4px)';g.fillStyle='rgba(168,214,190,0.5)';
+  for(const s of islands)rect(s,Math.min(1.8,halo(s)*0.35));
   g.filter='none';
 
   // Sun-sparkle cells in the shallows only.
@@ -148,10 +152,12 @@ export function createWater(islands){
   // Two ripple sheets scrolling on crossing headings = visible flow, cheap.
   const ripTex=rippleTexture();
   const rips=[];
-  for(const [op,sc] of [[0.11,90],[0.07,55]]){
+  for(const [op,sc] of [[0.14,90],[0.09,55]]){
     const t=ripTex.clone();
     t.needsUpdate=true;
-    t.repeat.set(sc,sc);
+    // Anisotropic repeat stretches every dash along the scroll heading —
+    // flow you can point at in a still, not just assert in the update.
+    t.repeat.set(sc,sc*0.6);
     const m=new THREE.Mesh(
       new THREE.PlaneGeometry(X1-X0,Z0-Z1),
       new THREE.MeshBasicMaterial({map:t,transparent:true,opacity:op,
