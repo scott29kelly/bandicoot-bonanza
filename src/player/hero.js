@@ -18,7 +18,10 @@ export function createHero(scene,solids,spawn){
   scene.add(group);
   // Dynamic contact blob: the floor demands a shadow under the feet in
   // EVERY framing, and the cascade alone won't ground a jump.
-  const blob=contactBlob(0.5);
+  // r=0.5 vanished under the ground-cover grass in every wide framing
+  // (round-6 verdict: "the hero looks pasted on") — it has to out-read
+  // the dressing around the feet, not just cover them.
+  const blob=contactBlob(0.68);
   scene.add(blob);
 
   /* ---------- input ----------------------------------------------------- */

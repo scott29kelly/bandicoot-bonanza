@@ -13,8 +13,12 @@ import * as THREE from 'three';
 import {toonMat} from '../art/materials.js';
 import {vcolor,xform,mergeGeoms} from '../world/geo.js';
 
-const FUR=0xe0661e, FUR_DARK=0xa8440f, BELLY=0xf5d9a4, GLOVE=0x7a4620,
-      SHOE=0xa03418, EAR_IN=0xe8a06a, NOSE=0x241812, MUZZLE=0xf0cf9a;
+// Glove albedo is CREAM, not leather-brown: round-6 verdict called the
+// gloves absent — they existed, but dark brown on orange fur in shade reads
+// as nothing. A glove has to contrast the fur or it isn't there.
+const FUR=0xe0661e, FUR_DARK=0xa8440f, BELLY=0xf5d9a4, GLOVE=0xefe3c8,
+      CUFF=0xb98a4e, SHOE=0xa03418, EAR_IN=0xe8a06a, NOSE=0x241812,
+      MUZZLE=0xf0cf9a;
 
 const _c=new THREE.Color();
 let outlineMat=null;
@@ -51,8 +55,22 @@ function torsoGeom(){
   vcolor(g,(x,y,z)=>{
     // darker saturated stripe down the back (-z), cream toward the chest
     if(z<-0.12)return _c.set(FUR_DARK);
-    if(z>0.14&&y<0.5)return _c.set(BELLY);
-    return _c.set(0xffffff);
+    // Belly bib, cut by ANGLE off the chest centreline, not by depth: a
+    // z-cut only reads dead-on, and every framing sees the hero in 3/4 —
+    // the round-6 "egg torso" was an invisible belly plus its hard rim.
+    // Wide at the belly (~77°), narrowing toward the collar, wavy fur edge.
+    // Past 90° at gut height: the hero-closeup framing is a straight side
+    // view, and a bib that stops short of the flank centreline vanishes
+    // there entirely (measured — ±77° showed zero belly pixels).
+    const ang=Math.abs(Math.atan2(x,z));
+    const wav=Math.sin(y*16+Math.atan2(x,z)*5)*0.10;
+    if(y<0.58&&ang<1.6-Math.max(0,y-0.38)*2.6+wav)
+      return _c.set(BELLY);
+    // vertex colors MULTIPLY the material color, so the material must stay
+    // white and the fur painted here — cream × orange material rendered as
+    // orange, which is why the round-5 belly and stripe never once read
+    // (found by painting the belly magenta).
+    return _c.set(FUR);
   });
   return g;
 }
@@ -64,7 +82,7 @@ export function createHeroModel(){
   root.add(hips);
 
   /* torso */
-  const torso=new THREE.Mesh(torsoGeom(),toonMat({color:FUR,vertexColors:true}));
+  const torso=new THREE.Mesh(torsoGeom(),toonMat({color:0xffffff,vertexColors:true}));
   torso.castShadow=true;
   outline(torso);
   torso.position.y=-0.06;
@@ -120,28 +138,30 @@ export function createHeroModel(){
     m.castShadow=true;
     head.add(m);
   }
-  // big ears with inner-ear plates
+  // big ears with inner-ear plates — thick enough to survive a profile view
+  // (round-6 verdict: "flat blade ears")
   const ears={};
   for(const s of[-1,1]){
     const pivot=new THREE.Group();
     pivot.position.set(s*0.13,0.16,-0.02);
     const ear=part(new THREE.SphereGeometry(0.095,9,8),FUR);
-    ear.scale.set(0.62,1.6,0.35);
+    ear.scale.set(0.62,1.6,0.52);
     ear.position.y=0.1;
     const inner=new THREE.Mesh(new THREE.SphereGeometry(0.07,8,7),toonMat({color:EAR_IN}));
-    inner.scale.set(0.42,1.3,0.22);
-    inner.position.set(0,0.1,0.035);
+    inner.scale.set(0.42,1.3,0.3);
+    inner.position.set(0,0.1,0.045);
     pivot.add(ear,inner);
     pivot.rotation.z=s*-0.28;
     pivot.rotation.x=-0.12;
     head.add(pivot);
     ears[s<0?'L':'R']=pivot;
   }
-  // hair spikes over the brow
+  // mohawk crest brow-to-crown: fur events that break the skull silhouette
   const spikes=[];
-  for(let i=0;i<3;i++){
-    const sp=new THREE.ConeGeometry(0.05,0.16,6);
-    xform(sp,{r:[rand2(-0.5,-0.2),0,(i-1)*0.5],p:[(i-1)*0.075,0.21,0.02]});
+  for(let i=0;i<4;i++){
+    const sp=new THREE.ConeGeometry(0.058,0.16+0.05*Math.sin(i/3*Math.PI),6);
+    xform(sp,{r:[rand2(-0.5,-0.2)-i*0.18,0,(i-1.5)*0.33],
+              p:[(i-1.5)*0.05,0.21-i*0.015,0.06-i*0.06]});
     spikes.push(sp);
   }
   const hair=new THREE.Mesh(mergeGeoms(spikes.map(s=>s.toNonIndexed())),toonMat({color:FUR_DARK}));
@@ -152,16 +172,38 @@ export function createHeroModel(){
   const arms={};
   for(const s of[-1,1]){
     const shoulder=new THREE.Group();
-    shoulder.position.set(s*0.27,0.42,0.04);
+    shoulder.position.set(s*0.25,0.42,0.04);
+    // a fur ball at the pivot bridges torso and arm — without it the arm
+    // floats beside the narrow chest (round-6 verdict: detached tubes)
+    const ball=part(new THREE.SphereGeometry(0.08,9,8),FUR,{line:false});
     const arm=part(new THREE.CapsuleGeometry(0.055,0.24,4,8),FUR);
     arm.position.y=-0.14;
-    const glove=part(new THREE.SphereGeometry(0.085,10,8),GLOVE);
+    // cream glove with knuckle bumps + a leather cuff — reads as a GLOVE
+    const handG=new THREE.SphereGeometry(0.085,10,8);
+    handG.scale(1,0.85,1.15);
+    const knuckles=[];
+    for(let k=-1;k<=1;k++){
+      const b=new THREE.SphereGeometry(0.032,7,6);
+      b.translate(k*0.045,-0.055,0.075);
+      knuckles.push(b.toNonIndexed());
+    }
+    const glove=part(mergeGeoms([handG.toNonIndexed(),...knuckles]),GLOVE);
     glove.position.y=-0.31;
-    glove.scale.set(1,0.85,1.15);
-    shoulder.add(arm,glove);
+    const cuff=part(new THREE.CylinderGeometry(0.065,0.072,0.055,9),CUFF,{line:false});
+    cuff.position.y=-0.235;
+    shoulder.add(ball,arm,glove,cuff);
     shoulder.rotation.z=s*0.55; // clear of the torso silhouette
     hips.add(shoulder);
     arms[s<0?'L':'R']=shoulder;
+  }
+
+  /* chest fur tufts where the bib meets the collar — silhouette breaks */
+  for(const [tx,ta] of [[-0.09,0.5],[0,0],[0.09,-0.5]]){
+    const tuft=new THREE.ConeGeometry(0.038,0.11,6);
+    xform(tuft,{r:[2.6,0,ta],p:[tx,0.40,0.20]});
+    const m=new THREE.Mesh(tuft,toonMat({color:BELLY}));
+    m.castShadow=true;
+    hips.add(m);
   }
 
   /* legs: hip pivots, big shoes */
@@ -186,7 +228,11 @@ export function createHeroModel(){
     new THREE.Vector3(0,0,0),new THREE.Vector3(0,0.10,-0.16),
     new THREE.Vector3(0,0.26,-0.24),new THREE.Vector3(0,0.4,-0.22)]);
   const tail=part(new THREE.TubeGeometry(tailCurve,8,0.032,6),FUR_DARK);
-  tailPivot.add(tail);
+  // fur tip so the tail ends in a shape, not a cut tube
+  const tip=part(new THREE.ConeGeometry(0.05,0.13,6),FUR_DARK,{line:false});
+  tip.position.set(0,0.44,-0.21);
+  tip.rotation.x=0.35;
+  tailPivot.add(tail,tip);
   hips.add(tailPivot);
 
   return {root,hips,head,ears,arms,legs,tailPivot};

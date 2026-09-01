@@ -139,6 +139,45 @@ function bgTree(x,z,h){
 }
 function randInt2(a,b){return Math.floor(rand(a,b+1));}
 
+/**
+ * Clouds: merged squashed-sphere clusters riding above the horizon. They
+ * skip fog (they'd wash to nothing at their distance) and skip lighting —
+ * shading is baked in vertex colors: warm-white tops, cool undersides.
+ * Round 6 ranked "the sky is empty" for the third round running.
+ */
+function makeClouds(){
+  const parts=[];
+  const N=9;
+  for(let i=0;i<N;i++){
+    const a=(i/N-0.5)*Math.PI*1.5-Math.PI/2; // biased around the corridor -z
+    const dist=rand(210,290);
+    const cx=Math.cos(a)*dist,cz=Math.sin(a)*dist;
+    const cy=rand(38,95),S=rand(9,20);
+    const puffs=Math.floor(rand(3,6));
+    for(let p=0;p<puffs;p++){
+      const puff=new THREE.SphereGeometry(S*rand(0.45,0.8),8,6);
+      puff.scale(rand(1.2,1.9),rand(0.35,0.5),1);
+      const pp=puff.getAttribute('position');
+      for(let j=0;j<pp.count;j++){
+        const k=0.85+hash3(pp.getX(j)*0.5+i,pp.getY(j)*0.5,pp.getZ(j)*0.5+p)*0.3;
+        pp.setXYZ(j,pp.getX(j)*k,Math.max(pp.getY(j)*k,-S*0.28),pp.getZ(j)*k);
+      }
+      puff.computeVertexNormals();
+      vcolor(puff,(px,py)=>{
+        const t=THREE.MathUtils.clamp(py/(S*0.5)+0.5,0,1);
+        return _c.setRGB(0.80+t*0.19,0.82+t*0.17,0.88+t*0.11);
+      });
+      xform(puff,{p:[cx+rand(-S,S)*1.3,cy+rand(-S,S)*0.25,cz+rand(-S,S)*0.6]});
+      parts.push(puff);
+    }
+  }
+  const mesh=new THREE.Mesh(mergeGeoms(parts.map(p=>p.toNonIndexed())),
+    new THREE.MeshBasicMaterial({vertexColors:true,fog:false}));
+  mesh.castShadow=false;
+  mesh.receiveShadow=false;
+  return mesh;
+}
+
 export function createBackdrop(){
   const mat=toonMat({vertexColors:true,side:THREE.DoubleSide});
   const parts=[];
@@ -176,7 +215,11 @@ export function createBackdrop(){
   // carry a mid-distance silhouette, not just flank walls.
   for(const [x,z,h,r] of [[-52,-58,16,5],[-64,-24,10,3.4],[58,-88,20,6],
                           [48,-30,9,3],[-58,-130,14,4.5],[70,-140,11,3.6],
-                          [-21,-76,9,3],[30,-108,13,4]])
+                          [-21,-76,9,3],[30,-108,13,4],
+                          // horizon pair dead in the corridor sightline —
+                          // the far layer must read from beach-corridor too,
+                          // not only from title-hero (round-6 verdict, gap 3)
+                          [-13,-152,22,6],[17,-162,27,7]])
     parts.push(seaStack(x,z,h,r));
 
   // Far layer: a haze ridge band across the horizon of the corridor, tall
@@ -188,5 +231,7 @@ export function createBackdrop(){
   const mesh=new THREE.Mesh(mergeGeoms(parts),mat);
   mesh.castShadow=false;   // far out of the cascade; shadows would just crawl
   mesh.receiveShadow=false;
-  return mesh;
+  const group=new THREE.Group();
+  group.add(mesh,makeClouds());
+  return group;
 }

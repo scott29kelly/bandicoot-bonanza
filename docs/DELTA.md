@@ -32,9 +32,44 @@ discrete emulator lottery passes, continuous build entropy cannot.
 Verified green four consecutive runs, pairing on the first two boots
 each time.
 
-### Critic verdict (blind, fresh context)
+### Critic verdict (blind, fresh context) — and what measurement said
 
-Pending — appended when the round-6 critic reports.
+**Biggest gap: "the closest thing to the camera is the least designed
+thing in every frame"** — the hero at portrait range is nameable
+primitives with an outline, and the fruit is the banned sphere verbatim.
+The calibration paragraph held: no grey-shadow template lead; the one
+lighting claim made ("hard polygon-edged cast shadow, zero penumbra")
+survived a pixel probe.
+
+Claims verified before obeying: hero contact blob EXISTS but r=0.5
+drowns under ground cover (claim survives perceptually); rim light
+EXISTS at 0.5 but never separates the hero (survives); "no gloves" is
+stale as stated — gloves existed since round 5 — but true in effect:
+dark leather on orange fur reads as nothing. Verification also exposed
+a real bug the critic could not have named: the torso's vertex colors
+MULTIPLY its orange material color, so the round-5 belly patch and back
+stripe had never rendered at all (cream × orange = orange; found by
+painting the belly magenta).
+
+Ranked (condensed): 1 hero fidelity · 2 sphere fruit (banned) · 3 two
+backdrop layers + empty sky (third round at #3) · 4 paper vegetation ·
+5 sheet foam, no flow · 6 no hero rim · 7 no hero contact shadow ·
+8 no macro variation · 9 frozen identical idle, no wind lean ·
+10 title-hero is a found frame.
+
+Self-score: character 3 · props 5 · dressing 4 · vegetation 4 · light 5
+· colour 5 · water 4 · backdrop 3 · motion 3 · composition 4.
+
+### Fixing this round (became round 7)
+
+#1 hero: the vertex-color multiply bug fixed (belly and stripe render
+for the first time), belly cut by angle so it survives 3/4 and side
+views, cream gloves + cuffs + knuckles, thicker ears, 4-spike crest,
+shoulder balls, chest tufts, tail tip. #2 fruit: five lobes and a stem
+dimple sculpted into the body. #3 backdrop: cloud layer (fog-free,
+baked shading) + a horizon sea-stack pair dead in the corridor
+sightline. Plus: VSM shadows (real penumbra — PCFSoft ignored
+shadow.radius, PCF+radius dithered), rim 0.65, hero blob r=0.68.
 
 ---
 

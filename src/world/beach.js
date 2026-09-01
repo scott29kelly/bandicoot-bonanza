@@ -137,16 +137,28 @@ export function buildBeach(scene){
   fruitRow(0,0,-5,-11,5);
   fruitPos.push([0,1.6,-31.5],[0,1.8,-39.2],[0,1.8,-47.3]); // arcs over the gaps
   fruitRow(3,0,-49,-55,4);
-  // A wumpa is a DESIGNED object, not a sphere (round-1 verdict, gap 3):
-  // squashed body + stem + two leaves, two materials via geometry groups.
-  const body=new THREE.SphereGeometry(0.27,12,10);
-  body.scale(1,1.14,1);
-  const stem=new THREE.CylinderGeometry(0.03,0.05,0.11,6);
-  stem.translate(0,0.33,0);
+  // A wumpa is a DESIGNED object, not a sphere. Round 6 ranked the sphere
+  // body as the banned outcome verbatim, stem notwithstanding — so the body
+  // gets sculpted: five lobes around the axis and a stem dimple at the top.
+  const body=new THREE.SphereGeometry(0.27,18,14);
+  {
+    const bp=body.getAttribute('position');
+    for(let i=0;i<bp.count;i++){
+      const x=bp.getX(i),y=bp.getY(i),z=bp.getZ(i);
+      const rxz=Math.hypot(x,z);
+      const lobe=1+0.055*Math.cos(Math.atan2(z,x)*5)*(rxz/0.27);
+      let ny=y*1.1;
+      if(y>0)ny-=Math.exp(-Math.pow(rxz/0.09,2))*0.09; // dimple seats the stem
+      bp.setXYZ(i,x*lobe,ny,z*lobe);
+    }
+    body.computeVertexNormals();
+  }
+  const stem=new THREE.CylinderGeometry(0.03,0.05,0.13,6);
+  stem.translate(0,0.24,0);
   const leaf=(rot)=>{
     const l=new THREE.SphereGeometry(0.09,6,4);
     l.scale(2.1,0.32,0.9);
-    l.translate(0.16,0.35,0);
+    l.translate(0.16,0.28,0);
     const m=new THREE.Matrix4().makeRotationY(rot);
     l.applyMatrix4(new THREE.Matrix4().makeRotationZ(0.45).premultiply(m));
     return l;

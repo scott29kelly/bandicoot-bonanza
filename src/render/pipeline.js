@@ -31,7 +31,10 @@ export function createPipeline(){
   renderer.setPixelRatio(MINFX?1:Math.min(window.devicePixelRatio||1,2));
   renderer.setSize(window.innerWidth,window.innerHeight);
   renderer.shadowMap.enabled=!MINFX;
-  renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  // VSM over PCFSoft: PCFSoft ignores shadow.radius and left every cast
+  // edge a hard polygon line (round-6 verdict — the one lighting claim that
+  // survived the pixel probe). PCF+radius dithers; VSM blurs the map itself.
+  renderer.shadowMap.type=THREE.VSMShadowMap;
   // AgX, once, at the end. Light intensities below are authored AGAINST this
   // tonemapper — change one and you re-author the other (pipeline law).
   // With the post chain on, the scene renders LINEAR into the float target
@@ -72,7 +75,7 @@ export function createPipeline(){
 
   // Cool rim from behind-left, shadowless: separates every silhouette from
   // the ground the way the refs do. Tracks the focus with the sun.
-  const rim=new THREE.DirectionalLight(PALETTE.rim,0.5);
+  const rim=new THREE.DirectionalLight(PALETTE.rim,0.65);
   scene.add(rim,rim.target);
 
   const sun=new THREE.DirectionalLight(PALETTE.sunColor,3.3);
@@ -82,8 +85,10 @@ export function createPipeline(){
   sun.shadow.camera.left=-d;sun.shadow.camera.right=d;
   sun.shadow.camera.top=d;sun.shadow.camera.bottom=-d;
   sun.shadow.camera.near=4;sun.shadow.camera.far=90;
-  sun.shadow.bias=-0.0004;
-  sun.shadow.normalBias=0.03;
+  sun.shadow.bias=-0.0001;
+  sun.shadow.normalBias=0.02;
+  sun.shadow.radius=4;      // penumbra: VSM blur radius (PCFSoft ignored it)
+  sun.shadow.blurSamples=12;
   // Changing the ortho bounds does nothing until the projection is rebuilt —
   // without this the cascade silently stays the 10 m default box.
   sun.shadow.camera.updateProjectionMatrix();
