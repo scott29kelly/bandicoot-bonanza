@@ -5,6 +5,66 @@ on top, closed entries move to the round that closed them, nothing is deleted.
 Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
+## Round 17 — 2026-09-03 (hewn rock, capped knees, a corridor worth running down)
+
+Shot from `068c507`, seed `0x5eed1e`, `shots/round17/`. Gates: build
+green, det green (pair in N boots, max 0), 5/5 PASS.
+
+What landed: sea stacks flat-shaded (the carving finally reads), crate
+beam UVs shrunk (sawtooth strip gone), knee cap sphere, corridor
+restaged off-axis with the hero mid-run.
+
+### Critic verdict (blind, fresh context, crop-verified) — measured
+
+The three round-16 fixes all landed: no sea-stack "lathe" call for the
+first time in four rounds, no beam sawtooth, no amputated knee. The
+verdict moved to the hero as the single biggest gap: "a stack of smooth
+unbroken primitives" — hands read as FOUR STACKED BALLS at 3x (crop
+`c17-hero-torso` — confirmed by the builder, the knuckle spheres sat
+inside the palm sphere so the outline had no gap to run through).
+
+Crop-verified and confirmed by the builder: hill trees are "one pentagon
+on a stick" (`c17-title-hill-tree` — one crown sphere at 8×6 segments IS
+a pentagon at that distance); the gap platforms meet the water as "a
+flat top plus one vertical band in darker brown, a hard corner" — the
+banned bare-slab outcome (`c17-water-shore`: the carved skirt shows only
+~0.6 m of freeboard and shades to one dark band); no specular anywhere
+on the water (`c17-water-far`).
+
+Discounted: "no midrib on the fronds" — `c17-beach-hill` shows the dark
+midrib stripe on the near frond. "No rim light on the hero" (FOURTH
+verdict running) — builder edge crops `b17-ear-edge`/`b17-belly-edge`
+show a faint pale band inside the outline: present, under-legible. At
+exponent 4.5 the band is 2–3 px and the hull outline covers half of it.
+Counted as "under-strength", not absent.
+
+Self-score: character 3 · props 4 · dressing 4 · vegetation 3 · light 4
+· colour 4 · water 4 · backdrop 3 · motion UNMEASURED · composition 5.
+(Colour 6→4 and character 4→3 with a new critic — template drift, both
+scores are in the noise; the mechanism claims are what got acted on.)
+
+Found present (critic's own list): outline, contact shadow, saturated
+cool shadow, ear/iris/brow/muzzle/crest/cuffs/tail, foam + shoreline
+band, ripple flow, four debris classes, per-instance grass hue, crate
+relief + nail heads + under-lip, coconuts, three distance layers, fog
+grading the stacks, mid-stride pose reads as a run.
+
+### Fixing this round (became round 18)
+
+Hands rebuilt: palm + three capsule FINGERS standing off the palm + a
+thumb, so the hull pass draws a dark line between each digit. Rim
+1.1→1.6, exponent 4.5→3.4 (`rim.power` option in toonMat). Background
+tree crowns are now a three-lump cluster (main + two shoulder lumps,
+each its own lightness). Shore boulders: half-sunk flat-shaded rocks
+along every island's waterline (`shoreRocks` in masses.js) — they
+break the slab corner and root the platforms. Water sun glints: two
+sparse additive dash sheets on crossing headings, opacity breathing on
+separate beats (materials.js `glintTexture`, water.js). Note: the
+boulders consume seeded rand() calls before the scatter, so every
+downstream placement re-rolled this round — a layout change, not a bug.
+
+---
+
 
 ## Round 16 — 2026-09-01 (twelve rounds of clones were one multiply)
 

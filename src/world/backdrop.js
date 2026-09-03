@@ -136,16 +136,25 @@ function bgTree(x,z,h){
   const tipX=Math.cos(leanD)*lean,tipZ=Math.sin(leanD)*lean;
   // A crown blob under the blades — bare blade fans vanish at distance and
   // the tree reads as a dead stick.
-  const crown=new THREE.SphereGeometry(h*0.2,8,6);
-  const cp=crown.getAttribute('position');
-  for(let j=0;j<cp.count;j++){
-    const k=0.75+hash3(cp.getX(j)*4,cp.getY(j)*4,cp.getZ(j)*4)*0.5;
-    cp.setXYZ(j,cp.getX(j)*k,cp.getY(j)*k*0.7,cp.getZ(j)*k);
+  // Round 17, crop-verified: ONE crown blob read as "a pentagon on a
+  // stick". A canopy is a cluster: a main lump, two shoulder lumps offset
+  // sideways and lower, each its own lightness so the lumps separate.
+  const lumps=[[0,0,0,1.0],[rand(0.5,0.8),-0.35,rand(-0.4,0.4),0.7],
+               [-rand(0.5,0.8),-0.45,rand(-0.4,0.4),0.62]];
+  for(const [ox,oy,oz,sc] of lumps){
+    const R=h*0.2*sc;
+    const crown=new THREE.SphereGeometry(R,7,5);
+    const cp=crown.getAttribute('position');
+    for(let j=0;j<cp.count;j++){
+      const k=0.75+hash3(cp.getX(j)*4+ox,cp.getY(j)*4,cp.getZ(j)*4+oz)*0.5;
+      cp.setXYZ(j,cp.getX(j)*k,cp.getY(j)*k*0.7,cp.getZ(j)*k);
+    }
+    crown.computeVertexNormals();
+    const hue=rand(0.26,0.34),lit=rand(0.13,0.2);
+    vcolor(crown,(px,py)=>_c.setHSL(hue,0.55,lit+Math.max(0,py)*0.12/sc));
+    xform(crown,{p:[tipX+ox*h*0.2,h*0.98+oy*h*0.2,tipZ+oz*h*0.2]});
+    parts.push(crown);
   }
-  crown.computeVertexNormals();
-  vcolor(crown,(px,py)=>_c.setHSL(rand(0.26,0.34),0.55,0.15+Math.max(0,py)*0.12));
-  xform(crown,{p:[tipX,h*0.98,tipZ]});
-  parts.push(crown);
   // Blades short and few: long splayed fans on a thin leaning trunk read
   // as INSECT LEGS at treeline distance (round-12, crop-verified).
   const N=randInt2(4,6);

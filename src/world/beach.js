@@ -11,7 +11,7 @@ import {rand} from '../core/rng.js';
 import {mark,addFraming} from '../review/framings.js';
 import {toonMat} from '../art/materials.js';
 import {mergeGeoms} from './geo.js';
-import {islandMass} from './masses.js';
+import {islandMass,shoreRocks} from './masses.js';
 import {createWater} from './water.js';
 import {createBackdrop} from './backdrop.js';
 import {makeCrate,makeTNT} from './props.js';
@@ -43,7 +43,7 @@ export function buildBeach(scene){
   const gapA=islandMass({x:0,z:-35,w:7,d:4});
   const gapB=islandMass({x:0,z:-43.5,w:7,d:4});
   const yard=islandMass({x:0,z:-54.5,w:12,d:17});
-  for(const m of [beach,gapA,gapB,yard]){scene.add(m.mesh);solids.push(m.solid);}
+  for(const m of [beach,gapA,gapB,yard]){scene.add(m.mesh);solids.push(m.solid);scene.add(shoreRocks(m.solid));}
   mark('beach',beach.mesh);
   mark('gapA',gapA.mesh);
   mark('gapB',gapB.mesh);

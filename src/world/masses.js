@@ -6,7 +6,8 @@
  * platform.
  */
 import * as THREE from 'three';
-import {fbm3,vcolor} from './geo.js';
+import {fbm3,vcolor,hash3,xform,mergeGeoms} from './geo.js';
+import {rand} from '../core/rng.js';
 import {toonMat,sandTexture,rockTexture} from '../art/materials.js';
 
 export const WATER_Y=-0.55;
@@ -130,4 +131,51 @@ export function islandMass({x,z,w,d,topY=0}){
   mesh.castShadow=true;
   mesh.receiveShadow=true;
   return {mesh,solid:{minX:x-w/2,maxX:x+w/2,minZ:z-d/2,maxZ:z+d/2,topY:yTop}};
+}
+
+/**
+ * Boulders along an island's waterline. The carved skirt shows ~0.6 m of
+ * freeboard and, sun-side-away, shades to one dark band with a hard corner
+ * — the "bare extruded slab" the bar bans (round-17, crop-verified on the
+ * gap platforms). Half-sunk rocks break the corner and root the platform.
+ */
+export function shoreRocks(solid){
+  const {cliffMat}=mats();
+  const {minX,maxX,minZ,maxZ}=solid;
+  const w=maxX-minX,d=maxZ-minZ,per=2*(w+d);
+  const n=Math.round(per*0.42);
+  const parts=[];
+  for(let i=0;i<n;i++){
+    // walk the perimeter by arclength, jittered
+    let l=(i+rand(0.1,0.9))/n*per;
+    let px,pz,nx,nz;
+    if(l<w){px=minX+l;pz=minZ;nx=0;nz=-1;}
+    else if((l-=w)<d){px=maxX;pz=minZ+l;nx=1;nz=0;}
+    else if((l-=d)<w){px=maxX-l;pz=maxZ;nx=0;nz=1;}
+    else{l-=w;px=minX;pz=maxZ-l;nx=-1;nz=0;}
+    const out=rand(0.9,2.2);
+    const s=rand(0.28,0.75);
+    const g=new THREE.IcosahedronGeometry(1,1);
+    const p=g.getAttribute('position');
+    for(let j=0;j<p.count;j++){
+      const k=0.72+hash3(p.getX(j)*3+i,p.getY(j)*3,p.getZ(j)*3)*0.55;
+      p.setXYZ(j,p.getX(j)*k,p.getY(j)*k*0.7,p.getZ(j)*k);
+    }
+    g.scale(s*rand(1,1.6),s,s*rand(1,1.4));
+    g.rotateY(rand(0,6.3));
+    // flat facets: smooth normals on a 42-vert blob read as a pebble balloon
+    const g2=g.toNonIndexed();
+    g2.computeVertexNormals();
+    const y=WATER_Y+rand(-0.15,0.22);
+    vcolor(g2,(vx,vy)=>{
+      const wet=THREE.MathUtils.clamp((WATER_Y+0.12-(vy+y))/0.35,0,1);
+      return _c.copy(cRockHi).lerp(cRockLo,0.35+hash3(vx*5,vy*5,i)*0.3).lerp(cWet,wet*0.7);
+    });
+    xform(g2,{p:[px+nx*out+rand(-0.5,0.5),y,pz+nz*out+rand(-0.5,0.5)]});
+    parts.push(g2);
+  }
+  const mesh=new THREE.Mesh(mergeGeoms(parts),cliffMat);
+  mesh.castShadow=true;
+  mesh.receiveShadow=true;
+  return mesh;
 }

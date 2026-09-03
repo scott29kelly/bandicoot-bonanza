@@ -43,20 +43,23 @@ export function toonMat(opts={}){
   if(rim){
     const color=new THREE.Color(rim.color??0xffe4b8);
     const strength=rim.strength??0.32;
+    const power=rim.power??4.5;
     m.onBeforeCompile=(sh)=>{
       sh.uniforms.uRimColor={value:color};
       sh.uniforms.uRimK={value:strength};
+      sh.uniforms.uRimP={value:power};
       sh.fragmentShader=sh.fragmentShader
         .replace('void main() {',
 `uniform vec3 uRimColor;
 uniform float uRimK;
+uniform float uRimP;
 void main() {`)
         .replace('#include <emissivemap_fragment>',
 `#include <emissivemap_fragment>
 {
   vec3 rimN=normalize(normal);
   vec3 rimV=normalize(vViewPosition);
-  float rimF=pow(1.0-clamp(dot(rimN,rimV),0.0,1.0),4.5);
+  float rimF=pow(1.0-clamp(dot(rimN,rimV),0.0,1.0),uRimP);
   totalEmissiveRadiance+=uRimColor*rimF*uRimK;
 }`);
     };
@@ -260,6 +263,19 @@ export function rippleTexture(){
  * too. One shared texture; meshes scale it per prop.
  */
 let _contactTex=null;
+/** Sun glints: sparse short bright dashes, additive over the sea. */
+export function glintTexture(){
+  return canvasTex(256,(g,s)=>{
+    g.clearRect(0,0,s,s);
+    for(let i=0;i<34;i++){
+      const x=rand(8,s-8),y=rand(8,s-8),len=rand(3,9),a=rand(0.35,0.9);
+      g.strokeStyle='rgba(255,250,235,'+a+')';
+      g.lineWidth=rand(1.2,2.2);
+      g.beginPath();g.moveTo(x-len,y);g.lineTo(x+len,y);g.stroke();
+    }
+  });
+}
+
 export function contactTexture(){
   if(_contactTex)return _contactTex;
   _contactTex=canvasTex(128,(g,s)=>{

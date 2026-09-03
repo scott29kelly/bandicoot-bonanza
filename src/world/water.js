@@ -8,7 +8,7 @@
  */
 import * as THREE from 'three';
 import {rand,rnd} from '../core/rng.js';
-import {rippleTexture,foamTexture} from '../art/materials.js';
+import {rippleTexture,foamTexture,glintTexture} from '../art/materials.js';
 import {WATER_Y} from './masses.js';
 
 // World rect the sea covers, mapped onto the depth canvas.
@@ -186,6 +186,26 @@ export function createWater(islands){
     rips.push(t);
   }
 
+  // Sun glints: two sparse dash sheets, additive, crossing headings. Where
+  // dashes cross they sum to a bright point that moves — the sparkle the
+  // stills lacked (round-17: "no specular highlight anywhere").
+  const glintTex=glintTexture();
+  const glints=[];
+  for(const [sc,op] of [[70,0.55],[46,0.4]]){
+    const t=glintTex.clone();
+    t.needsUpdate=true;
+    t.repeat.set(sc,sc*0.6);
+    const m=new THREE.Mesh(
+      new THREE.PlaneGeometry(X1-X0,Z0-Z1),
+      new THREE.MeshBasicMaterial({map:t,transparent:true,opacity:op,
+        blending:THREE.AdditiveBlending,depthWrite:false,fog:true}));
+    m.rotation.x=-Math.PI/2;
+    m.position.set((X0+X1)/2,WATER_Y+0.05+glints.length*0.01,(Z0+Z1)/2);
+    m.renderOrder=3;
+    group.add(m);
+    glints.push(m);
+  }
+
   const foamTex=foamTexture();
   const foams=[];
   for(const s of islands){
@@ -197,6 +217,11 @@ export function createWater(islands){
   function update(t){
     rips[0].offset.set(t*0.014,t*0.010);
     rips[1].offset.set(-t*0.009,t*0.013);
+    glints[0].material.map.offset.set(t*0.021,-t*0.008);
+    glints[1].material.map.offset.set(-t*0.013,t*0.017);
+    // Twinkle: each sheet breathes on its own beat, out of phase.
+    glints[0].material.opacity=0.42+Math.sin(t*2.1)*0.16;
+    glints[1].material.opacity=0.30+Math.sin(t*1.7+1.9)*0.13;
     for(let i=0;i<foams.length;i++){
       // The lace edge breathes in and out — surf, not a painted ribbon.
       foams[i].material.map.offset.y=Math.sin(t*1.25+i*1.3)*0.10;

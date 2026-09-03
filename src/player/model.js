@@ -43,7 +43,10 @@ function outline(mesh,px=0.011){
 // injection works): exponent 4.5 narrows the band to the silhouette edge
 // and 1.1 survives AgX + the grade's S-curve, which ate 0.32 and 0.5 —
 // three critics running called the hero rimless before this.
-const RIM={color:0xffe4b8,strength:1.1};
+// Round 17: at exponent 4.5 the band was 2–3 px wide and the outline hull
+// sat on top of half of it — a fourth critic called the hero rimless while
+// edge crops showed a faint pale line. Wider band, brighter.
+const RIM={color:0xffe4b8,strength:1.6,power:3.4};
 
 function part(geo,color,{shadow=true,line=true}={}){
   const m=new THREE.Mesh(geo,toonMat({color,rim:RIM}));
@@ -215,22 +218,28 @@ export function createHeroModel(){
     // exactly behind the torso's widest band and no pose could show them.
     const arm=part(new THREE.CapsuleGeometry(0.055,0.32,4,8),FUR);
     arm.position.y=-0.18;
-    // cream glove: palm + three proud knuckles + a THUMB — "arms end in
-    // smooth rounded stumps" survived two verdicts because the old bumps
-    // hid inside the palm silhouette. The thumb breaks it.
-    const handG=new THREE.SphereGeometry(0.09,10,8);
-    handG.scale(1.05,0.85,1.2);
-    const knuckles=[];
+    // cream glove: a palm and SEPARATE fingers. The round-17 knuckle balls
+    // read as "four stacked balls" at 3x — spheres sunk into a sphere have
+    // no gap for the outline to run through. Capsule fingers standing off
+    // the palm give the hull pass a dark line between each digit, which is
+    // what makes a glove read as a hand.
+    const handG=new THREE.SphereGeometry(0.08,10,8);
+    handG.scale(1.1,0.75,1.0);
+    const digits=[];
     for(let k=-1;k<=1;k++){
-      const b=new THREE.SphereGeometry(0.04,7,6);
-      b.translate(k*0.05,-0.065,0.095);
-      knuckles.push(b.toNonIndexed());
+      const f=new THREE.CapsuleGeometry(0.026,0.075,3,7);
+      // splay: outer fingers fan away from the middle one
+      f.rotateX(-0.95);
+      f.rotateZ(k*0.28);
+      f.translate(k*0.058,-0.052,0.085);
+      digits.push(f.toNonIndexed());
     }
-    const thumb=new THREE.SphereGeometry(0.038,7,6);
-    thumb.scale(1,0.9,1.4);
-    thumb.translate(-s*0.085,-0.02,0.055);
-    knuckles.push(thumb.toNonIndexed());
-    const glove=part(mergeGeoms([handG.toNonIndexed(),...knuckles]),GLOVE);
+    const thumb=new THREE.CapsuleGeometry(0.026,0.06,3,7);
+    thumb.rotateX(-0.5);
+    thumb.rotateZ(-s*1.05);
+    thumb.translate(-s*0.095,-0.005,0.045);
+    digits.push(thumb.toNonIndexed());
+    const glove=part(mergeGeoms([handG.toNonIndexed(),...digits]),GLOVE);
     glove.position.y=-0.39;
     const cuff=part(new THREE.CylinderGeometry(0.072,0.082,0.06,9),CUFF,{line:false});
     cuff.position.y=-0.312;
