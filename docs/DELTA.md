@@ -5,6 +5,58 @@ on top, closed entries move to the round that closed them, nothing is deleted.
 Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
+## Round 24 — 2026-09-03 (crowns on the surface, strata on the skirt, shallows with grain)
+
+Shot from `1dc34b4` + `2b4bcbd`, seed `0x5eed1e`, `shots/round24/`.
+Gates: build green, det green (pair in 2 boots, max 0), 5/5 PASS.
+
+What landed: the mound carpet placed ON sampled ridge vertices (hill
+L sd 0.018→0.057 — the first time the base shell is buried), sculpted
+stacks, shaded clouds, skirt strata + waterline band + rubble, mottled
+2048 shallows, fanned cheek cones, chest fringe, sunk pebbles, lower
+hero-closeup camera. Builder-caught before the critic: a blade at
+1.2 m drew a pale line across hero-closeup after the camera dropped —
+lens collapse radius 0.9→1.5 m (24b).
+
+### Critic verdict (blind, fresh context, measured) — measured
+
+Colour script 6 ("saturated and coherent"), composition 6, backdrop 5
+(up from 3–4: "three layers exist"), props 6. The hill is no longer
+"one flat value"; the complaint moved to the crowns' polygonal
+silhouette at 6×4 segments.
+
+Real finds, builder-confirmed:
+1. A black wedge on the crate stack (`z24-cc-cratetop-black`): the
+   stacked-crate contact blob, widened to r 1.35 in round 22, lay past
+   the lower crate's edge and read as an unlit object.
+2. Dotted diagonal lines across the fruit and the hero's arm
+   (`z24-hc-fruit-dots`): grass blade TIPS going sub-pixel in front of
+   them — the blades were single triangles to a point.
+3. Rim band measured at V 0.55 against a lit body of 0.65 on the arm:
+   present, under the body value.
+4. Grass tufts "sparse spike stars, ground shows through every tuft".
+
+Discounted: "crushed blue-black on the shadowed crate wall" — the
+crop (`c24-hc-crate`) shows dark maroon planks with the grain legible;
+the rgb 29,30,37 sample is the recessed crevice at the floor. "Foam
+quad edge at (765–793,600–610)" — a pale straight edge exists in
+`z24-wg-floating`; not yet traced (collar ring or island ring end).
+Logged, not fixed. "Skirt has one crack line only" — strata bands are
+present at 6× (round-24 builder crop); low contrast, not absent.
+
+Self-score: character 4 · props 6 · dressing 5 · vegetation 4 · light 5
+· colour 6 · water 4 · backdrop 5 · motion — · composition 6.
+
+### Fixing this round (became round 25)
+
+Grass blades rebuilt: 11 per tuft, two segments with a bend, a 1.2 cm
+tip, vertex-colour dark base (material white × instance × vertex).
+Rim 1.6→2.2. Stacked-crate blob r 0.7 (inside the footprint). Hemi
+ground 0xa4b9a0. TNT fuse pot lifted off near-black. Crowns 7×5 at
+4.0/m; leaf shell density 0.4.
+
+---
+
 ## Round 23 — 2026-09-03 (crates out of the multiply, grass parts for the hero, crowns down the slope)
 
 Shot from `74cce4b`, seed `0x5eed1e`, `shots/round23/`. Gates: build

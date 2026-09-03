@@ -66,7 +66,9 @@ function outline(mesh,px=0.011){
 // Round 17: at exponent 4.5 the band was 2–3 px wide and the outline hull
 // sat on top of half of it — a fourth critic called the hero rimless while
 // edge crops showed a faint pale line. Wider band, brighter.
-const RIM={color:0xffe4b8,strength:1.6,power:3.4};
+// 2.2 (was 1.6): round 24 measured the rim band at V 0.55 against a lit
+// body of 0.65 — present, but under the body, so it never separates.
+const RIM={color:0xffe4b8,strength:2.2,power:3.4};
 
 function part(geo,color,{shadow=true,line=true}={}){
   const m=new THREE.Mesh(geo,toonMat({color,rim:RIM}));

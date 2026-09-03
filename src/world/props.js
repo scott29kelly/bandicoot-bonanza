@@ -15,7 +15,7 @@ function mats(){
   if(!crateMat){
     crateMat=toonMat({map:woodTexture(),vertexColors:true});
     tntMat=toonMat({map:tntTexture(),vertexColors:true});
-    fuseMat=toonMat({color:0x2a2320});
+    fuseMat=toonMat({color:0x4a3a30});
   }
   return {crateMat,tntMat,fuseMat};
 }

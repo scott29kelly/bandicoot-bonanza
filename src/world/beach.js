@@ -83,7 +83,10 @@ export function buildBeach(scene){
     scene.add(c.mesh);
     solids.push(c.solid);
     avoid.push({x,z,r:1.15});
-    ground(x,z,1.35,y,y>0?0.55:1); // stacked crates shade the crate below
+    // Upper crates: r 0.7 keeps the disc INSIDE the lower crate's top —
+    // at 1.35 it lay past the edge and read as a black wedge on the stack
+    // (round 24, crop-verified).
+    ground(x,z,y>0?0.7:1.35,y,y>0?0.55:1);
     return c;
   };
   crateAt(-1.4,0,-14);crateAt(0,0,-14);crateAt(1.4,0,-14);

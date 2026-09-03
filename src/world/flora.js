@@ -172,19 +172,33 @@ export function makeFern(x,y,z,s=1){
 }
 
 /* ---------- grass tufts (instanced, wind in the shader) ------------------ */
+/**
+ * A tuft: 11 blades, each TWO segments (base quad + tip quad) so the blade
+ * bends, with a 1.2 cm tip instead of a point — the pointed triangles went
+ * sub-pixel and drew dotted lines across whatever stood behind them
+ * (round 24, crop-verified on the fruit). Vertex colour darkens the base
+ * (material is white; instance colour × vertex colour = blade colour) so
+ * every tuft has a shadow core, not ground showing through a star.
+ */
 function tuftGeom(){
   const parts=[];
-  for(let i=0;i<7;i++){
-    const a=i/7*Math.PI*2+rand(-0.3,0.3),lean=rand(0.25,0.6),hgt=rand(0.5,0.85);
+  const N=11;
+  for(let i=0;i<N;i++){
+    const a=i/N*Math.PI*2+rand(-0.3,0.3),lean=rand(0.2,0.6),hgt=rand(0.5,0.9);
+    const w=0.04,wt=0.012;
+    const sx=Math.cos(a+1.57),sz=Math.sin(a+1.57);   // blade width axis
+    const mx=Math.cos(a)*lean*0.45,my=hgt*0.55,mz=Math.sin(a)*lean*0.45; // mid
+    const tx=Math.cos(a)*lean,ty=hgt,tz=Math.sin(a)*lean;                 // tip
+    const wm=w*0.7;
+    const pos=[
+      sx*w,0,sz*w,  -sx*w,0,-sz*w,  mx-sx*wm,my,mz-sz*wm,  mx+sx*wm,my,mz+sz*wm,
+      tx-sx*wt,ty,tz-sz*wt, tx+sx*wt,ty,tz+sz*wt];
+    const col=[0.55,0.6,0.5, 0.55,0.6,0.5, 0.85,0.88,0.8, 0.85,0.88,0.8, 1,1,1, 1,1,1];
     const blade=new THREE.BufferGeometry();
-    const w=0.045;
-    const tip=[Math.cos(a)*lean,hgt,Math.sin(a)*lean];
-    blade.setAttribute('position',new THREE.Float32BufferAttribute([
-      Math.cos(a+1.57)*w,0,Math.sin(a+1.57)*w,
-      -Math.cos(a+1.57)*w,0,-Math.sin(a+1.57)*w,
-      tip[0],tip[1],tip[2]],3));
-    blade.setAttribute('uv',new THREE.Float32BufferAttribute([0,0,1,0,0.5,1],2));
-    blade.setIndex([0,1,2]);
+    blade.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+    blade.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+    blade.setAttribute('uv',new THREE.Float32BufferAttribute([0,0,1,0,0,0.5,1,0.5,0,1,1,1],2));
+    blade.setIndex([0,1,2, 1,3,2, 2,3,4, 3,5,4]);
     blade.computeVertexNormals();
     parts.push(blade.toNonIndexed());
   }
@@ -197,7 +211,7 @@ export function makeGrassField(spots){
   // every per-instance hue back toward green — the round-2 "loud spread"
   // never actually rendered. Same bug class as the hero's cream×orange
   // torso (round 7). The instance HSL values below ARE the blade colors.
-  const mat=toonMat({color:0xffffff,side:THREE.DoubleSide});
+  const mat=toonMat({color:0xffffff,vertexColors:true,side:THREE.DoubleSide});
   // Wind rides the same field as the palms: same frequencies, same phases.
   mat.onBeforeCompile=(sh)=>{
     sh.uniforms.uTime={value:0};

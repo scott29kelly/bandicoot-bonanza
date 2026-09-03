@@ -82,7 +82,7 @@ function leafShell(samples,mat){
     fan.push(g2);
   }
   const geo=mergeGeoms(fan);
-  const pick=samples.filter(()=>rand(0,1)<0.28);
+  const pick=samples.filter(()=>rand(0,1)<0.4);
   const mesh=new THREE.InstancedMesh(geo,mat,pick.length);
   const m=new THREE.Matrix4(),q=new THREE.Quaternion(),up=new THREE.Vector3(0,1,0),
         n=new THREE.Vector3(),p=new THREE.Vector3(),sc=new THREE.Vector3(),yaw=new THREE.Quaternion();
@@ -238,11 +238,11 @@ function jungleRidge(x,z,len,w,h,dir){
   // most of them sat buried in the volume — the lower slope stayed a
   // bare membrane through three verdicts. Now each mound sits on a
   // sampled surface vertex, a third sunk along the normal.
-  const N=Math.round(len*4.5);
+  const N=Math.round(len*4.0);
   for(let i=0;i<N;i++){
     const sm=samples[Math.floor(rand(0,samples.length))];
     if(!sm||sm.ly<0.8)continue;
-    const mound=new THREE.SphereGeometry(rand(1.2,2.6),6,4);
+    const mound=new THREE.SphereGeometry(rand(1.2,2.6),7,5); // 6×4 read as polyhedra (round 24)
     const mp=mound.getAttribute('position');
     for(let j=0;j<mp.count;j++){
       const k=0.8+hash3(mp.getX(j)*3+i,mp.getY(j)*3,mp.getZ(j)*3)*0.4;

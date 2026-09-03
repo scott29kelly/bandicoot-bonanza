@@ -22,7 +22,7 @@ export const PALETTE={
   fog:0xb9d9e4,
   sunColor:0xffdd96,      // hotter key
   hemiSky:0x55a8d2,       // saturated teal — this is what shadow is made of
-  hemiGround:0x93b09a,    // cool moss bounce, not warm sand (lifted round 23)
+  hemiGround:0xa4b9a0,    // cool moss bounce, brighter and a touch warmer (round 25)
   rim:0xcfeaff            // back light that pulls silhouettes off the ground
 };
 
