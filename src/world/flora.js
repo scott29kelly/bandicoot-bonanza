@@ -262,21 +262,44 @@ export function makeFlowerField(spots){
 }
 
 /** Second ground species: broadleaf clumps — wide bent blades, not spikes. */
+/**
+ * One leaf: a midrib strip with both halves folded UP into a shallow V,
+ * arching out and drooping at the tip. The old three-triangle fan read as
+ * "raw PlaneGeometry" at 3x (round-18, crop-verified) — no fold, no rib,
+ * no curl. Vertex colour darkens the rib (material is white; instance
+ * colour multiplies both, so this is a lightness mask, not a hue).
+ */
+function leafGeom(len,w,droop){
+  const N=4,pos=[],col=[],idx=[];
+  for(let k=0;k<=N;k++){
+    const t=k/N,x=len*t;
+    const y=0.02+len*0.62*t-droop*t*t;
+    const wk=w*(0.2+Math.sin(t*Math.PI)*1.15);
+    // fold: deep at the base, flattening then curling DOWN past the tip
+    const fold=wk*(0.55-t*0.75);
+    pos.push(x,y+fold,-wk, x,y,0, x,y+fold,wk);
+    col.push(1,1,1, 0.66,0.7,0.6, 1,1,1);
+    if(k<N){
+      const L=k*3,C=L+1,R=L+2,L1=L+3,C1=L+4,R1=L+5;
+      idx.push(L,C,L1, C,C1,L1, C,R,C1, R,R1,C1);
+    }
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  const g2=g.toNonIndexed();
+  g2.setAttribute('uv',new THREE.BufferAttribute(new Float32Array(g2.getAttribute('position').count*2),2));
+  return g2;
+}
+
 function broadleafGeom(){
   const parts=[];
-  for(let i=0;i<4;i++){
-    const a=i/4*Math.PI*2+rand(-0.4,0.4),len=rand(0.4,0.7),w=rand(0.09,0.15);
-    const droop=len*rand(0.5,0.8);
-    const g=new THREE.BufferGeometry();
-    g.setAttribute('position',new THREE.Float32BufferAttribute([
-      0,0.02,-w, 0,0.02,w,
-      len*0.55,len*0.5,-w*1.3, len*0.55,len*0.5,w*1.3,
-      len*1.05,len*0.5-droop*0.35,0],3));
-    g.setIndex([0,1,2, 1,3,2, 2,3,4]);
-    g.computeVertexNormals();
-    const g2=g.toNonIndexed();
-    g2.setAttribute('uv',new THREE.BufferAttribute(new Float32Array(g2.getAttribute('position').count*2),2));
-    xform(g2,{r:[0,a,0]});
+  for(let i=0;i<5;i++){
+    const a=i/5*Math.PI*2+rand(-0.4,0.4),len=rand(0.4,0.7),w=rand(0.09,0.15);
+    const g2=leafGeom(len,w,len*rand(0.35,0.6));
+    xform(g2,{r:[0,a,rand(-0.1,0.1)]});
     parts.push(g2);
   }
   return mergeGeoms(parts);
@@ -284,7 +307,7 @@ function broadleafGeom(){
 
 export function makeBroadleafField(spots){
   const geo=broadleafGeom();
-  const mat=toonMat({color:0xffffff,side:THREE.DoubleSide}); // see grass note
+  const mat=toonMat({color:0xffffff,vertexColors:true,side:THREE.DoubleSide}); // see grass note
   const mesh=new THREE.InstancedMesh(geo,mat,spots.length);
   const m=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler();
   for(let i=0;i<spots.length;i++){

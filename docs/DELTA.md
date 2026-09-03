@@ -5,6 +5,59 @@ on top, closed entries move to the round that closed them, nothing is deleted.
 Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
+## Round 18 — 2026-09-03 (fingers, a wider rim, canopies in clusters, rocks at the waterline)
+
+Shot from `cfc7c6e`, seed `0x5eed1e`, `shots/round18/`. Gates: build
+green, det green (pair in 2 boots, max 0), 5/5 PASS.
+
+What landed: capsule fingers on the gloves, rim 1.6 / exponent 3.4,
+three-lump background canopies, shore boulders on every island, two
+additive glint sheets on the sea.
+
+### Critic verdict (blind, fresh context, crop-verified) — measured
+
+Hands closed: the critic lists "gloved hands with four modelled
+fingers and a cuff" under PRESENT. Canopies no longer "a pentagon on
+a stick". Rocks and skirt noted present ("a modelled skirt under the
+play surface, not a floating slab"). Water: depth grade, foam band and
+flow streaks all present.
+
+Three real finds, all crop-confirmed by the builder:
+1. Crate top rails cast a SERRATED SAWTOOTH onto the panel behind them
+   (`critic18-crate-acne`). Builder traced it: a ?minfx render (no
+   shadows) has no strip at all, so it is the rail's shadow boundary
+   aliasing on a vertical receiver 3 cm behind the caster. Bias 0 and
+   normalBias 0.05 changed nothing; PCF-radius and VSM are banned.
+2. Broad-leaf plants are raw flat triangles — no fold, rib or curl
+   (`critic18-crate-fgplants`). Confirmed at 3x.
+3. The eye has no wet highlight (`critic18-hero-head`). Confirmed.
+
+Discounted: "rim is a faint 1-px fringe" — `critic18-hero-rim` shows a
+clear pale band inside the outline on ear and cheek; present. "Grass
+blades stand straight, no wind lean" — the grass shader carries a
+static +0.12 lean bias plus position-phased sway that is non-zero at
+t=0; blades lean in every still. "Sand speckle is square blotches at
+texel scale" — `critic18-beach-sand` shows soft ovals, no rectangles.
+"Hill mass one smooth blob" — true in the render, but the ±0.35 m
+canopy octave IS in the mesh; smooth normals average it away (the
+sea-stack lesson from round 17, second instance).
+
+Self-score: character 4 · props 5 · dressing 5 · vegetation 4 · light 5
+· colour 4 · water 5 · backdrop 4 · motion 3 · composition 5.
+
+### Fixing this round (became round 19)
+
+Crate split into a casting core and a NON-casting frame (`splitCaster`
+in props.js): no rail shadow boundary, no sawtooth; the baked crevice
+AO carries the under-rail dark. Broadleaf rebuilt as a folded midrib
+leaf with a V-fold, arch and tip droop, vertex-colour rib mask
+(`leafGeom` in flora.js). Eye glint dot (unlit white sphere). Shore
+rocks lightened (dry above the tide line) and given foam collars.
+Jungle ridges FLAT-shaded so the canopy octave catches its own light.
+Pipeline bias left at the round-9 values — it was not the cause.
+
+---
+
 ## Round 17 — 2026-09-03 (hewn rock, capped knees, a corridor worth running down)
 
 Shot from `068c507`, seed `0x5eed1e`, `shots/round17/`. Gates: build

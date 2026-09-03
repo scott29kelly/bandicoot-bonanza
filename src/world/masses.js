@@ -8,7 +8,7 @@
 import * as THREE from 'three';
 import {fbm3,vcolor,hash3,xform,mergeGeoms} from './geo.js';
 import {rand} from '../core/rng.js';
-import {toonMat,sandTexture,rockTexture} from '../art/materials.js';
+import {toonMat,sandTexture,rockTexture,foamTexture} from '../art/materials.js';
 
 export const WATER_Y=-0.55;
 const SKIRT_DEPTH=6;
@@ -144,7 +144,7 @@ export function shoreRocks(solid){
   const {minX,maxX,minZ,maxZ}=solid;
   const w=maxX-minX,d=maxZ-minZ,per=2*(w+d);
   const n=Math.round(per*0.42);
-  const parts=[];
+  const parts=[],collars=[];
   for(let i=0;i<n;i++){
     // walk the perimeter by arclength, jittered
     let l=(i+rand(0.1,0.9))/n*per;
@@ -167,15 +167,46 @@ export function shoreRocks(solid){
     const g2=g.toNonIndexed();
     g2.computeVertexNormals();
     const y=WATER_Y+rand(-0.15,0.22);
+    // Round 18: the whole rock came out one dark wet brown. Dry rock above
+    // the tide line, wet band only where the water actually laps.
     vcolor(g2,(vx,vy)=>{
-      const wet=THREE.MathUtils.clamp((WATER_Y+0.12-(vy+y))/0.35,0,1);
-      return _c.copy(cRockHi).lerp(cRockLo,0.35+hash3(vx*5,vy*5,i)*0.3).lerp(cWet,wet*0.7);
+      const wet=THREE.MathUtils.clamp((WATER_Y+0.04-(vy+y))/0.22,0,1);
+      return _c.copy(cRockHi).lerp(cRockLo,0.12+hash3(vx*5,vy*5,i)*0.3).lerp(cWet,wet*0.75);
     });
-    xform(g2,{p:[px+nx*out+rand(-0.5,0.5),y,pz+nz*out+rand(-0.5,0.5)]});
+    const cx=px+nx*out+rand(-0.5,0.5),cz=pz+nz*out+rand(-0.5,0.5);
+    xform(g2,{p:[cx,y,cz]});
     parts.push(g2);
+    // Foam collar: the sea breaks around a rock, it doesn't cut it on a
+    // ruler line. A ring at the waterline, solid at the rock, fading out.
+    const r0=s*1.15,r1=r0+rand(0.35,0.6),M=12,cp=[],cu=[],ci=[];
+    for(let k=0;k<=M;k++){
+      const a=k/M*Math.PI*2,ca=Math.cos(a),sa=Math.sin(a);
+      const wob=1+hash3(k+i*7,i,3)*0.25;
+      cp.push(cx+ca*r0,0,cz+sa*r0, cx+ca*r1*wob,0,cz+sa*r1*wob);
+      cu.push(k/M*2.5,0, k/M*2.5,1);
+      if(k<M){const b=k*2;ci.push(b,b+2,b+1, b+1,b+2,b+3);}
+    }
+    const cg=new THREE.BufferGeometry();
+    cg.setAttribute('position',new THREE.Float32BufferAttribute(cp,3));
+    cg.setAttribute('uv',new THREE.Float32BufferAttribute(cu,2));
+    cg.setIndex(ci);
+    collars.push(cg.toNonIndexed());
   }
+  const group=new THREE.Group();
   const mesh=new THREE.Mesh(mergeGeoms(parts),cliffMat);
   mesh.castShadow=true;
   mesh.receiveShadow=true;
-  return mesh;
+  group.add(mesh);
+  if(collars.length){
+    const ft=foamTexture();
+    ft.flipY=false;
+    ft.wrapT=THREE.ClampToEdgeWrapping; // same trap as the island rings
+    ft.needsUpdate=true;
+    const cm=new THREE.Mesh(mergeGeoms(collars),new THREE.MeshBasicMaterial({
+      map:ft,transparent:true,depthWrite:false,opacity:0.7,fog:true,side:THREE.DoubleSide}));
+    cm.position.y=WATER_Y+0.045;
+    cm.renderOrder=2;
+    group.add(cm);
+  }
+  return group;
 }

@@ -44,7 +44,26 @@ function frameGeoms(size,beam){
 }
 
 /**
- * @returns {{mesh:THREE.Mesh, solid:{minX,maxX,minZ,maxZ,topY}}}
+ * Core casts and receives; the frame only RECEIVES. The rails stand 3 cm
+ * proud of the panel, and their own shadow boundary on that panel aliased
+ * into a serrated sawtooth at every top rail (round-18, crop-verified;
+ * proven shadow by a ?minfx render — bias changes did nothing, PCF radius
+ * and VSM are banned above). A non-casting frame has no boundary to alias;
+ * the baked crevice AO already darkens under each rail, and the core's
+ * silhouette covers the frame's on the ground to within 3 cm.
+ */
+function splitCaster(core,frameParts,mat){
+  const group=new THREE.Group();
+  const c=new THREE.Mesh(core.toNonIndexed(),mat);
+  c.castShadow=true;c.receiveShadow=true;
+  const f=new THREE.Mesh(mergeGeoms(frameParts.map(g=>g.toNonIndexed())),mat);
+  f.castShadow=false;f.receiveShadow=true;
+  group.add(c,f);
+  return group;
+}
+
+/**
+ * @returns {{mesh:THREE.Group, solid:{minX,maxX,minZ,maxZ,topY}}}
  */
 export function makeCrate(x,y,z){
   mats();
@@ -58,15 +77,11 @@ export function makeCrate(x,y,z){
   // Plank core, inset behind the frame so the faces read as panels.
   const core=new THREE.BoxGeometry(S-beam*0.9,S-beam*0.9,S-beam*0.9);
   vcolor(core,(px,py)=>_c.setHSL(0.08+hueJ,0.55,rand(0.55,0.66)*ao(py)));
-  parts.push(core);
   for(const g of frameGeoms(S,beam))
     parts.push(vcolor(g,(px,py)=>_c.setHSL(0.07+hueJ,0.5,0.4*ao(py))));
-  const geo=mergeGeoms(parts.map(g=>g.toNonIndexed()));
-  const mesh=new THREE.Mesh(geo,crateMat);
+  const mesh=splitCaster(core,parts,crateMat);
   mesh.position.set(x,y+S/2-0.02,z);
   mesh.rotation.y=rand(-0.09,0.09); // hand-stacked, not machine-placed
-  mesh.castShadow=true;
-  mesh.receiveShadow=true;
   const hw=S/2+0.02;
   return {mesh,solid:{minX:x-hw,maxX:x+hw,minZ:z-hw,maxZ:z+hw,topY:y+S-0.02}};
 }
@@ -80,7 +95,8 @@ export function makeTNT(x,y,z){
   parts.push(core);
   for(const g of frameGeoms(S*0.92,0.11))
     parts.push(vcolor(g,(px,py)=>_c.setHSL(0.0,0.55,0.30*ao(py))));
-  const body=new THREE.Mesh(mergeGeoms(parts.map(g=>g.toNonIndexed())),tntMat);
+  const core2=parts.shift();
+  const body=splitCaster(core2,parts,tntMat);
 
   // The fuse: a little pot and a bent wick. The prop's job is to promise a
   // bang later; a plain red cube promises nothing.
@@ -96,7 +112,7 @@ export function makeTNT(x,y,z){
   group.add(body,pot,wick);
   group.position.set(x,y+S*0.46,z);
   group.rotation.y=rand(-0.08,0.08);
-  group.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
+  for(const o of [pot,wick]){o.castShadow=true;o.receiveShadow=true;}
   const hw=S*0.46+0.02;
   return {mesh:group,solid:{minX:x-hw,maxX:x+hw,minZ:z-hw,maxZ:z+hw,topY:y+S*0.92-0.02}};
 }

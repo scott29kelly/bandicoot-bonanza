@@ -52,7 +52,7 @@ function jungleRidge(x,z,len,w,h,dir){
   // vertices 2–3 m apart and the vcolor octaves interpolated away across
   // giant triangles — four rounds of "the near hill is one flat value"
   // were a sampling failure, not a painting one.
-  const ridge=new THREE.SphereGeometry(1,48,30);
+  let ridge=new THREE.SphereGeometry(1,48,30);
   xform(ridge,{s:[len/2,h,w/2]});
   const rp=ridge.getAttribute('position');
   for(let i=0;i<rp.count;i++){
@@ -65,6 +65,11 @@ function jungleRidge(x,z,len,w,h,dir){
              +(fbm3(rp.getX(i)*0.9+x*2,rp.getY(i)*1.1,rp.getZ(i)*0.9+z*2)-0.5)*0.09;
     rp.setXYZ(i,rp.getX(i)*k,rp.getY(i)*k,rp.getZ(i)*k);
   }
+  // FLAT normals, the sea-stack lesson (round 17): smooth shading averaged
+  // the ±0.35 m canopy octave back into a membrane — "one smooth blob"
+  // survived another verdict with the relief present in the mesh. Faceted,
+  // every lump catches its own light.
+  ridge=ridge.toNonIndexed();
   ridge.computeVertexNormals();
   // The inner slope is the single biggest surface in most framings — it
   // needs banded canopy-scale breakup, not one lightness ramp.

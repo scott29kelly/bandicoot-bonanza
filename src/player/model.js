@@ -164,7 +164,13 @@ export function createHeroModel(){
     const pupil=new THREE.Mesh(new THREE.SphereGeometry(0.017,8,6),
       toonMat({color:0x120c08}));
     pupil.position.set(s*0.088,0.04,0.228);
-    head.add(white,iris,pupil);
+    // Wet highlight: one unlit white dot high on the pupil. A flat disc
+    // eye with no glint reads as a toy (round-18, crop-verified).
+    const glint=new THREE.Mesh(new THREE.SphereGeometry(0.0075,7,6),
+      new THREE.MeshBasicMaterial({color:0xffffff,toneMapped:false}));
+    glint.position.set(s*0.088-0.007,0.05,0.241);
+    glint.castShadow=false;
+    head.add(white,iris,pupil,glint);
   }
   // cheek fur tufts frame the face
   for(const s of[-1,1]){
