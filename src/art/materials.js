@@ -134,10 +134,14 @@ export function sandTexture(){
     // Grain speckle — fewer, LARGER, fainter: at 2–3 px and 1700 count the
     // mip chain wove them into a repeating mat pattern readable across the
     // crate yard (rounds 12–14, "halftone/weave" claims traced here).
-    for(let i=0;i<900;i++){
+    // Round 21: axis-aligned 3–4 px rects read as a texel grid at portrait
+    // range. Ellipses, 5–8 px across (the bar's ~5-texel floor), fewer.
+    for(let i=0;i<700;i++){
       const v=rand(0,1);
       g.fillStyle=v>0.5?`rgba(246,226,178,${rand(0.12,0.3)})`:`rgba(140,104,66,${rand(0.1,0.24)})`;
-      g.fillRect(rand(0,s),rand(0,s),rand(2.6,4.6),rand(2.6,4.6));
+      g.beginPath();
+      g.ellipse(rand(0,s),rand(0,s),rand(2.5,4),rand(2.5,4),rand(0,3),0,7);
+      g.fill();
     }
   },{repeat:1});
 }

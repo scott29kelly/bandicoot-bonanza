@@ -60,6 +60,12 @@ export function createPost(renderer){
           c=mix(vec3(l),c,1.22);
           float mx=max(c.r,max(c.g,c.b)),mn=min(c.r,min(c.g,c.b));
           c=mix(vec3(dot(c,vec3(0.2126,0.7152,0.0722))),c,1.0+0.18*(1.0-(mx-mn)));
+          // Highlight knee: AgX rolls 1.0 linear to ~0.85 display and the
+          // S-curve leaves it there — round 21 measured max L 0.85–0.91 in
+          // every still, 0.00% of pixels above 0.85. Foam, eye whites and
+          // the fruit rim get the last stop back; mids are barely touched.
+          float hl=smoothstep(0.58,0.92,dot(c,vec3(0.2126,0.7152,0.0722)));
+          c*=1.0+0.24*hl;
         }
         // Black floor (Pillar B: nothing crushes to black). Surfaces lit by
         // ambient alone — crevices, undersides, the shade side of a clump —

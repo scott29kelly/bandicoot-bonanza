@@ -83,7 +83,7 @@ export function buildBeach(scene){
     scene.add(c.mesh);
     solids.push(c.solid);
     avoid.push({x,z,r:1.15});
-    ground(x,z,1.0,y,y>0?0.55:1); // stacked crates shade the crate below
+    ground(x,z,1.35,y,y>0?0.55:1); // stacked crates shade the crate below
     return c;
   };
   crateAt(-1.4,0,-14);crateAt(0,0,-14);crateAt(1.4,0,-14);
@@ -112,13 +112,17 @@ export function buildBeach(scene){
   scene.add(grass.mesh);
   updates.push(grass.update);
 
-  scene.add(makeBroadleafField([
+  const broadSpots=[
     ...scatter(90,beach.solid,0.9,avoid),
-    ...scatter(45,yard.solid,0.9,avoid)]));
+    ...scatter(45,yard.solid,0.9,avoid)];
+  scene.add(makeBroadleafField(broadSpots));
 
+  // Blossoms keep clear of the broadleaf clumps: a stem under a leaf
+  // showed as a bare dark peg through the whorl (round 21, crop-verified).
+  const flowerAvoid=[...avoid,...broadSpots.map(([x,,z])=>({x,z,r:0.75}))];
   scene.add(makeFlowerField([
-    ...scatter(110,beach.solid,0.7,avoid),
-    ...scatter(50,yard.solid,0.7,avoid)]));
+    ...scatter(110,beach.solid,0.7,flowerAvoid),
+    ...scatter(50,yard.solid,0.7,flowerAvoid)]));
 
   const spots=(n)=>[
     ...scatter(Math.round(n*0.62),beach.solid,0.4),

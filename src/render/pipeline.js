@@ -80,7 +80,11 @@ export function createPipeline(){
   // keyless. Fill was eating the key — lit:shadow was ~7:1 in linear but
   // AgX + a lifting grade compressed it to ~15% on screen. Cut fill, raise
   // the key, and let the grade add contrast back instead of lifting.
-  const hemi=new THREE.HemisphereLight(PALETTE.hemiSky,PALETTE.hemiGround,0.48);
+  // 0.70 (was 0.48): round 21 measured every cast-shadow face landing on
+  // a plateau at L~0.10 — the wood grain on a shaded crate wall sat below
+  // the floor with the wall. Same hemi colours, so the shadow stays teal;
+  // more of it, so a shaded plank still carries its lines.
+  const hemi=new THREE.HemisphereLight(PALETTE.hemiSky,PALETTE.hemiGround,0.70);
   scene.add(hemi);
 
   // Cool rim from behind-left, shadowless: separates every silhouette from

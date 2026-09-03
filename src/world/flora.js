@@ -72,8 +72,11 @@ function frondGeom(len,droop){
     }
   }
   const [xt,yt]=rib(1);
-  quad([xt*0.97,yt+0.02,-0.05],[xt*0.97,yt+0.02,0.05],
-       [xt+len*0.16,yt-droop*0.28,0.02],[xt+len*0.16,yt-droop*0.28,-0.02]);
+  // Tip leaflet wide enough to hold a pixel at treeline range — the old
+  // 4 cm sliver went sub-pixel and drew a dashed hairline off every frond
+  // end against the sky (round 21, crop-verified at 6x).
+  quad([xt*0.97,yt+0.02,-0.11],[xt*0.97,yt+0.02,0.11],
+       [xt+len*0.11,yt-droop*0.2,0.05],[xt+len*0.11,yt-droop*0.2,-0.05]);
   const g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
   g.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));

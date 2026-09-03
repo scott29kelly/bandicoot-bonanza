@@ -120,7 +120,9 @@ export function islandMass({x,z,w,d,topY=0}){
       // now swing ~10%.
       _c.copy(cSand).lerp(cSandLow,Math.min(1,fbm3((px+x)*0.2,11,(pz+z)*0.2)*1.35));
       _c.lerp(cSandDamp,Math.min(1,Math.max(0,fbm3((px+x)*0.09,23,(pz+z)*0.09)-0.45)*2.0));
-      _c.lerp(cSandPale,Math.min(1,Math.max(0,fbm3((px+x)*0.45,31,(pz+z)*0.45)-0.5)*1.6));
+      // Pale drift stays at the old amplitude: at 1.6 the 0.45/m octave,
+      // sampled on 0.77 m vertices, printed round polka dots (round 22).
+      _c.lerp(cSandPale,Math.max(0,fbm3((px+x)*0.45,31,(pz+z)*0.45)-0.55)*0.9);
       // Wet-sand band where the top meets the rim — the tide got here.
       const rim=Math.max(Math.abs(px)/halfW,Math.abs(pz)/halfD);
       return _c.lerp(cWet,THREE.MathUtils.smoothstep(rim,0.78,0.98)*0.45);
@@ -176,7 +178,7 @@ export function shoreRocks(solid){
     // the tide line, wet band only where the water actually laps.
     vcolor(g2,(vx,vy)=>{
       const wet=THREE.MathUtils.clamp((WATER_Y+0.04-(vy+y))/0.22,0,1);
-      return _c.copy(cRockHi).lerp(cRockLo,0.12+hash3(vx*5,vy*5,i)*0.3).lerp(cWet,wet*0.75);
+      return _c.copy(cRockHi).lerp(cRockLo,hash3(vx*5,vy*5,i)*0.22).lerp(cWet,wet*0.7);
     });
     const cx=px+nx*out+rand(-0.5,0.5),cz=pz+nz*out+rand(-0.5,0.5);
     xform(g2,{p:[cx,y,cz]});

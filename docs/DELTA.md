@@ -5,6 +5,73 @@ on top, closed entries move to the round that closed them, nothing is deleted.
 Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
+## Round 21 — 2026-09-03 (leaves on the hills, dapple on the sand, a line that holds its width)
+
+Shot from `1e517f4`, seed `0x5eed1e`, `shots/round21/`. Gates: build
+green, det green (pair in 2 boots, max 0), 5/5 PASS.
+
+What landed: leaf shell on the near flanks, trees standing on the
+sampled ridge surface, canopy dapple casters, exposure 1.0, shader-
+pushed distance-scaled outline, fruit rim, louder sand macro, shallower
+lip undercut, collars clear of the rocks, crate-cluster restaged.
+
+### Critic verdict (blind, fresh context, measured) — measured
+
+Closed: dapple "reads as a canopy, not as noise"; frond midrib and wind
+lean PRESENT; five fingers, glint, contact shadow PRESENT; rim
+"present, ~3–4 px, peaks L 0.71–0.81" (row-sampled). Scores: props 6,
+dressing 6, water 6, composition 6 — four rows at 6 for the first time.
+
+Real finds, builder-confirmed:
+1. Shaded faces land on a PLATEAU at L≈0.10 (hero-closeup crate wall
+   760,260 220×260: mean L 0.231, 62% of pixels below 0.13 — builder
+   re-measured). Mechanism: MeshToon takes the shadow factor inside the
+   direct term, so a cast-shadow face gets hemi only, and hemi 0.48 ×
+   albedo/π lands the wall AND its grain lines under the floor.
+2. Nothing reaches white: max L 0.85–0.91 per still, 0.00–0.02% of
+   pixels above 0.85 (builder re-measured: 0.883 / 0.889 / 0.850).
+3. Dashed hairline trailing off frond tips against the sky
+   (`critic21-th-hairline`): the 4 cm tip quad goes sub-pixel at
+   treeline range.
+4. A flower stem stands as a bare dark peg through a broadleaf whorl
+   (`critic21-hc-fern-left`): the scatter did not avoid across species.
+5. Sand speckle: axis-aligned 3–4 px rects (`fillRect`) at portrait
+   range — under the bar's ~5-texel floor.
+6. Shore rocks read as dark brown wedges at the sand line
+   (`critic21-bc-shore-notch`).
+
+Discounted: "stray outline stroke across the belly" — the arm's hull
+contour where the arm overlaps the belly, i.e. the outline doing its
+job. "Pebbles are blue faceted crystals" — pebbles are warm-hued
+(HSL 0.05–0.13); the blue is the cool shadow tint on them, which is
+pillar B working. "Crate base has no contact AO" — the contact blob is
+there (r 1.0); widened anyway.
+
+Pillar-B note: `compare --pillarb` was re-run across rounds 17–22. Its
+round-17 "shadow" sample (rgb 76,47,14, sat 0.90) was the hero's
+shadowed FUR, not sand — the tool takes the darkest 20% of the
+dominant hue and orange fur shares the sand's hue. On sand (rounds
+20–22) it reads sat 0.60–0.62, cool shift +0.004…+0.066: both floors
+pass, thinly. A 6×3 cell grid on hero-closeup sand: lit h40 s0.63
+v0.70, cast shadow h62 s0.56 v0.61 — the shift is toward green (teal
+hemi × orange albedo), not blue. Passing; logged so the calibration ¶
+stops quoting the fur number.
+
+Self-score: character 4 · props 6 · dressing 6 · vegetation 4 · light 4
+· colour 5 · water 6 · backdrop 4 · motion UNMEASURED · composition 6.
+
+### Fixing this round (became round 22)
+
+Hemi 0.48→0.70 (wall region: 62%→39% of pixels below L 0.13, grain
+lines back on the shaded face). Highlight knee in the grade
+(`c*=1+0.24*smoothstep(0.58,0.92,l)`). Frond tip leaflet 4→22 cm wide.
+Flowers avoid broadleaf spots (r 0.75). Sand speckle: 5–8 px ellipses,
+700. Crate contact blob r 1.0→1.35. Shore rocks lighter. The sand pale
+octave went to 1.6× amplitude and printed POLKA DOTS (0.45/m noise on
+0.77 m vertices) — pulled back to 0.9 the same round, crop-verified.
+
+---
+
 ## Round 20 — 2026-09-03 (no blade at the lens, no black anywhere, hills back to smooth)
 
 Shot from `216a1f4`, seed `0x5eed1e`, `shots/round20/`. Gates: build
