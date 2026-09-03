@@ -52,7 +52,7 @@ function jungleRidge(x,z,len,w,h,dir){
   // vertices 2–3 m apart and the vcolor octaves interpolated away across
   // giant triangles — four rounds of "the near hill is one flat value"
   // were a sampling failure, not a painting one.
-  let ridge=new THREE.SphereGeometry(1,48,30);
+  const ridge=new THREE.SphereGeometry(1,48,30);
   xform(ridge,{s:[len/2,h,w/2]});
   const rp=ridge.getAttribute('position');
   for(let i=0;i<rp.count;i++){
@@ -65,11 +65,10 @@ function jungleRidge(x,z,len,w,h,dir){
              +(fbm3(rp.getX(i)*0.9+x*2,rp.getY(i)*1.1,rp.getZ(i)*0.9+z*2)-0.5)*0.09;
     rp.setXYZ(i,rp.getX(i)*k,rp.getY(i)*k,rp.getZ(i)*k);
   }
-  // FLAT normals, the sea-stack lesson (round 17): smooth shading averaged
-  // the ±0.35 m canopy octave back into a membrane — "one smooth blob"
-  // survived another verdict with the relief present in the mesh. Faceted,
-  // every lump catches its own light.
-  ridge=ridge.toNonIndexed();
+  // Smooth normals. Round 19 tried FLAT (the sea-stack lesson) and the
+  // ridge read as "a visibly triangulated low-poly mesh" — a 3 m facet is
+  // terrain, not canopy. The leafy relief comes from the mound layer below
+  // instead: twice as many, half the size, so the clumps ARE the surface.
   ridge.computeVertexNormals();
   // The inner slope is the single biggest surface in most framings — it
   // needs banded canopy-scale breakup, not one lightness ramp.
@@ -88,10 +87,10 @@ function jungleRidge(x,z,len,w,h,dir){
   parts.push(ridge);
   // Canopy mounds over crest AND slopes — clustered on the crest alone they
   // hide inside the ridge and the visible inner wall stays bare.
-  const N=Math.round(len*0.85);
+  const N=Math.round(len*1.7);
   for(let i=0;i<N;i++){
     const t=i/N-0.5;
-    const mound=new THREE.SphereGeometry(rand(2.2,4.6),8,6);
+    const mound=new THREE.SphereGeometry(rand(1.5,3.2),7,5);
     const mp=mound.getAttribute('position');
     for(let j=0;j<mp.count;j++){
       // amplitude eased: at ±0.25 the noise tore thin slivers off the
@@ -112,8 +111,8 @@ function jungleRidge(x,z,len,w,h,dir){
     // ±0.6 is the measured limit: at ±0.75 the lateral offset walks mounds
     // clear off the noise-shrunk ridge surface and they float (round 11).
     const zs=rand(-0.6,0.6);
-    xform(mound,{p:[t*len,
-      Math.max(3.2,h*Math.cos(t*2.4)*rand(0.38,0.62)*(1-Math.abs(zs)*0.8)),
+    xform(mound,{p:[t*len+rand(-1.5,1.5),
+      Math.max(3.2,h*Math.cos(t*2.4)*rand(0.36,0.66)*(1-Math.abs(zs)*0.8)),
       w/2*zs]});
     parts.push(mound);
   }

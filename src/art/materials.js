@@ -76,7 +76,10 @@ function canvasTex(size,draw,{repeat=1,srgb=true}={}){
   t.wrapS=t.wrapT=THREE.RepeatWrapping;
   t.repeat.set(repeat,repeat);
   if(srgb)t.colorSpace=THREE.SRGBColorSpace;
-  t.anisotropy=4;
+  // 16: at 4 the sand's ripple bands aliased into fine horizontal striping
+  // at grazing angles (round-19 water-gap foreground, present with shadows
+  // and post OFF, so it is sampling, not lighting).
+  t.anisotropy=16;
   return t;
 }
 /**

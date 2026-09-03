@@ -5,6 +5,60 @@ on top, closed entries move to the round that closed them, nothing is deleted.
 Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
+## Round 19 — 2026-09-03 (frames that don't cast, leaves that fold, an eye that's wet)
+
+Shot from `0719b39`, seed `0x5eed1e`, `shots/round19/`. Gates: build
+green, det green (pair in 2 boots, max 0), 5/5 PASS.
+
+What landed: crate frame split off as a non-casting mesh (sawtooth
+gone), folded midrib broadleaf, eye glint, dry shore rocks with foam
+collars, jungle ridges flat-shaded (an experiment — see below).
+
+### Critic verdict (blind, fresh context, crop-verified) — measured
+
+Closed from round 18: no sawtooth call, no "raw triangles" call on the
+broadleaf, eye glint listed PRESENT, rim listed PRESENT ("under-
+strength, not absent" — the calibration note worked), hands PRESENT.
+
+Three ARTIFACT finds, all real:
+1. A hairline yellow-green line across the whole hero-closeup frame
+   (`critic19-closeup-ground`, `b19-line-origin`): a grass blade
+   edge-on at the lens. The layout re-rolled this round and put a tuft
+   at the camera.
+2. A pure-BLACK wedge in the crevice between a gap platform's skirt
+   and a shore rock (`critic19-platform-under`, measured rgb sum 5,
+   307 px). Builder probe: magenta clear colour showed 0 magenta px —
+   a rendered surface, not a hole. Ambient-only surfaces (undersides,
+   crevices) × mid-dark albedo land below the grade's toe. A black
+   mound sliver on the title-hero hill is the same failure.
+3. Fine horizontal striping on grazing-angle sand (`critic19-water-
+   nearedge`). Present with shadows and post OFF (?minfx probe), so it
+   is texture sampling, not lighting. Anisotropy was 4.
+
+The flat-shaded ridge experiment FAILED: "a visibly triangulated
+low-poly mesh with flat-shaded facets" (`critic19-title-hill`). A 3 m
+facet is terrain, not canopy. Reverted.
+
+Discounted: "hands have no thumb offset" (the thumb is the splayed
+digit in `critic19-hero-hands`); "no contact AO under the feet" (the
+hero contact blob is present, r=0.68, since round 9); sea-stack and
+title-composition notes are template repeats already logged.
+
+Self-score: character 3 · props 4 · dressing 5 · vegetation 4 · light 4
+· colour 5 · water 4 · backdrop 3 · motion 4 · composition 3.
+
+### Fixing this round (became round 20)
+
+Grass blades within 0.9 m of the camera collapse to their root
+(vertex shader, `cameraPosition`). Texture anisotropy 4→16. Ridges
+back to smooth normals; the canopy relief now comes from a mound layer
+at twice the density and half the size (r 1.5–3.2, 7×5), jittered
+along the ridge. Grade gains a soft BLACK FLOOR — `sqrt(c²+f²)` with
+a teal f, unchanged above ~0.03 — after which no still has a pixel
+below rgb sum 81 (was 5). Pipeline shadow bias untouched.
+
+---
+
 ## Round 18 — 2026-09-03 (fingers, a wider rim, canopies in clusters, rocks at the waterline)
 
 Shot from `cfc7c6e`, seed `0x5eed1e`, `shots/round18/`. Gates: build

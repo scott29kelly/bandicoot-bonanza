@@ -61,6 +61,13 @@ export function createPost(renderer){
           float mx=max(c.r,max(c.g,c.b)),mn=min(c.r,min(c.g,c.b));
           c=mix(vec3(dot(c,vec3(0.2126,0.7152,0.0722))),c,1.0+0.18*(1.0-(mx-mn)));
         }
+        // Black floor (Pillar B: nothing crushes to black). Surfaces lit by
+        // ambient alone — crevices, undersides, the shade side of a clump —
+        // landed at rgb sum ~5 in round-19/20 stills (magenta-clear probe:
+        // rendered surfaces, not holes). A soft floor, teal like every other
+        // shadow here: unchanged above ~0.03, never flat below it.
+        vec3 fl=vec3(0.006,0.011,0.018);
+        c=sqrt(c*c+fl*fl);
         c=clamp(c,0.0,1.0);
         // Manual sRGB OETF — this pass owns the canvas, nothing runs after.
         c=mix(c*12.92,1.055*pow(c,vec3(1.0/2.4))-0.055,step(vec3(0.0031308),c));
