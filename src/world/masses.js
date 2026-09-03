@@ -126,7 +126,7 @@ export function islandMass({x,z,w,d,topY=0}){
       // present, unreadable): the 12 m damp patches and 3 m pale drifts
       // now swing ~10%.
       _c.copy(cSand).lerp(cSandLow,Math.min(1,fbm3((px+x)*0.2,11,(pz+z)*0.2)*1.35));
-      _c.lerp(cSandDamp,Math.min(1,Math.max(0,fbm3((px+x)*0.09,23,(pz+z)*0.09)-0.45)*2.0));
+      _c.lerp(cSandDamp,Math.min(1,Math.max(0,fbm3((px+x)*0.09,23,(pz+z)*0.09)-0.45)*1.4));
       // Pale drift stays at the old amplitude: at 1.6 the 0.45/m octave,
       // sampled on 0.77 m vertices, printed round polka dots (round 22).
       _c.lerp(cSandPale,Math.max(0,fbm3((px+x)*0.45,31,(pz+z)*0.45)-0.55)*0.9);
@@ -134,9 +134,15 @@ export function islandMass({x,z,w,d,topY=0}){
       const rim=Math.max(Math.abs(px)/halfW,Math.abs(pz)/halfD);
       return _c.lerp(cWet,THREE.MathUtils.smoothstep(rim,0.78,0.98)*0.45);
     }
-    if(py>WATER_Y+0.55)return _c.copy(cSandLow).lerp(cRockHi,Math.min(1,(yTop-py)/0.9));
-    if(py>WATER_Y-0.8)return _c.copy(cWet); // the tide-wet band
-    return _c.copy(cRockLo).lerp(cWet,THREE.MathUtils.clamp((py-yBot)/3,0,1)*0.5);
+    // Skirt: strata bands wobbled by noise, and a dark band at the
+    // waterline — the face read as "a single flat brown plane" (round 23).
+    if(py>WATER_Y+0.55)_c.copy(cSandLow).lerp(cRockHi,Math.min(1,(yTop-py)/0.9));
+    else if(py>WATER_Y-0.8)_c.copy(cWet); // the tide-wet band
+    else _c.copy(cRockLo).lerp(cWet,THREE.MathUtils.clamp((py-yBot)/3,0,1)*0.5);
+    const strata=Math.sin(py*6.5+fbm3((px+x)*0.5,py*0.8,(pz+z)*0.5)*4.5)*0.06;
+    _c.offsetHSL(0,0,strata);
+    if(py<WATER_Y+0.2&&py>WATER_Y-0.35)_c.multiplyScalar(0.74);
+    return _c;
   });
 
   // Sides + bottom wear the cliff material; the walkable top wears sand.
@@ -157,7 +163,7 @@ export function shoreRocks(solid){
   const {cliffMat}=mats();
   const {minX,maxX,minZ,maxZ}=solid;
   const w=maxX-minX,d=maxZ-minZ,per=2*(w+d);
-  const n=Math.round(per*0.42);
+  const n=Math.round(per*0.7);
   const parts=[],collars=[];
   for(let i=0;i<n;i++){
     // walk the perimeter by arclength, jittered
@@ -167,7 +173,7 @@ export function shoreRocks(solid){
     else if((l-=w)<d){px=maxX;pz=minZ+l;nx=1;nz=0;}
     else if((l-=d)<w){px=maxX-l;pz=maxZ;nx=0;nz=1;}
     else{l-=w;px=minX;pz=maxZ-l;nx=-1;nz=0;}
-    const out=rand(0.9,2.2);
+    const out=rand(0.15,1.5); // rubble AT the base (was 0.9–2.2 out)
     const s=rand(0.28,0.75);
     const g=new THREE.IcosahedronGeometry(1,1);
     const p=g.getAttribute('position');

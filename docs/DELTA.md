@@ -5,6 +5,64 @@ on top, closed entries move to the round that closed them, nothing is deleted.
 Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
+## Round 23 — 2026-09-03 (crates out of the multiply, grass parts for the hero, crowns down the slope)
+
+Shot from `74cce4b`, seed `0x5eed1e`, `shots/round23/`. Gates: build
+green, det green (pair in 2 boots, max 0), 5/5 PASS.
+
+What landed: crate vertex colour out of the multiply trap (third
+instance), bevelled beams, hemi 0.80, grass parting under the hero,
+debris avoiding props, blended island-top normals, ridge shore foam,
+crown-shaded mounds over the whole slope, pink blossoms.
+
+### Critic verdict (blind, fresh context, measured) — measured
+
+Closed: crate sides no longer a plateau (no call; the crate scored
+6 — "the best-designed thing in frame"); no grass through boots; no
+shell in a post; no sand seam; hill shoreline foam listed PRESENT.
+Performance 8 (335–391k tris, 241–316 draws).
+
+Real finds, builder-confirmed:
+1. Hill mass still "one flat green value with flat leaf decals"
+   (hero-closeup 40,100 300×100: L sd 0.014). The 2.6/m mounds left
+   the base shell visible between crowns.
+2. Platform faces "a single flat brown plane" with three stray crack
+   strokes (`c23-water-cliff`): no strata, no waterline band, rubble
+   too far out to read as a skirt.
+3. A hard 6-sided cone pokes out of the cheek as "an orange prism"
+   (`c23-art-cheek-wedge`).
+4. Sea stacks "8-sided faceted lathes" at 10 radial segments.
+5. Ground "polka dots": one-size ovals at 12–18 px, evenly spaced
+   (`c23-corridor-ground`) — the round-22 speckle ellipses, 5–8 px on
+   the tile, at 0.1–0.3 alpha.
+6. Shallows band "an opaque flat sheet", L sd 0.006 (`c23-water-
+   foam`): the 1024 depth canvas is 0.6 m/px and the band is ~8 px.
+7. Cloud "two overlapping pale ellipses, hard edge, single flat value"
+   (`c23-title-cloud`).
+8. Pebbles float on the plane as faceted solids.
+
+Discounted: "sand shadow shifts warmer, B/R 0.30 vs 0.69" — the
+darkest sand-hue quintile is the DAMP-SAND albedo octave in full sun
+(round-22 amplitude), not cast shadow; the cast-shadow cells measure
+h62 (green-olive) against lit h40. Damp octave eased anyway.
+
+Self-score: character 4 · props 6 · dressing 5 · vegetation 4 · light 5
+· colour 5 · water 5 · backdrop 4 · motion — · composition 6 ·
+performance 8.
+
+### Fixing this round (became round 24)
+
+Mound carpet 4.5/m of 36-tri crowns (the base shell is buried). Sea
+stacks 16×8 with a cap overhang and deeper noise. Clouds: 14 of 5–9
+smaller puffs, undersides to 0.62 blue-grey. Skirt strata bands and a
+dark waterline band; rubble 0.7/m at 0.15–1.5 m from the base.
+Speckle 1.5–5 px at half alpha. Dapple at two scales. Depth canvas
+2048 with mottled shallows. Cheek tufts as three thin fanned cones;
+chest fringe of five. Pebbles sunk 4 cm. Hero-closeup camera lowered
+so the head sits against the crates.
+
+---
+
 ## Round 22 — 2026-09-03 (fill for the shaded planks, a knee for the whites, leaflets at the tips)
 
 Shot from `39cc5f2`, seed `0x5eed1e`, `shots/round22/`. Gates: build

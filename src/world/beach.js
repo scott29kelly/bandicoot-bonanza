@@ -225,7 +225,9 @@ export function buildBeach(scene){
     p:at('beach',1.9,2.2,16.5),lookAt:at('crateYard',-1.1,1.1,20),fov:52,player:[0.6,0,-7,0,0.6]}));
   addFraming(at=>({id:'hero-closeup',name:'Hero close-up',
     tests:'Pillars A/B — character silhouette and chromatic shadow at portrait range',
-    p:at('beach',2.9,1.5,5.7),lookAt:at('beach',1.2,1.0,3.5),fov:38,player:[1.2,0,-9]}));
+    // Lower: at 1.5 the head sat against the hill shell, the flattest
+    // region in the set (round 23, composition).
+    p:at('beach',2.9,1.05,5.7),lookAt:at('beach',1.2,0.85,3.5),fov:38,player:[1.2,0,-9]}));
   addFraming(at=>({id:'water-gap',name:'Water gap',
     tests:'Pillars B/F — depth-graded water, foam at the shoreline, visible flow',
     p:at('gapA',8.5,1.9,7),lookAt:at('gapB',-1.5,0.4,1),fov:47,player:[0,0,-35]}));

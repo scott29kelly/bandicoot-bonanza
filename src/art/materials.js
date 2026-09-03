@@ -136,11 +136,13 @@ export function sandTexture(){
     // crate yard (rounds 12–14, "halftone/weave" claims traced here).
     // Round 21: axis-aligned 3–4 px rects read as a texel grid at portrait
     // range. Ellipses, 5–8 px across (the bar's ~5-texel floor), fewer.
+    // Round 23: one-size ovals at 0.1–0.3 alpha read as evenly spaced
+    // polka dots at corridor range. Mixed sizes, half the alpha.
     for(let i=0;i<700;i++){
       const v=rand(0,1);
-      g.fillStyle=v>0.5?`rgba(246,226,178,${rand(0.12,0.3)})`:`rgba(140,104,66,${rand(0.1,0.24)})`;
+      g.fillStyle=v>0.5?`rgba(246,226,178,${rand(0.06,0.16)})`:`rgba(140,104,66,${rand(0.05,0.12)})`;
       g.beginPath();
-      g.ellipse(rand(0,s),rand(0,s),rand(2.5,4),rand(2.5,4),rand(0,3),0,7);
+      g.ellipse(rand(0,s),rand(0,s),rand(1.5,5),rand(1.5,5),rand(0,3),0,7);
       g.fill();
     }
   },{repeat:1});
@@ -278,7 +280,18 @@ export function dappleTexture(){
   const t=canvasTex(512,(g,s)=>{
     g.clearRect(0,0,s,s);
     g.fillStyle='rgba(0,0,0,1)';
-    for(let i=0;i<34;i++){
+    // Big crowns first (1.3–2.8 m), then the leaf-scale clusters — one
+    // scale of dapple read as a uniform dot pattern (round 23).
+    for(let i=0;i<9;i++){
+      const cx=rand(0,s),cy=rand(0,s),n=Math.floor(rand(3,6));
+      for(let k=0;k<n;k++){
+        const r=rand(40,80),a=rand(0,6.3),d=rand(0,50);
+        g.beginPath();
+        g.ellipse((cx+Math.cos(a)*d+s)%s,(cy+Math.sin(a)*d+s)%s,r,r*rand(0.6,0.9),a,0,7);
+        g.fill();
+      }
+    }
+    for(let i=0;i<26;i++){
       const cx=rand(0,s),cy=rand(0,s),n=Math.floor(rand(4,9));
       for(let k=0;k<n;k++){
         const r=rand(14,34),a=rand(0,6.3),d=rand(0,38);

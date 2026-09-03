@@ -193,10 +193,16 @@ export function createHeroModel(){
     head.add(white,iris,pupil,glint);
   }
   // cheek fur tufts frame the face
+  // Three thin cones fanned per cheek: the single fat cone read as "an
+  // orange prism poking out of the cheek" (round 23, crop-verified).
   for(const s of[-1,1]){
-    const tuft=new THREE.ConeGeometry(0.045,0.13,6);
-    xform(tuft,{r:[0,0,s*1.9],p:[s*0.2,-0.05,0.06]});
-    const m=new THREE.Mesh(tuft,toonMat({color:FUR}));
+    const cones=[];
+    for(const [dy,dz,tilt] of [[0.02,0.02,-0.35],[-0.05,0.06,0],[-0.11,0.04,0.35]]){
+      const tuft=new THREE.ConeGeometry(0.024,0.12,5);
+      xform(tuft,{r:[tilt,0,s*(1.75+tilt*0.5)],p:[s*0.2,dy,dz]});
+      cones.push(tuft.toNonIndexed());
+    }
+    const m=new THREE.Mesh(mergeGeoms(cones),toonMat({color:FUR,rim:RIM}));
     m.castShadow=true;
     head.add(m);
   }
@@ -276,10 +282,12 @@ export function createHeroModel(){
   }
 
   /* chest fur tufts where the bib meets the collar — silhouette breaks */
-  for(const [tx,ta] of [[-0.09,0.5],[0,0],[0.09,-0.5]]){
-    const tuft=new THREE.ConeGeometry(0.038,0.11,6);
-    xform(tuft,{r:[2.6,0,ta],p:[tx,0.40,0.20]});
-    const m=new THREE.Mesh(tuft,toonMat({color:BELLY}));
+  // Five along the bib's top edge, alternating lean: a jagged fringe
+  // rather than "three flat triangles lying on the belly" (round 23).
+  for(const [tx,ta,ln] of [[-0.13,0.7,0.09],[-0.065,0.3,0.12],[0,0,0.1],[0.065,-0.3,0.13],[0.13,-0.7,0.08]]){
+    const tuft=new THREE.ConeGeometry(0.03,ln,5);
+    xform(tuft,{r:[2.5,0,ta],p:[tx,0.41,0.19]});
+    const m=new THREE.Mesh(tuft,toonMat({color:BELLY,rim:RIM}));
     m.castShadow=true;
     hips.add(m);
   }

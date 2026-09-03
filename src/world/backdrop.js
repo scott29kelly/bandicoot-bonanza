@@ -15,14 +15,17 @@ const _c=new THREE.Color();
 
 /** A wave-carved rock pillar with a green cap — silhouette first. */
 function seaStack(x,z,h,r){
-  const g=new THREE.CylinderGeometry(r*rand(0.55,0.75),r*rand(1.0,1.25),h,10,6);
+  // 16 sides, 8 rows (was 10×6): the facets read as "an 8-sided lathe"
+  // at gameplay distance (round 23); overhang under the cap.
+  const g=new THREE.CylinderGeometry(r*rand(0.55,0.75),r*rand(1.0,1.25),h,16,8);
   const p=g.getAttribute('position');
   for(let i=0;i<p.count;i++){
     const wx=p.getX(i),wy=p.getY(i),wz=p.getZ(i);
     // Undercut at the waterline, bulge above it — the classic stack profile.
     const t=(wy+h/2)/h;
-    const cut=1-Math.exp(-Math.pow((t-0.12)*5,2))*0.35;
-    const n=0.75+fbm3((wx+x)*0.4,wy*0.4,(wz+z)*0.4)*0.6;
+    const cut=1-Math.exp(-Math.pow((t-0.12)*5,2))*0.35
+              +Math.exp(-Math.pow((t-0.78)*7,2))*0.22;   // cap overhang
+    const n=0.7+fbm3((wx+x)*0.4,wy*0.4,(wz+z)*0.4)*0.85;
     p.setX(i,wx*cut*n);
     p.setZ(i,wz*cut*n);
   }
@@ -207,7 +210,8 @@ function jungleRidge(x,z,len,w,h,dir){
       if(ly<1.5||rn.getY(i)<0.2)continue;
       // rotateY(dir): x' = x cos + z sin, z' = -x sin + z cos
       samples.push({x:lx*cd+lz*sd+x,y:ly+WATER_Y,z:-lx*sd+lz*cd+z,
-        nx:rn.getX(i)*cd+rn.getZ(i)*sd,ny:rn.getY(i),nz:-rn.getX(i)*sd+rn.getZ(i)*cd});
+        nx:rn.getX(i)*cd+rn.getZ(i)*sd,ny:rn.getY(i),nz:-rn.getX(i)*sd+rn.getZ(i)*cd,
+        lx,ly,lz,lnx:rn.getX(i),lny:rn.getY(i),lnz:rn.getZ(i)});
     }
   }
   ridgeSamples.push(...samples);
@@ -229,39 +233,30 @@ function jungleRidge(x,z,len,w,h,dir){
   // hide inside the ridge and the visible inner wall stays bare.
   // Over the WHOLE slope (round 23: mounds only at the crest left the
   // lower half a bare membrane again).
-  const N=Math.round(len*2.6);
+  // A CARPET on the SURFACE: rounds 21–23 placed mounds by a height
+  // formula inside the ellipsoid, and at rand(0.12..0.8) of the crest
+  // most of them sat buried in the volume — the lower slope stayed a
+  // bare membrane through three verdicts. Now each mound sits on a
+  // sampled surface vertex, a third sunk along the normal.
+  const N=Math.round(len*4.5);
   for(let i=0;i<N;i++){
-    const t=i/N-0.5;
-    const mound=new THREE.SphereGeometry(rand(1.3,2.8),7,5);
+    const sm=samples[Math.floor(rand(0,samples.length))];
+    if(!sm||sm.ly<0.8)continue;
+    const mound=new THREE.SphereGeometry(rand(1.2,2.6),6,4);
     const mp=mound.getAttribute('position');
     for(let j=0;j<mp.count;j++){
-      // amplitude eased: at ±0.25 the noise tore thin slivers off the
-      // mound rims that read as detached leaf shards over the crest
       const k=0.8+hash3(mp.getX(j)*3+i,mp.getY(j)*3,mp.getZ(j)*3)*0.4;
       mp.setXYZ(j,mp.getX(j)*k,mp.getY(j)*k*0.75,mp.getZ(j)*k);
     }
     mound.computeVertexNormals();
-    // Real hue/value spread mound to mound — one green end to end is the
-    // "two smooth blobs" verdict (round 1, gap 2).
-    // Crown shading: lit cap, DARK skirt — each mound reads as a canopy
-    // with an under-shadow, and overlapping crowns stack (round 22: "no
-    // under-canopy shadow, no overlapping crowns").
-    const hue=0.24+rand(0,0.13),sat=rand(0.45,0.68),base=rand(0.14,0.3),R=mound.parameters.radius;
+    const hue=0.26+rand(0,0.13),sat=rand(0.45,0.68),base=rand(0.14,0.3),R=mound.parameters.radius;
     vcolor(mound,(px,py)=>{
       const cap=THREE.MathUtils.smoothstep(py,-R*0.25,R*0.55);
       return _c.setHSL(hue+fbm3(px*0.6,py*0.6,i)*0.03+(1-cap)*0.07,sat,
         Math.max(0.05,base*(0.3+0.7*cap)+(fbm3(px*1.4,py*1.4,i+40)-0.5)*0.12));
     });
-    // Keep every mound buried in the crest: the ridge surface at t is about
-    // h*cos(t*2.4) before noise, so centring below 0.62 of it can't float.
-    // Spread across the slope, but never down to the waterline — a mound
-    // dipped to y~0 reads as a lettuce head floating in the sea.
-    // ±0.6 is the measured limit: at ±0.75 the lateral offset walks mounds
-    // clear off the noise-shrunk ridge surface and they float (round 11).
-    const zs=rand(-0.7,0.7);
-    xform(mound,{p:[t*len+rand(-1.5,1.5),
-      Math.max(2.4,h*Math.cos(t*2.4)*rand(0.12,0.8)*(1-Math.abs(zs)*0.8)),
-      w/2*zs]});
+    const sink=R*0.35;
+    xform(mound,{p:[sm.lx-sm.lnx*sink,sm.ly-sm.lny*sink,sm.lz-sm.lnz*sink]});
     parts.push(mound);
   }
   const g=mergeGeoms(parts.map(p=>p.toNonIndexed()));
@@ -338,15 +333,17 @@ function randInt2(a,b){return Math.floor(rand(a,b+1));}
  */
 function makeClouds(){
   const parts=[];
-  const N=9;
+  // 14 clouds of 5–9 smaller puffs: the round-23 crop showed "two
+  // overlapping pale ellipses, hard edge, single flat value".
+  const N=14;
   for(let i=0;i<N;i++){
     const a=(i/N-0.5)*Math.PI*1.5-Math.PI/2; // biased around the corridor -z
     const dist=rand(210,290);
     const cx=Math.cos(a)*dist,cz=Math.sin(a)*dist;
-    const cy=rand(38,95),S=rand(9,20);
-    const puffs=Math.floor(rand(3,6));
+    const cy=rand(38,95),S=rand(8,18);
+    const puffs=Math.floor(rand(5,10));
     for(let p=0;p<puffs;p++){
-      const puff=new THREE.SphereGeometry(S*rand(0.45,0.8),10,8);
+      const puff=new THREE.SphereGeometry(S*rand(0.3,0.62),10,8);
       puff.scale(rand(1.2,1.9),rand(0.35,0.5),1);
       const pp=puff.getAttribute('position');
       for(let j=0;j<pp.count;j++){
@@ -358,7 +355,8 @@ function makeClouds(){
       puff.computeVertexNormals();
       vcolor(puff,(px,py)=>{
         const t=THREE.MathUtils.clamp(py/(S*0.5)+0.5,0,1);
-        return _c.setRGB(0.80+t*0.19,0.82+t*0.17,0.88+t*0.11);
+        // lit top to a blue-grey underside: 0.62 at the base, not 0.80
+        return _c.setRGB(0.62+t*0.37,0.68+t*0.31,0.80+t*0.19);
       });
       xform(puff,{p:[cx+rand(-S,S)*1.3,cy+rand(-S,S)*0.25,cz+rand(-S,S)*0.6]});
       parts.push(puff);

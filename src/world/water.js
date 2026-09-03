@@ -12,7 +12,9 @@ import {rippleTexture,foamTexture,glintTexture} from '../art/materials.js';
 import {WATER_Y} from './masses.js';
 
 // World rect the sea covers, mapped onto the depth canvas.
-const X0=-300,X1=300,Z0=100,Z1=-500,SZ=1024;
+// 2048 (was 1024): at 0.6 m/px the shallows band was ~8 px wide and read
+// as one flat pale sheet (round 23, L sd 0.006). 0.3 m/px, and mottled.
+const X0=-300,X1=300,Z0=100,Z1=-500,SZ=2048;
 const px=(wx)=>(wx-X0)/(X1-X0)*SZ;
 const pz=(wz)=>(wz-Z0)/(Z1-Z0)*SZ;
 
@@ -59,17 +61,30 @@ function depthCanvas(islands){
       }
   };
   const halo=(s)=>Math.min(5,Math.min(s.maxX-s.minX,s.maxZ-s.minZ)*0.5);
-  g.filter='blur(10px)';g.fillStyle='rgba(52,168,172,0.75)';
+  g.filter='blur(20px)';g.fillStyle='rgba(52,168,172,0.75)';
   for(const s of islands){
     rect(s,halo(s)*0.45);
     scallop(s,halo(s)*0.45,halo(s)*0.35,halo(s)*0.85);
   }
-  g.filter='blur(4px)';g.fillStyle='rgba(168,214,190,0.5)';
+  g.filter='blur(8px)';g.fillStyle='rgba(168,214,190,0.4)';
   for(const s of islands)rect(s,Math.min(1.8,halo(s)*0.35));
   g.filter='none';
+  // Mottle: darker turquoise cells across the shallows so the band is
+  // not one value.
+  for(const s of islands){
+    const n=Math.round((s.maxX-s.minX+s.maxZ-s.minZ)*6);
+    for(let i=0;i<n;i++){
+      const wx=rand(s.minX-6,s.maxX+6),wz=rand(s.minZ-6,s.maxZ+6);
+      if(wx>s.minX-0.5&&wx<s.maxX+0.5&&wz>s.minZ-0.5&&wz<s.maxZ+0.5)continue;
+      g.fillStyle=`rgba(30,130,150,${rand(0.1,0.28)})`;
+      g.beginPath();
+      g.ellipse(px(wx),pz(wz),rand(1.5,4.5),rand(1.2,3),rand(0,3),0,7);
+      g.fill();
+    }
+  }
 
   // Sun-sparkle cells in the shallows only.
-  g.strokeStyle='rgba(220,255,250,0.2)';g.lineWidth=2;
+  g.strokeStyle='rgba(220,255,250,0.2)';g.lineWidth=3;
   for(const s of islands){
     const n=Math.round((s.maxX-s.minX+s.maxZ-s.minZ)*1.2);
     for(let i=0;i<n;i++){
@@ -77,7 +92,7 @@ function depthCanvas(islands){
       const inside=wx>s.minX-1&&wx<s.maxX+1&&wz>s.minZ-1&&wz<s.maxZ+1;
       if(inside)continue;
       g.beginPath();
-      g.arc(px(wx),pz(wz),rand(2,5),rand(0,3),rand(3.5,6.5));
+      g.arc(px(wx),pz(wz),rand(4,10),rand(0,3),rand(3.5,6.5));
       g.stroke();
     }
   }

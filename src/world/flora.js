@@ -342,13 +342,13 @@ export function makeBroadleafField(spots){
 }
 
 /* ---------- debris (instanced) ------------------------------------------ */
-function debrisMesh(geo,mats,spots,colorFn,{yJitter=0.02,sMin=0.6,sMax=1.5}={}){
+function debrisMesh(geo,mats,spots,colorFn,{yJitter=0.02,sMin=0.6,sMax=1.5,yBase=0}={}){
   const mesh=new THREE.InstancedMesh(geo,mats,spots.length);
   const m=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler();
   for(let i=0;i<spots.length;i++){
     const [x,y,z]=spots[i];
     e.set(rand(0,3.1),rand(0,6.2),rand(0,3.1));
-    m.compose(new THREE.Vector3(x,y+rand(0,yJitter),z),q.setFromEuler(e),
+    m.compose(new THREE.Vector3(x,y+yBase+rand(0,yJitter),z),q.setFromEuler(e),
       new THREE.Vector3(rand(sMin,sMax),rand(sMin,sMax),rand(sMin,sMax)));
     mesh.setMatrixAt(i,m);
     mesh.setColorAt(i,colorFn());
@@ -366,8 +366,9 @@ export function makePebbles(spots){
     p.setXYZ(i,p.getX(i)*k,p.getY(i)*k*0.55,p.getZ(i)*k);
   }
   g.computeVertexNormals();
+  // Sunk 4 cm: sitting on the plane they "float" as faceted solids (round 23).
   return debrisMesh(g,toonMat({color:0xffffff}),spots,
-    ()=>_c.setHSL(rand(0.05,0.13),rand(0.08,0.3),rand(0.3,0.62)));
+    ()=>_c.setHSL(rand(0.05,0.13),rand(0.08,0.3),rand(0.3,0.62)),{yBase:-0.04});
 }
 
 export function makeShells(spots){
