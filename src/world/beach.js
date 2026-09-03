@@ -124,11 +124,13 @@ export function buildBeach(scene){
     ...scatter(110,beach.solid,0.7,flowerAvoid),
     ...scatter(50,yard.solid,0.7,flowerAvoid)]));
 
+  // Debris avoids the prop footprints too: a shell cut into a crate post
+  // in the framing that judges prop relief (round 22, crop-verified).
   const spots=(n)=>[
-    ...scatter(Math.round(n*0.62),beach.solid,0.4),
+    ...scatter(Math.round(n*0.62),beach.solid,0.4,avoid),
     ...scatter(Math.round(n*0.07),gapA.solid,0.3),
     ...scatter(Math.round(n*0.07),gapB.solid,0.3),
-    ...scatter(Math.round(n*0.24),yard.solid,0.4)];
+    ...scatter(Math.round(n*0.24),yard.solid,0.4,avoid)];
   scene.add(makePebbles(spots(950)));
   scene.add(makeShells(spots(400)));
   scene.add(makeTwigs(spots(280)));
@@ -236,6 +238,6 @@ export function buildBeach(scene){
   return {
     solids,
     spawn:[0,0,-5],
-    update(t){for(const u of updates)u(t);}
+    update(t,heroPos){for(const u of updates)u(t,heroPos);}
   };
 }

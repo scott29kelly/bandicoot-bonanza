@@ -201,9 +201,10 @@ export function makeGrassField(spots){
   // Wind rides the same field as the palms: same frequencies, same phases.
   mat.onBeforeCompile=(sh)=>{
     sh.uniforms.uTime={value:0};
+    sh.uniforms.uHero={value:new THREE.Vector3(0,0,1e6)};
     mat.userData.shader=sh;
     sh.vertexShader=sh.vertexShader
-      .replace('#include <common>','#include <common>\nuniform float uTime;')
+      .replace('#include <common>','#include <common>\nuniform float uTime;\nuniform vec3 uHero;')
       .replace('#include <begin_vertex>',`#include <begin_vertex>
         vec4 bbWp=instanceMatrix*vec4(transformed,1.0);
         float bbW=sin(uTime*1.6+bbWp.x*0.13+bbWp.z*0.09)*0.6
@@ -213,7 +214,10 @@ export function makeGrassField(spots){
         // frame (round-19 hero-closeup, crop-verified). Blades within 0.9 m
         // of the camera collapse to their root.
         float bbNear=smoothstep(0.35,0.9,distance(instanceMatrix[3].xyz,cameraPosition));
-        transformed.y*=bbNear;`);
+        // Blades under the hero flatten to the sand — they passed through
+        // the boots in two framings (round 22, crop-verified).
+        float bbHero=smoothstep(0.3,0.6,distance(instanceMatrix[3].xz,uHero.xz));
+        transformed.y*=bbNear*bbHero;`);
   };
   const mesh=new THREE.InstancedMesh(geo,mat,spots.length);
   const m=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler();
@@ -228,8 +232,11 @@ export function makeGrassField(spots){
     mesh.setColorAt(i,_c.setHSL(rand(0.16,0.36),rand(0.5,0.75),rand(0.32,0.62)));
   }
   mesh.castShadow=true;
-  function update(t){
-    if(mat.userData.shader)mat.userData.shader.uniforms.uTime.value=t;
+  function update(t,heroPos){
+    const sh=mat.userData.shader;
+    if(!sh)return;
+    sh.uniforms.uTime.value=t;
+    if(heroPos)sh.uniforms.uHero.value.copy(heroPos);
   }
   return {mesh,update};
 }
@@ -262,8 +269,12 @@ export function makeFlowerField(spots){
     m.compose(new THREE.Vector3(x,y,z),q.setFromEuler(e),
       new THREE.Vector3(rand(0.8,1.5),rand(0.8,1.4),rand(0.8,1.5)));
     mesh.setMatrixAt(i,m);
-    // blossom tint rides instanceColor: coral to cream to gold
-    mesh.setColorAt(i,_c.setHSL(rand(-0.02,0.12),rand(0.55,0.8),rand(0.55,0.75)));
+    // blossom tint rides instanceColor: coral to cream to gold, and one
+    // in four PINK-VIOLET — the only accent hue the set dressing carried
+    // was the fruit's orange (round 22 hue histogram: 0–3% magenta).
+    mesh.setColorAt(i,rand(0,1)<0.25
+      ?_c.setHSL(rand(0.84,0.95),rand(0.6,0.8),rand(0.55,0.7))
+      :_c.setHSL(rand(-0.02,0.12),rand(0.55,0.8),rand(0.55,0.75)));
   }
   mesh.castShadow=true;
   return mesh;

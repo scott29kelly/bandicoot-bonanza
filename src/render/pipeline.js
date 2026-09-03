@@ -22,7 +22,7 @@ export const PALETTE={
   fog:0xb9d9e4,
   sunColor:0xffdd96,      // hotter key
   hemiSky:0x55a8d2,       // saturated teal — this is what shadow is made of
-  hemiGround:0x7f9a84,    // cool moss bounce, not warm sand
+  hemiGround:0x93b09a,    // cool moss bounce, not warm sand (lifted round 23)
   rim:0xcfeaff            // back light that pulls silhouettes off the ground
 };
 
@@ -84,7 +84,7 @@ export function createPipeline(){
   // a plateau at L~0.10 — the wood grain on a shaded crate wall sat below
   // the floor with the wall. Same hemi colours, so the shadow stays teal;
   // more of it, so a shaded plank still carries its lines.
-  const hemi=new THREE.HemisphereLight(PALETTE.hemiSky,PALETTE.hemiGround,0.70);
+  const hemi=new THREE.HemisphereLight(PALETTE.hemiSky,PALETTE.hemiGround,0.80);
   scene.add(hemi);
 
   // Cool rim from behind-left, shadowless: separates every silhouette from

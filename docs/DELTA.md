@@ -5,6 +5,67 @@ on top, closed entries move to the round that closed them, nothing is deleted.
 Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
+## Round 22 — 2026-09-03 (fill for the shaded planks, a knee for the whites, leaflets at the tips)
+
+Shot from `39cc5f2`, seed `0x5eed1e`, `shots/round22/`. Gates: build
+green, det green (pair in 2 boots, max 0), 5/5 PASS.
+
+What landed: hemi 0.70, highlight knee, 22 cm frond-tip leaflet,
+flowers clear of broadleaf, round 5–8 px sand speckle, wider crate
+contact, lighter rocks; the sand pale octave pulled back after it
+printed polka dots.
+
+### Critic verdict (blind, fresh context, measured) — measured
+
+Closed: frond-tip hairline gone (no call), stem peg gone, speckle
+rects gone (the remaining "hatch" is the ripple strokes at 8x).
+Performance scored for the first time (7 — "293k–307k tris, 240–314
+draws, 60 fps, inside the floors"). Composition 6, dressing 6.
+
+Real finds, builder-confirmed:
+1. Crate SIDE faces in shadow: L 0.107, sd 0.004, 100% in one bin —
+   a flat navy plane, grain gone. Lit crate faces only L 0.31–0.34.
+   Root cause (third instance of the multiply class): the crate vertex
+   colour (L 0.55–0.66) MULTIPLIES the golden wood texture, so lit
+   faces land at a third and shaded faces on the floor.
+2. Grass blades pass through the hero's boots in hero-closeup and
+   crate-cluster (`c22-boot-grass`, `c22-cc-feet`).
+3. A shell cuts into a crate corner post (`c22-tnt-base`): the debris
+   scatter had no avoid list.
+4. A straight lighting seam across the sand (`c22-sand-stretch`,
+   contrast-stretched): the island top's forced-up normals switched
+   hard at edge 0.9.
+5. The hill meets the sea on a hard diagonal with no foam
+   (`c22-title-shore`); only the islands had rings.
+6. Hill mass "one smooth dome with flat 2-D leaf decals": the leaf
+   shell reads as clip-art tangent to the dome, no under-canopy
+   shadow, no overlapping crowns; hill sd 0.056–0.072.
+7. Colour: full-frame hue 81–118 in every still, no accent but the
+   fruit; hill base h92, the same hue as the palms.
+
+Discounted: "no shoreline band anywhere" (islands have rings — the
+claim was correct only for the hills, logged as 5). "Black gap where
+the post does not meet the rail" — the post's own shadow crevice.
+
+Self-score: character 4 · props 5 · dressing 6 · vegetation 5 · light 5
+· colour 5 · water 5 · backdrop 3 · motion UNMEASURED · composition 6
+· performance 7.
+
+### Fixing this round (became round 23)
+
+Crate vertex colour L 0.72–0.82 (frame 0.52), beams bevelled
+(RoundedBoxGeometry, three addons via the import map). Hemi 0.80,
+ground bounce lifted to 0x93b09a. Grass flattens within 0.6 m of the
+hero (`uHero`, fed from main.js through world.update(t, hero.pos)).
+Debris scatter takes the prop avoid list. Island-top normals blend
+over edge 0.82–0.97 instead of switching. Ridge shore foam rings built
+from the sphere equator row (`ridgeFoam`). Mounds shaded as crowns
+(lit cap, dark skirt, cooler hue below), less buried; leaf shell
+density 0.42→0.28; ridge hue drifts blue-green toward the base. One
+blossom in four pink-violet. Sand texture dark blotches halved.
+
+---
+
 ## Round 21 — 2026-09-03 (leaves on the hills, dapple on the sand, a line that holds its width)
 
 Shot from `1e517f4`, seed `0x5eed1e`, `shots/round21/`. Gates: build

@@ -76,7 +76,7 @@ function frame(){
     t+=dt;
     renderer.info.reset();
 
-    world.update(t);
+    world.update(t,hero.pos);
 
     if(state.mode!=='REVIEW'){
       hero.update(dt,t);

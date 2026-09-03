@@ -91,10 +91,17 @@ export function islandMass({x,z,w,d,topY=0}){
   // Faceted normals on the segmented top paint the segment grid onto the
   // sand as ruled seam lines (round-3 critic, verified in hero-closeup).
   // The interior top is near-flat by construction; say so.
+  // Blend, don't switch: the hard edge<0.9 cut drew a straight lighting
+  // seam across the sand (round 22, contrast-stretched crop).
   const nrmFix=g.getAttribute('normal');
   for(let i=0;i<pos.count;i++){
     const edge=Math.max(Math.abs(pos.getX(i))/halfW,Math.abs(pos.getZ(i))/halfD);
-    if(pos.getY(i)>yTop-0.45&&edge<0.9)nrmFix.setXYZ(i,0,1,0);
+    if(pos.getY(i)>yTop-0.45&&edge<0.97){
+      const k=THREE.MathUtils.smoothstep(edge,0.82,0.97);
+      const nx=nrmFix.getX(i)*k,ny=nrmFix.getY(i)*k+(1-k),nz=nrmFix.getZ(i)*k;
+      const l=Math.hypot(nx,ny,nz)||1;
+      nrmFix.setXYZ(i,nx/l,ny/l,nz/l);
+    }
   }
   nrmFix.needsUpdate=true;
 

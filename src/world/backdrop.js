@@ -7,7 +7,7 @@
  */
 import * as THREE from 'three';
 import {rand} from '../core/rng.js';
-import {toonMat,dappleTexture} from '../art/materials.js';
+import {toonMat,dappleTexture,foamTexture} from '../art/materials.js';
 import {mergeGeoms,xform,fbm3,vcolor,hash3} from './geo.js';
 import {WATER_Y} from './masses.js';
 
@@ -46,7 +46,7 @@ function seaStack(x,z,h,r){
 }
 
 /** A jungle flank: a ridge mass buried under overlapping canopy mounds. */
-let ridgeSamples=[];
+let ridgeSamples=[],ridgeShores=[];
 /** Ridge surface height under (x,z) from the sampled vertices — the trees
  * stand ON the flank instead of half inside it (round 20: fronds through
  * the hill skin). */
@@ -79,7 +79,7 @@ function leafShell(samples,mat){
     fan.push(g2);
   }
   const geo=mergeGeoms(fan);
-  const pick=samples.filter(()=>rand(0,1)<0.42);
+  const pick=samples.filter(()=>rand(0,1)<0.28);
   const mesh=new THREE.InstancedMesh(geo,mat,pick.length);
   const m=new THREE.Matrix4(),q=new THREE.Quaternion(),up=new THREE.Vector3(0,1,0),
         n=new THREE.Vector3(),p=new THREE.Vector3(),sc=new THREE.Vector3(),yaw=new THREE.Quaternion();
@@ -123,6 +123,38 @@ function dappleCasters(){
   return g;
 }
 
+/** Foam where the flanks meet the sea — the islands had it, the hills met
+ * the water on a hard diagonal (round 22, gap 5). */
+function ridgeFoam(){
+  const pos=[],uv=[],idx=[];
+  for(const ring of ridgeShores){
+    if(ring.length<8)continue;
+    const cx=ring.reduce((s,p)=>s+p.x,0)/ring.length,cz=ring.reduce((s,p)=>s+p.z,0)/ring.length;
+    const base=pos.length/3;
+    let l=0;
+    for(let i=0;i<=ring.length;i++){
+      const p=ring[i%ring.length],q=ring[(i+1)%ring.length];
+      if(i>0){const o=ring[(i-1)%ring.length];l+=Math.hypot(p.x-o.x,p.z-o.z);}
+      let nx=p.x-cx,nz=p.z-cz;const nl=Math.hypot(nx,nz)||1;nx/=nl;nz/=nl;
+      const w=2.4*(0.7+0.5*Math.abs(Math.sin(l*0.31+p.x*0.2)));
+      pos.push(p.x,0,p.z, p.x+nx*w,0,p.z+nz*w);
+      uv.push(l/4,0, l/4,1);
+      if(i<ring.length){const a=base+i*2;idx.push(a,a+1,a+2, a+1,a+3,a+2);}
+    }
+  }
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+  g.setIndex(idx);
+  const t=foamTexture();
+  t.flipY=false;t.wrapT=THREE.ClampToEdgeWrapping;t.needsUpdate=true;
+  const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({map:t,transparent:true,depthWrite:false,
+    opacity:0.7,fog:true,side:THREE.DoubleSide}));
+  m.position.y=WATER_Y+0.04;
+  m.renderOrder=2;
+  return m;
+}
+
 function jungleRidge(x,z,len,w,h,dir){
   const parts=[];
   // 48×30, not 22×14: scaled to a ~36 m ridge, the coarse mesh spaced
@@ -154,8 +186,11 @@ function jungleRidge(x,z,len,w,h,dir){
   // The second octave is canopy-clump scale so the wall reads as foliage.
   // Third octave earns its keep only since the 48×30 mesh — before that,
   // vertices 2–3 m apart interpolated everything above the first away.
+  // Hue drifts blue-green toward the base: the under-canopy is cool in
+  // every ref, and at one hue the mass and the palms read as one object
+  // (round 22, h92 for both).
   vcolor(ridge,(px,py,pz)=>_c.setHSL(
-    0.27+fbm3(px*0.10,py*0.3,3)*0.09,
+    0.27+fbm3(px*0.10,py*0.3,3)*0.09+(1-THREE.MathUtils.clamp(py/h,0,1))*0.045,
     0.42+fbm3(px*0.23,py*0.5,9)*0.18,
     Math.max(0.05,0.12+Math.max(0,py)/h*0.12
       +(fbm3(px*0.16,py*0.35,(pz+7)*0.16)-0.5)*0.24
@@ -176,12 +211,28 @@ function jungleRidge(x,z,len,w,h,dir){
     }
   }
   ridgeSamples.push(...samples);
+  // Waterline ring (the sphere's equator row sits exactly at y=0 local,
+  // and the noise scales it radially, so these ARE the shore points).
+  {
+    const rp2=ridge.getAttribute('position');
+    const cd=Math.cos(dir),sd=Math.sin(dir),ring=[];
+    for(let i=0;i<rp2.count;i++){
+      const ly=rp2.getY(i);
+      if(Math.abs(ly)>0.02)continue;
+      const lx=rp2.getX(i),lz=rp2.getZ(i);
+      ring.push({x:lx*cd+lz*sd+x,z:-lx*sd+lz*cd+z,a:Math.atan2(lz,lx)});
+    }
+    ring.sort((p,q)=>p.a-q.a);
+    ridgeShores.push(ring);
+  }
   // Canopy mounds over crest AND slopes — clustered on the crest alone they
   // hide inside the ridge and the visible inner wall stays bare.
-  const N=Math.round(len*1.7);
+  // Over the WHOLE slope (round 23: mounds only at the crest left the
+  // lower half a bare membrane again).
+  const N=Math.round(len*2.6);
   for(let i=0;i<N;i++){
     const t=i/N-0.5;
-    const mound=new THREE.SphereGeometry(rand(1.5,3.2),7,5);
+    const mound=new THREE.SphereGeometry(rand(1.3,2.8),7,5);
     const mp=mound.getAttribute('position');
     for(let j=0;j<mp.count;j++){
       // amplitude eased: at ±0.25 the noise tore thin slivers off the
@@ -192,18 +243,24 @@ function jungleRidge(x,z,len,w,h,dir){
     mound.computeVertexNormals();
     // Real hue/value spread mound to mound — one green end to end is the
     // "two smooth blobs" verdict (round 1, gap 2).
-    const hue=0.24+rand(0,0.13),sat=rand(0.45,0.68),base=rand(0.07,0.24);
-    vcolor(mound,(px,py)=>_c.setHSL(hue+fbm3(px*0.6,py*0.6,i)*0.03,sat,
-      Math.max(0.05,base+py*0.12+(fbm3(px*1.4,py*1.4,i+40)-0.5)*0.16)));
+    // Crown shading: lit cap, DARK skirt — each mound reads as a canopy
+    // with an under-shadow, and overlapping crowns stack (round 22: "no
+    // under-canopy shadow, no overlapping crowns").
+    const hue=0.24+rand(0,0.13),sat=rand(0.45,0.68),base=rand(0.14,0.3),R=mound.parameters.radius;
+    vcolor(mound,(px,py)=>{
+      const cap=THREE.MathUtils.smoothstep(py,-R*0.25,R*0.55);
+      return _c.setHSL(hue+fbm3(px*0.6,py*0.6,i)*0.03+(1-cap)*0.07,sat,
+        Math.max(0.05,base*(0.3+0.7*cap)+(fbm3(px*1.4,py*1.4,i+40)-0.5)*0.12));
+    });
     // Keep every mound buried in the crest: the ridge surface at t is about
     // h*cos(t*2.4) before noise, so centring below 0.62 of it can't float.
     // Spread across the slope, but never down to the waterline — a mound
     // dipped to y~0 reads as a lettuce head floating in the sea.
     // ±0.6 is the measured limit: at ±0.75 the lateral offset walks mounds
     // clear off the noise-shrunk ridge surface and they float (round 11).
-    const zs=rand(-0.6,0.6);
+    const zs=rand(-0.7,0.7);
     xform(mound,{p:[t*len+rand(-1.5,1.5),
-      Math.max(3.2,h*Math.cos(t*2.4)*rand(0.36,0.66)*(1-Math.abs(zs)*0.8)),
+      Math.max(2.4,h*Math.cos(t*2.4)*rand(0.12,0.8)*(1-Math.abs(zs)*0.8)),
       w/2*zs]});
     parts.push(mound);
   }
@@ -317,7 +374,7 @@ function makeClouds(){
 export function createBackdrop(){
   const mat=toonMat({vertexColors:true,side:THREE.DoubleSide});
   const parts=[];
-  ridgeSamples=[];
+  ridgeSamples=[];ridgeShores=[];
 
   // Mid layer: jungle flanks RUNNING ALONG the corridor (a ridge's long
   // axis is X, so flanks need the quarter turn) from well outside it —
@@ -377,6 +434,6 @@ export function createBackdrop(){
   mesh.receiveShadow=false;
   const group=new THREE.Group();
   const shellMat=toonMat({color:0xffffff,side:THREE.DoubleSide}); // white: instance colour IS the colour
-  group.add(mesh,leafShell(nearSamples,shellMat),dappleCasters(),makeClouds());
+  group.add(mesh,leafShell(nearSamples,shellMat),ridgeFoam(),dappleCasters(),makeClouds());
   return group;
 }
