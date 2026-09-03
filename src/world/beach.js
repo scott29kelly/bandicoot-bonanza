@@ -109,7 +109,9 @@ export function buildBeach(scene){
 
   const grassSpots=[
     ...scatter(230,beach.solid,0.8,avoid),
-    ...scatter(28,gapA.solid,0.5,avoid),...scatter(28,gapB.solid,0.5,avoid),
+    // 60 each (was 28): the water-gap foreground platform measured 75%
+    // bare sand (round 25).
+    ...scatter(60,gapA.solid,0.5,avoid),...scatter(60,gapB.solid,0.5,avoid),
     ...scatter(120,yard.solid,0.8,avoid)];
   const grass=makeGrassField(grassSpots);
   scene.add(grass.mesh);
@@ -117,8 +119,11 @@ export function buildBeach(scene){
 
   const broadSpots=[
     ...scatter(90,beach.solid,0.9,avoid),
+    ...scatter(10,gapA.solid,0.6,avoid),...scatter(10,gapB.solid,0.6,avoid),
     ...scatter(45,yard.solid,0.9,avoid)];
-  scene.add(makeBroadleafField(broadSpots));
+  const broad=makeBroadleafField(broadSpots);
+  scene.add(broad.mesh);
+  updates.push(broad.update);
 
   // Blossoms keep clear of the broadleaf clumps: a stem under a leaf
   // showed as a bare dark peg through the whorl (round 21, crop-verified).
@@ -131,8 +136,8 @@ export function buildBeach(scene){
   // in the framing that judges prop relief (round 22, crop-verified).
   const spots=(n)=>[
     ...scatter(Math.round(n*0.62),beach.solid,0.4,avoid),
-    ...scatter(Math.round(n*0.07),gapA.solid,0.3),
-    ...scatter(Math.round(n*0.07),gapB.solid,0.3),
+    ...scatter(Math.round(n*0.11),gapA.solid,0.3),
+    ...scatter(Math.round(n*0.11),gapB.solid,0.3),
     ...scatter(Math.round(n*0.24),yard.solid,0.4,avoid)];
   scene.add(makePebbles(spots(950)));
   scene.add(makeShells(spots(400)));

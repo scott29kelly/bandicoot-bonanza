@@ -343,6 +343,17 @@ function broadleafGeom(){
 export function makeBroadleafField(spots){
   const geo=broadleafGeom();
   const mat=toonMat({color:0xffffff,vertexColors:true,side:THREE.DoubleSide}); // see grass note
+  // Same hero collapse as the grass: a leaf passed through the hero's foot
+  // (round 25, crop-verified).
+  mat.onBeforeCompile=(sh)=>{
+    sh.uniforms.uHero={value:new THREE.Vector3(0,0,1e6)};
+    mat.userData.shader=sh;
+    sh.vertexShader=sh.vertexShader
+      .replace('#include <common>','#include <common>\nuniform vec3 uHero;')
+      .replace('#include <begin_vertex>',`#include <begin_vertex>
+        float blHero=smoothstep(0.35,0.7,distance(instanceMatrix[3].xz,uHero.xz));
+        transformed.y*=blHero;`);
+  };
   const mesh=new THREE.InstancedMesh(geo,mat,spots.length);
   const m=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler();
   for(let i=0;i<spots.length;i++){
@@ -354,7 +365,11 @@ export function makeBroadleafField(spots){
     mesh.setColorAt(i,_c.setHSL(rand(0.22,0.38),rand(0.5,0.7),rand(0.35,0.6)));
   }
   mesh.castShadow=true;
-  return mesh;
+  function update(t,heroPos){
+    const sh=mat.userData.shader;
+    if(sh&&heroPos)sh.uniforms.uHero.value.copy(heroPos);
+  }
+  return {mesh,update};
 }
 
 /* ---------- debris (instanced) ------------------------------------------ */
@@ -379,12 +394,12 @@ export function makePebbles(spots){
   const p=g.getAttribute('position');
   for(let i=0;i<p.count;i++){
     const k=0.6+fbm3(p.getX(i)*8,p.getY(i)*8,p.getZ(i)*8)*0.9;
-    p.setXYZ(i,p.getX(i)*k,p.getY(i)*k*0.55,p.getZ(i)*k);
+    p.setXYZ(i,p.getX(i)*k,p.getY(i)*k*0.7,p.getZ(i)*k);
   }
   g.computeVertexNormals();
   // Sunk 4 cm: sitting on the plane they "float" as faceted solids (round 23).
   return debrisMesh(g,toonMat({color:0xffffff}),spots,
-    ()=>_c.setHSL(rand(0.05,0.13),rand(0.08,0.3),rand(0.3,0.62)),{yBase:-0.04});
+    ()=>_c.setHSL(rand(0.05,0.13),rand(0.08,0.3),rand(0.3,0.62)),{yBase:-0.025});
 }
 
 export function makeShells(spots){

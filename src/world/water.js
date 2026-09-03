@@ -62,11 +62,13 @@ function depthCanvas(islands){
   };
   const halo=(s)=>Math.min(5,Math.min(s.maxX-s.minX,s.maxZ-s.minZ)*0.5);
   g.filter='blur(20px)';g.fillStyle='rgba(52,168,172,0.75)';
+  // 0.7 (was 0.45): beach-corridor measured the water at the sand edge
+  // the same blue as at 40 m (round 25).
   for(const s of islands){
-    rect(s,halo(s)*0.45);
-    scallop(s,halo(s)*0.45,halo(s)*0.35,halo(s)*0.85);
+    rect(s,halo(s)*0.7);
+    scallop(s,halo(s)*0.7,halo(s)*0.35,halo(s)*0.85);
   }
-  g.filter='blur(8px)';g.fillStyle='rgba(168,214,190,0.4)';
+  g.filter='blur(8px)';g.fillStyle='rgba(168,214,190,0.3)';
   for(const s of islands)rect(s,Math.min(1.8,halo(s)*0.35));
   g.filter='none';
   // Mottle: darker turquoise cells across the shallows so the band is

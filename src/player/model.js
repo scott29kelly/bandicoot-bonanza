@@ -41,7 +41,9 @@ function outlineMaterial(px){
       .replace('#include <begin_vertex>',`#include <begin_vertex>
         {
           vec4 olMv=modelViewMatrix*vec4(position,1.0);
-          float olD=clamp(length(olMv.xyz)/3.0,1.0,3.5);
+          // /4, max 2.2 (was /3, 3.5): at 15 m the line ran 2.5 px on a
+          // 120 px figure and the ears merged into it (round 25).
+          float olD=clamp(length(olMv.xyz)/4.0,1.0,2.2);
           transformed+=normal*uPx*olD;
         }`);
   };
@@ -200,7 +202,10 @@ export function createHeroModel(){
   for(const s of[-1,1]){
     const cones=[];
     for(const [dy,dz,tilt] of [[0.02,0.02,-0.35],[-0.05,0.06,0],[-0.11,0.04,0.35]]){
-      const tuft=new THREE.ConeGeometry(0.024,0.12,5);
+      // Flattened (z 0.4): round cones read as "cylinder pegs with end
+      // caps" (round 25); a flat tuft reads as fur.
+      const tuft=new THREE.ConeGeometry(0.028,0.13,5);
+      tuft.scale(1,1,0.4);
       xform(tuft,{r:[tilt,0,s*(1.75+tilt*0.5)],p:[s*0.2,dy,dz]});
       cones.push(tuft.toNonIndexed());
     }
@@ -247,7 +252,10 @@ export function createHeroModel(){
     shoulder.position.set(s*0.25,0.42,0.04);
     // a fur ball at the pivot bridges torso and arm — without it the arm
     // floats beside the narrow chest (round-6 verdict: detached tubes)
-    const ball=part(new THREE.SphereGeometry(0.08,9,8),FUR,{line:false});
+    // 0.065, tucked in: at 0.08 the ball sat ON the torso as a second
+    // sphere (round 25, "ball shoulders").
+    const ball=part(new THREE.SphereGeometry(0.065,9,8),FUR,{line:false});
+    ball.position.set(-s*0.03,0,-0.01);
     // Long enough that the hands clear the belly: at 0.24 the gloves hung
     // exactly behind the torso's widest band and no pose could show them.
     const arm=part(new THREE.CapsuleGeometry(0.055,0.32,4,8),FUR);

@@ -73,7 +73,11 @@ export function islandMass({x,z,w,d,topY=0}){
       // 0.28: at 0.45 the undercut cavity under the lip read as a hole in
       // the mesh (round-19/20, the "navy wedge" at every gap platform).
       const lip=down<0.16?0.28:0;
-      const bulge=(0.3+down*1.6)*(0.55+n*2.6)+lip;
+      // Terraced strata: the same band function the paint uses, stepping
+      // the face 12 cm so the bands are relief (round 25: "three
+      // scribbled strata lines on a flat plane").
+      const band=Math.sin(py*6.5+fbm3((px+x)*0.5,py*0.8,(pz+z)*0.5)*4.5)>0.2?0.12:0;
+      const bulge=(0.3+down*1.6)*(0.55+n*2.6)+lip+band*Math.min(1,down*4);
       const dirX=px/halfW,dirZ=pz/halfD;
       const dl=Math.hypot(dirX,dirZ)||1;
       pos.setX(i,px+dirX/dl*bulge);

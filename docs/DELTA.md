@@ -5,6 +5,57 @@ on top, closed entries move to the round that closed them, nothing is deleted.
 Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
+## Round 25 — 2026-09-03 (blades that bend, a blob that stays inside its crate, a rim above the body)
+
+Shot from `a487414`, seed `0x5eed1e`, `shots/round25/`. Gates: build
+green, det green (pair in 2 boots, max 0), 5/5 PASS.
+
+What landed: 11-blade two-segment tufts with dark bases, rim 2.2,
+stacked-crate blob inside its footprint, rounder crowns, denser leaf
+shell, brighter ground bounce.
+
+### Critic verdict (blind, fresh context, measured) — measured
+
+Light transport 6 (rim "+0.34 L over 14 px at the belly edge",
+shadow sat 0.59–0.63), colour 6, props 6, composition 6, motion 5
+(first score: "blade lean varies per instance"). No fruit dots, no
+black wedge, no sub-pixel line calls.
+
+Real finds, builder-confirmed:
+1. Cheek tufts read as "cylinder pegs with flat end caps"; shoulders
+   "a second sphere sitting on the torso" (`c25x-hc-whisker`,
+   `c25-hc-torso-rim`).
+2. Water-gap foreground platform 75.5% bare sand (measured).
+3. Pale blue-grey blobs in the haze between stack and horizon
+   (`c25x-wg-skyblobs`): the far haze ridges' crown carpet through fog.
+4. Outline 2–3 px on the 120 px distant hero — ears merge into it.
+5. A broadleaf passes through the hero's foot (`c25x-hc-feet-ground`).
+6. Skirt strata are paint on a flat plane, not relief.
+7. Water at the sand edge in beach-corridor the same blue as at 40 m.
+8. TNT sits back from the crate row with a gap (S 0.92 vs 1.0).
+9. Pebbles show one flat top facet (sunk 4 cm, y-scale 0.55).
+
+Discounted: "grass blades are straight isosceles triangles" — they
+are two-segment bent blades since this round (crop `b25-grass`); at
+crate-cluster range the bend is small. "Hard dark trapezoid on the
+sand reads as a hole" — a crisp cast shadow from the shadow map, not
+geometry. "Pale facet inside the tail" — the hip tuft cone through
+the tail tube; real but 10 px, logged.
+
+Self-score: character 4 · props 6 · dressing 5 · vegetation 5 · light 6
+· colour 6 · water 4 · backdrop 5 · motion 5 · composition 6.
+
+### Fixing this round (became round 26)
+
+Cheek tufts flattened (z 0.4); shoulder balls 0.065 tucked in;
+outline distance clamp /4, max 2.2. Far haze ridges skip the crown
+carpet. Gap islets: grass 60 each, broadleaf 10 each, debris 11%.
+Broadleaf gets the hero collapse. Skirt strata stepped 12 cm as
+terraces. Shallows halo 0.7 (was 0.45), contact band alpha 0.3. TNT
+S 0.98, seated in the row. Pebbles y-scale 0.7, sunk 2.5 cm.
+
+---
+
 ## Round 24 — 2026-09-03 (crowns on the surface, strata on the skirt, shallows with grain)
 
 Shot from `1dc34b4` + `2b4bcbd`, seed `0x5eed1e`, `shots/round24/`.

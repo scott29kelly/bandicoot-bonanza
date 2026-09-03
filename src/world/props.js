@@ -98,10 +98,10 @@ export function makeTNT(x,y,z){
   mats();
   const parts=[];
   const ao=(y)=>0.72+0.28*THREE.MathUtils.clamp(y/S+0.5,0,1);
-  const core=new THREE.BoxGeometry(S*0.92,S*0.92,S*0.92);
+  const core=new THREE.BoxGeometry(S*0.98,S*0.98,S*0.98);
   vcolor(core,(px,py)=>_c.setScalar(ao(py)));
   parts.push(core);
-  for(const g of frameGeoms(S*0.92,0.11))
+  for(const g of frameGeoms(S*0.98,0.11))
     parts.push(vcolor(g,(px,py)=>_c.setHSL(0.0,0.55,0.30*ao(py))));
   const core2=parts.shift();
   const body=splitCaster(core2,parts,tntMat);
@@ -109,18 +109,18 @@ export function makeTNT(x,y,z){
   // The fuse: a little pot and a bent wick. The prop's job is to promise a
   // bang later; a plain red cube promises nothing.
   const pot=new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.12,0.1,10),fuseMat);
-  pot.position.y=S*0.46+0.04;
+  pot.position.y=S*0.49+0.04;
   const wickCurve=new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0,S*0.46+0.08,0),
-    new THREE.Vector3(0.05,S*0.46+0.22,0.02),
-    new THREE.Vector3(0.14,S*0.46+0.28,0.06)]);
+    new THREE.Vector3(0,S*0.49+0.08,0),
+    new THREE.Vector3(0.05,S*0.49+0.22,0.02),
+    new THREE.Vector3(0.14,S*0.49+0.28,0.06)]);
   const wick=new THREE.Mesh(new THREE.TubeGeometry(wickCurve,6,0.025,5),fuseMat);
 
   const group=new THREE.Group();
   group.add(body,pot,wick);
-  group.position.set(x,y+S*0.46,z);
+  group.position.set(x,y+S*0.49,z);
   group.rotation.y=rand(-0.08,0.08);
   for(const o of [pot,wick]){o.castShadow=true;o.receiveShadow=true;}
-  const hw=S*0.46+0.02;
-  return {mesh:group,solid:{minX:x-hw,maxX:x+hw,minZ:z-hw,maxZ:z+hw,topY:y+S*0.92-0.02}};
+  const hw=S*0.49+0.02;
+  return {mesh:group,solid:{minX:x-hw,maxX:x+hw,minZ:z-hw,maxZ:z+hw,topY:y+S*0.98-0.02}};
 }

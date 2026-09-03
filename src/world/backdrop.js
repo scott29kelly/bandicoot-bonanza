@@ -158,7 +158,7 @@ function ridgeFoam(){
   return m;
 }
 
-function jungleRidge(x,z,len,w,h,dir){
+function jungleRidge(x,z,len,w,h,dir,near=true){
   const parts=[];
   // 48×30, not 22×14: scaled to a ~36 m ridge, the coarse mesh spaced
   // vertices 2–3 m apart and the vcolor octaves interpolated away across
@@ -238,7 +238,9 @@ function jungleRidge(x,z,len,w,h,dir){
   // most of them sat buried in the volume — the lower slope stayed a
   // bare membrane through three verdicts. Now each mound sits on a
   // sampled surface vertex, a third sunk along the normal.
-  const N=Math.round(len*4.0);
+  // Far ridges skip the carpet: through the fog their crowns rendered as
+  // "pale blue-grey blobs in the haze" (round 25, crop-verified).
+  const N=near?Math.round(len*4.0):0;
   for(let i=0;i<N;i++){
     const sm=samples[Math.floor(rand(0,samples.length))];
     if(!sm||sm.ly<0.8)continue;
@@ -424,8 +426,8 @@ export function createBackdrop(){
   // Far layer: a haze ridge band across the horizon of the corridor, tall
   // enough to read OVER the mid flanks, still inside the fog range so it
   // silhouettes instead of vanishing.
-  parts.push(jungleRidge(-40,-182,150,40,30,0.25));
-  parts.push(jungleRidge(60,-172,120,36,26,-0.3));
+  parts.push(jungleRidge(-40,-182,150,40,30,0.25,false));
+  parts.push(jungleRidge(60,-172,120,36,26,-0.3,false));
 
   const mesh=new THREE.Mesh(mergeGeoms(parts),mat);
   mesh.castShadow=false;   // far out of the cascade; shadows would just crawl
