@@ -27,7 +27,7 @@ function scatter(n,s,inset=0.8,avoid=[]){
     const x=rand(s.minX+inset,s.maxX-inset),z=rand(s.minZ+inset,s.maxZ-inset);
     // Keep the running line readable: debris thins out where the player runs.
     const mid=Math.abs(x-(s.minX+s.maxX)/2)/((s.maxX-s.minX)/2);
-    if(rand(0,1)>0.35+mid*0.65)continue;
+    if(rand(0,1)>0.5+mid*0.5)continue;
     // Nothing tall grows through a prop.
     if(avoid.some(a=>(x-a.x)*(x-a.x)+(z-a.z)*(z-a.z)<a.r*a.r))continue;
     out.push([x,s.topY,z]);
@@ -108,7 +108,7 @@ export function buildBeach(scene){
   }
 
   const grassSpots=[
-    ...scatter(230,beach.solid,0.8,avoid),
+    ...scatter(300,beach.solid,0.8,avoid),
     // 60 each (was 28): the water-gap foreground platform measured 75%
     // bare sand (round 25).
     ...scatter(60,gapA.solid,0.5,avoid),...scatter(60,gapB.solid,0.5,avoid),
@@ -156,7 +156,7 @@ export function buildBeach(scene){
   // bobbing row visually ONTO the hero ("oddly clutching a fruit").
   fruitRow(-1.6,0,-5,-11,5);
   fruitPos.push([0,1.6,-31.5],[0,1.8,-39.2],[0,1.8,-47.3]); // arcs over the gaps
-  fruitRow(3,0,-49,-55,4);
+  fruitRow(4.3,0,-49,-55,4); // off the crate-cluster hero (round 26)
   // A wumpa is a DESIGNED object, not a sphere. Round 6 ranked the sphere
   // body as the banned outcome verbatim, stem notwithstanding — so the body
   // gets sculpted: five lobes around the axis and a stem dimple at the top.

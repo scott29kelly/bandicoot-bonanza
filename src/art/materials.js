@@ -309,10 +309,11 @@ export function glintTexture(){
   return canvasTex(256,(g,s)=>{
     g.clearRect(0,0,s,s);
     for(let i=0;i<34;i++){
-      const x=rand(8,s-8),y=rand(8,s-8),len=rand(3,9),a=rand(0.35,0.9);
+      const x=rand(8,s-8),y=rand(8,s-8),len=rand(2,11),a=rand(0.35,0.9),ang=rand(-0.35,0.35);
+      const dx=Math.cos(ang)*len,dy=Math.sin(ang)*len;
       g.strokeStyle='rgba(255,250,235,'+a+')';
-      g.lineWidth=rand(1.2,2.2);
-      g.beginPath();g.moveTo(x-len,y);g.lineTo(x+len,y);g.stroke();
+      g.lineWidth=rand(1.0,2.4);
+      g.beginPath();g.moveTo(x-dx,y-dy);g.lineTo(x+dx,y+dy);g.stroke();
     }
   });
 }

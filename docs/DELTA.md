@@ -5,6 +5,62 @@ on top, closed entries move to the round that closed them, nothing is deleted.
 Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
+## Round 26 — 2026-09-03 (terraced skirts, dressed islets, fur where there were pegs)
+
+Shot from `d184242`, seed `0x5eed1e`, `shots/round26/`. Gates: build
+green, det green (pair in 2 boots, max 0), 5/5 PASS.
+
+What landed: flattened cheek tufts, tucked shoulder balls, thinner
+outline at range, far ridges without the carpet, dressed islets,
+broadleaf hero collapse, terraced strata, wider shallows, flush TNT,
+pebbles with a top.
+
+### Critic verdict (blind, fresh context, measured) — measured
+
+Performance 8 (386k–444k tris, 237–321 draws). Four depth layers
+listed PRESENT ("near dressing, hill+palms, sea stacks, mountain
+haze"). No haze-blob call, no peg call, no leaf-through-foot call.
+The dark wedge on the platform was traced by the critic itself to a
+fern's cast shadow ("not a hole") — the calibration note works.
+
+Real finds, builder-confirmed:
+1. A shore rock rises through the second platform's rim and its
+   unlit facet reads as a pit (`critic26-wg-pit`): rock size up to
+   0.75 m from a base at WATER_Y+0.22 tops the walkable surface.
+2. Crates "plank fences, not crates": no X-brace (the ref crate's
+   signature), no chamfer read at 8 m.
+3. Fuse pot "an unshaded dark lump".
+4. Hero: "arms are single straight tubes with no elbow"; boots "red
+   hemispheres, no sole"; crest "four identical red triangles".
+5. Water glints "identical horizontal capsule dashes".
+6. Crate-cluster: foreground fruit and grass sit in the hero's
+   silhouette (fruit row at x=3, hero at x=3.2).
+7. Shadow terminator on the crate face is a texel staircase
+   (`critic26-hc-shadow-stair`): the 1.3 cm shadow texel at 3 m.
+   Known limit — PCF radius and VSM banned, cascade at d=26 already
+   loses shadows past 26 m from the hero. Logged, not fixed.
+
+Discounted: "sand shadow hue goes warm, H=34°, rgb 147/72/43" — the
+sampled rectangle (crate-cluster 560,490 120×40) is the crate's
+shadowed BOTTOM RAIL, i.e. wood, not sand (builder crop
+`b26-shadowsample`). "Jungle mass is a shaded mound with stickers" —
+the leaf fans lay tangent to the surface; tilted this round.
+
+Self-score: character 4 · props 4 · dressing 5 · vegetation 4 · light 5
+· colour 5 · water 4 · backdrop 4 · motion 5 · composition 5 ·
+performance 8.
+
+### Fixing this round (became round 27)
+
+X-braces on the four crate side faces (bevelled diagonals). Fuse pot
+as a metal cap. Shore rock size capped at 0.42 m. Glints at varied
+angle and length. Fruit row moved to x=4.3; scatter thinning eased
+(0.5+mid·0.5); beach grass 300. Hero: upper arm + elbow group +
+forearm bent forward, sole plates under the boots, uneven crest. Leaf
+fans tilted 0.35–0.8 rad off the surface.
+
+---
+
 ## Round 25 — 2026-09-03 (blades that bend, a blob that stays inside its crate, a rim above the body)
 
 Shot from `a487414`, seed `0x5eed1e`, `shots/round25/`. Gates: build

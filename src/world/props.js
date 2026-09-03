@@ -10,14 +10,15 @@ import {mergeGeoms,xform,vcolor} from './geo.js';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 
 const _c=new THREE.Color();
-let crateMat=null,tntMat=null,fuseMat=null;
+let crateMat=null,tntMat=null,fuseMat=null,potMat=null;
 function mats(){
   if(!crateMat){
     crateMat=toonMat({map:woodTexture(),vertexColors:true});
     tntMat=toonMat({map:tntTexture(),vertexColors:true});
     fuseMat=toonMat({color:0x4a3a30});
+    potMat=toonMat({color:0x8a7f74}); // a metal cap, not "an unshaded dark lump" (round 26)
   }
-  return {crateMat,tntMat,fuseMat};
+  return {crateMat,tntMat,fuseMat,potMat};
 }
 
 const S=1.15;   // crate size — matches the old game's collision feel
@@ -44,6 +45,23 @@ function frameGeoms(size,beam){
   // …and 8 corner blocks proud of them.
   for(const x of[-h,h])for(const y of[-h,h])for(const z of[-h,h])
     beamBox(beam*1.7,beam*1.7,beam*1.7,[x,y,z]);
+  // X-braces on the four side faces: the ref crate's read (round 26:
+  // "plank fences, not crates"). Two diagonals, proud of the panel.
+  const bl=size*1.2,bw=beam*0.75,off=h-beam*0.3;
+  for(const s of[-1,1]){
+    for(const rot of[0.785,-0.785]){
+      const gx=new RoundedBoxGeometry(bw,bl,bw,2,bw*0.2);
+      gx.rotateX(rot);
+      const uvx=gx.getAttribute('uv');
+      for(let i=0;i<uvx.count;i++)uvx.setXY(i,uvx.getX(i)*0.16+0.3,uvx.getY(i)*0.16+0.55);
+      parts.push(xform(gx,{p:[s*off,0,0]}));
+      const gz=new RoundedBoxGeometry(bl,bw,bw,2,bw*0.2);
+      gz.rotateZ(rot);
+      const uvz=gz.getAttribute('uv');
+      for(let i=0;i<uvz.count;i++)uvz.setXY(i,uvz.getX(i)*0.16+0.3,uvz.getY(i)*0.16+0.55);
+      parts.push(xform(gz,{p:[0,0,s*off]}));
+    }
+  }
   return parts;
 }
 
@@ -108,7 +126,7 @@ export function makeTNT(x,y,z){
 
   // The fuse: a little pot and a bent wick. The prop's job is to promise a
   // bang later; a plain red cube promises nothing.
-  const pot=new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.12,0.1,10),fuseMat);
+  const pot=new THREE.Mesh(new THREE.CylinderGeometry(0.09,0.12,0.1,10),potMat);
   pot.position.y=S*0.49+0.04;
   const wickCurve=new THREE.CatmullRomCurve3([
     new THREE.Vector3(0,S*0.49+0.08,0),

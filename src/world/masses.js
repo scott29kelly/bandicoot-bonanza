@@ -178,7 +178,9 @@ export function shoreRocks(solid){
     else if((l-=d)<w){px=maxX-l;pz=maxZ;nx=0;nz=1;}
     else{l-=w;px=minX;pz=maxZ-l;nx=-1;nz=0;}
     const out=rand(0.15,1.5); // rubble AT the base (was 0.9–2.2 out)
-    const s=rand(0.28,0.75);
+    // Capped so no rock tops the walkable rim: one rose through the
+    // platform edge and its unlit facet read as a pit (round 26).
+    const s=Math.min(rand(0.28,0.75),0.42);
     const g=new THREE.IcosahedronGeometry(1,1);
     const p=g.getAttribute('position');
     for(let j=0;j<p.count;j++){

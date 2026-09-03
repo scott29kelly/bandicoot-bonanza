@@ -236,7 +236,8 @@ export function createHeroModel(){
   // loose shards intersecting the head (round-10, crop-verified).
   const spikes=[];
   for(let i=0;i<4;i++){
-    const sp=new THREE.ConeGeometry(0.055,0.17+0.05*Math.sin(i/3*Math.PI),6);
+    // Uneven: "four identical red triangles in a row" (round 26).
+    const sp=new THREE.ConeGeometry(0.045+0.018*((i*7)%3),0.13+0.03*((i*5)%4),6);
     xform(sp,{r:[-0.35-i*0.22,0,(i-1.5)*0.22],
               p:[(i-1.5)*0.045,0.235-i*0.01,0.02-i*0.055]});
     spikes.push(sp);
@@ -258,8 +259,16 @@ export function createHeroModel(){
     ball.position.set(-s*0.03,0,-0.01);
     // Long enough that the hands clear the belly: at 0.24 the gloves hung
     // exactly behind the torso's widest band and no pose could show them.
-    const arm=part(new THREE.CapsuleGeometry(0.055,0.32,4,8),FUR);
-    arm.position.y=-0.18;
+    // Upper arm + ELBOW group + forearm: one straight tube read as "no
+    // elbow" (round 26). The forearm bends forward so the gloves come
+    // off the belly.
+    const arm=part(new THREE.CapsuleGeometry(0.055,0.14,4,8),FUR);
+    arm.position.y=-0.09;
+    const elbow=new THREE.Group();
+    elbow.position.set(0,-0.19,0);
+    elbow.rotation.x=-0.5;
+    const fore=part(new THREE.CapsuleGeometry(0.05,0.13,4,8),FUR);
+    fore.position.y=-0.09;
     // cream glove: a palm and SEPARATE fingers. The round-17 knuckle balls
     // read as "four stacked balls" at 3x — spheres sunk into a sphere have
     // no gap for the outline to run through. Capsule fingers standing off
@@ -282,10 +291,11 @@ export function createHeroModel(){
     thumb.translate(-s*0.095,-0.005,0.045);
     digits.push(thumb.toNonIndexed());
     const glove=part(mergeGeoms([handG.toNonIndexed(),...digits]),GLOVE);
-    glove.position.y=-0.39;
+    glove.position.y=-0.21;
     const cuff=part(new THREE.CylinderGeometry(0.072,0.082,0.06,9),CUFF,{line:false});
-    cuff.position.y=-0.312;
-    shoulder.add(ball,arm,glove,cuff);
+    cuff.position.y=-0.13;
+    elbow.add(fore,cuff,glove);
+    shoulder.add(ball,arm,elbow);
     shoulder.rotation.z=s*0.55; // clear of the torso silhouette
     hips.add(shoulder);
     arms[s<0?'L':'R']=shoulder;
@@ -344,7 +354,12 @@ export function createHeroModel(){
     const shoe=part(new THREE.SphereGeometry(0.1,10,8),SHOE);
     shoe.position.set(0,-0.32,0.05);
     shoe.scale.set(0.95,0.7,1.6);
-    hip.add(leg,pant,knee,shoe);
+    // Sole plate: "red hemispheres, no sole, heel" (round 26).
+    // Inside the boot footprint: at 0.19x0.33 it read as a board the hero
+    // stood on (round 27, builder crop).
+    const sole=part(new THREE.BoxGeometry(0.16,0.03,0.26),0x5a2210,{line:false});
+    sole.position.set(0,-0.378,0.05);
+    hip.add(leg,pant,knee,shoe,sole);
     hips.add(hip);
     legs[s<0?'L':'R']=hip;
   }

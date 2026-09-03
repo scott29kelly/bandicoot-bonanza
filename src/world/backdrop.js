@@ -67,6 +67,7 @@ function ridgeHeightAt(x,z){
  * mass reads as a canopy of individual leaves, not a green skin (round
  * 20, gap 1 — the largest surface in four of five stills).
  */
+const _tilt=new THREE.Quaternion(),_xAxis=new THREE.Vector3(1,0,0);
 function leafShell(samples,mat){
   const fan=[];
   for(let i=0;i<4;i++){
@@ -92,6 +93,9 @@ function leafShell(samples,mat){
     q.setFromUnitVectors(up,n);
     yaw.setFromAxisAngle(up,rand(0,6.3));
     q.multiply(yaw);
+    // Lift one side: flat on the surface the fans read as "leaf-polygon
+    // decals stuck to the mound" (round 26).
+    q.multiply(_tilt.setFromAxisAngle(_xAxis,rand(0.35,0.8)));
     const k=rand(0.8,1.4);
     sc.set(k,k*rand(0.8,1.2),k);
     p.set(s.x,s.y-0.15,s.z);
