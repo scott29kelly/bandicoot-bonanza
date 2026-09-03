@@ -87,7 +87,9 @@ uniform vec3 uHero;`).replace("#include <begin_vertex>",`#include <begin_vertex>
         // A blade edge-on at the lens draws as a hairline across the whole
         // frame (round-19 hero-closeup, crop-verified). Blades within 0.9 m
         // of the camera collapse to their root.
-        float bbNear=smoothstep(0.35,0.9,distance(instanceMatrix[3].xyz,cameraPosition));
+        // 1.5 m (was 0.9): with the hero-closeup camera lowered, a blade at
+        // 1.2 m drew edge-on as a pale line across the frame (round 24).
+        float bbNear=smoothstep(0.7,1.5,distance(instanceMatrix[3].xyz,cameraPosition));
         // Blades under the hero flatten to the sand \u2014 they passed through
         // the boots in two framings (round 22, crop-verified).
         float bbHero=smoothstep(0.3,0.6,distance(instanceMatrix[3].xz,uHero.xz));
