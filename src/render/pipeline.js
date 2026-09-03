@@ -45,7 +45,10 @@ export function createPipeline(){
   // and the composite pass applies AgX + the grade; ?minfx keeps the direct
   // path and lets the renderer tonemap instead.
   renderer.toneMapping=MINFX?THREE.AgXToneMapping:THREE.NoToneMapping;
-  renderer.toneMappingExposure=1.12;
+  // 1.0 (was 1.12): round 20 measured whole-frame mean L 0.46–0.56 against
+  // 0.21–0.45 in the refs — the build was high-key. Exposure, not the
+  // grade, so the shadow split-tone and floor keep their tuning.
+  renderer.toneMappingExposure=1.0;
   // Several passes may render per frame; with autoReset on, renderer.info
   // would only report the last one. main.js calls reset() at frame top.
   renderer.info.autoReset=false;

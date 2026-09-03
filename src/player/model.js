@@ -23,14 +23,34 @@ const FUR=0xe0661e, FUR_DARK=0xa8440f, BELLY=0xf5d9a4, GLOVE=0xefe3c8,
 const _c=new THREE.Color(),_c2=new THREE.Color();
 let outlineMat=null;
 
-/** Inverted hull: same geometry, pushed out along normals, backfaces only. */
+/**
+ * Inverted hull: same geometry, pushed out along normals in the VERTEX
+ * SHADER, backfaces only. The push grows with view distance past 3 m, so
+ * the line holds roughly constant on screen — a fixed 1.1 cm hull went
+ * sub-pixel at 40 px character height and MSAA broke it into a black/white
+ * checker between grass blades (round 20, crop-verified at 10x).
+ */
+const outlineMats=new Map();
+function outlineMaterial(px){
+  if(outlineMats.has(px))return outlineMats.get(px);
+  const m=new THREE.MeshBasicMaterial({color:0x2a1408,side:THREE.BackSide,toneMapped:false});
+  m.onBeforeCompile=(sh)=>{
+    sh.uniforms.uPx={value:px};
+    sh.vertexShader=sh.vertexShader
+      .replace('#include <common>','#include <common>\nuniform float uPx;')
+      .replace('#include <begin_vertex>',`#include <begin_vertex>
+        {
+          vec4 olMv=modelViewMatrix*vec4(position,1.0);
+          float olD=clamp(length(olMv.xyz)/3.0,1.0,3.5);
+          transformed+=normal*uPx*olD;
+        }`);
+  };
+  outlineMats.set(px,m);
+  return m;
+}
 function outline(mesh,px=0.011){
-  if(!outlineMat)outlineMat=new THREE.MeshBasicMaterial({color:0x2a1408,side:THREE.BackSide,toneMapped:false});
-  const g=mesh.geometry.clone();
-  const pos=g.getAttribute('position'),nrm=g.getAttribute('normal');
-  for(let i=0;i<pos.count;i++)
-    pos.setXYZ(i,pos.getX(i)+nrm.getX(i)*px,pos.getY(i)+nrm.getY(i)*px,pos.getZ(i)+nrm.getZ(i)*px);
-  const o=new THREE.Mesh(g,outlineMat);
+  const g=mesh.geometry;
+  const o=new THREE.Mesh(g,outlineMaterial(px));
   o.castShadow=false;
   mesh.add(o);
   return mesh;

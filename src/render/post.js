@@ -26,7 +26,7 @@ export function createPost(renderer){
   const mat=new THREE.ShaderMaterial({
     uniforms:{
       tDiffuse:{value:rt.texture},
-      toneMappingExposure:{value:1.12},
+      toneMappingExposure:{value:1.0},
       uGrade:{value:ablated('grade')?0:1}
     },
     depthTest:false,

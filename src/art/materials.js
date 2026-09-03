@@ -266,6 +266,27 @@ export function rippleTexture(){
  * too. One shared texture; meshes scale it per prop.
  */
 let _contactTex=null;
+/**
+ * Canopy dapple: opaque leaf-clump blobs on a clear sheet, used as an
+ * alpha-tested SHADOW CASTER only (colorWrite off). ~35% coverage.
+ */
+export function dappleTexture(){
+  const t=canvasTex(512,(g,s)=>{
+    g.clearRect(0,0,s,s);
+    g.fillStyle='rgba(0,0,0,1)';
+    for(let i=0;i<34;i++){
+      const cx=rand(0,s),cy=rand(0,s),n=Math.floor(rand(4,9));
+      for(let k=0;k<n;k++){
+        const r=rand(14,34),a=rand(0,6.3),d=rand(0,38);
+        g.beginPath();
+        g.ellipse((cx+Math.cos(a)*d+s)%s,(cy+Math.sin(a)*d+s)%s,r,r*rand(0.5,0.85),a,0,7);
+        g.fill();
+      }
+    }
+  },{srgb:false});
+  return t;
+}
+
 /** Sun glints: sparse short bright dashes, additive over the sea. */
 export function glintTexture(){
   return canvasTex(256,(g,s)=>{

@@ -182,7 +182,10 @@ export function buildBeach(scene){
   // the shading: the round-7 sculpted lobes rendered as flat discs because
   // the glow erased the light side / shade side split. 0.16 keeps the hint.
   const fruitMesh=new THREE.InstancedMesh(fruitGeo,[
-    toonMat({color:0xd45a0e,emissive:0xff7a1a,emissiveIntensity:0.16}),
+    // Warm fresnel rim: the lobes read only at the terminator; without an
+    // edge highlight the fruit still "names SphereGeometry" (round 20).
+    toonMat({color:0xd45a0e,emissive:0xff7a1a,emissiveIntensity:0.16,
+             rim:{color:0xffe0a0,strength:1.2,power:3.2}}),
     toonMat({color:0x4e7d2a})],fruitPos.length);
   const _m=new THREE.Matrix4(),_e=new THREE.Euler(),_q=new THREE.Quaternion(),
         _v=new THREE.Vector3(),_s=new THREE.Vector3(1,1,1);
@@ -222,7 +225,9 @@ export function buildBeach(scene){
     p:at('gapA',8.5,1.9,7),lookAt:at('gapB',-1.5,0.4,1),fov:47,player:[0,0,-35]}));
   addFraming(at=>({id:'crate-cluster',name:'Crate cluster',
     tests:'Pillars A/C — prop relief, and ground that is dressed, not bare',
-    p:at('tnt1',5.2,1.5,4.5),lookAt:at('tnt1',-0.3,0.3,-0.8),fov:44,player:[2.6,0,-50]}));
+    p:at('tnt1',5.2,1.5,4.5),lookAt:at('tnt1',-0.3,0.3,-0.8),fov:44,
+    // Off the camera→TNT line: at [2.6,-50] the hero covered the label.
+    player:[3.2,0,-51.0,0.9,0.25]}));
 
   return {
     solids,

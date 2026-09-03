@@ -70,7 +70,9 @@ export function islandMass({x,z,w,d,topY=0}){
       const n=fbm3((px+x)*freq,py*0.7,(pz+z)*freq)-0.5;
       // The top row keeps a sand lip proud of the rock — an undercut edge,
       // not a cake slice.
-      const lip=down<0.16?0.45:0;
+      // 0.28: at 0.45 the undercut cavity under the lip read as a hole in
+      // the mesh (round-19/20, the "navy wedge" at every gap platform).
+      const lip=down<0.16?0.28:0;
       const bulge=(0.3+down*1.6)*(0.55+n*2.6)+lip;
       const dirX=px/halfW,dirZ=pz/halfD;
       const dl=Math.hypot(dirX,dirZ)||1;
@@ -113,9 +115,12 @@ export function islandMass({x,z,w,d,topY=0}){
       // Two world-space octaves so the beach never repeats with the 9 m
       // texture tile — the tile carries grain, THIS carries the macro
       // (round-7 gap 1: large surfaces one value end to end).
-      _c.copy(cSand).lerp(cSandLow,fbm3((px+x)*0.2,11,(pz+z)*0.2));
-      _c.lerp(cSandDamp,Math.max(0,fbm3((px+x)*0.09,23,(pz+z)*0.09)-0.5)*1.1);
-      _c.lerp(cSandPale,Math.max(0,fbm3((px+x)*0.45,31,(pz+z)*0.45)-0.55)*0.9);
+      // Amplitudes up (round 20 measured the macro at ~3% luminance —
+      // present, unreadable): the 12 m damp patches and 3 m pale drifts
+      // now swing ~10%.
+      _c.copy(cSand).lerp(cSandLow,Math.min(1,fbm3((px+x)*0.2,11,(pz+z)*0.2)*1.35));
+      _c.lerp(cSandDamp,Math.min(1,Math.max(0,fbm3((px+x)*0.09,23,(pz+z)*0.09)-0.45)*2.0));
+      _c.lerp(cSandPale,Math.min(1,Math.max(0,fbm3((px+x)*0.45,31,(pz+z)*0.45)-0.5)*1.6));
       // Wet-sand band where the top meets the rim — the tide got here.
       const rim=Math.max(Math.abs(px)/halfW,Math.abs(pz)/halfD);
       return _c.lerp(cWet,THREE.MathUtils.smoothstep(rim,0.78,0.98)*0.45);
@@ -178,7 +183,10 @@ export function shoreRocks(solid){
     parts.push(g2);
     // Foam collar: the sea breaks around a rock, it doesn't cut it on a
     // ruler line. A ring at the waterline, solid at the rock, fading out.
-    const r0=s*1.15,r1=r0+rand(0.35,0.6),M=12,cp=[],cu=[],ci=[];
+    // Inner radius past the rock's widest scale (1.6 s): at 1.15 s the
+    // ring passed through the rock body and lay as a grey strip on its
+    // face (round 20, crop-verified).
+    const r0=s*1.75,r1=r0+rand(0.35,0.6),M=12,cp=[],cu=[],ci=[];
     for(let k=0;k<=M;k++){
       const a=k/M*Math.PI*2,ca=Math.cos(a),sa=Math.sin(a);
       const wob=1+hash3(k+i*7,i,3)*0.25;

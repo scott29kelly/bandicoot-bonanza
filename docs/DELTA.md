@@ -5,6 +5,68 @@ on top, closed entries move to the round that closed them, nothing is deleted.
 Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
+## Round 20 — 2026-09-03 (no blade at the lens, no black anywhere, hills back to smooth)
+
+Shot from `216a1f4`, seed `0x5eed1e`, `shots/round20/`. Gates: build
+green, det green (pair in 2 boots, max 0), 5/5 PASS.
+
+What landed: grass collapses at the lens, anisotropy 16, ridges smooth
+with a denser mound layer, a soft teal black floor in the grade.
+
+### Critic verdict (blind, fresh context, crop-verified, measured) — measured
+
+The most quantitative verdict yet. Closed: "no crushed black anywhere
+— 0.00% of pixels under L 0.05 in all five stills" (the floor works);
+no hairline; rim "present and strong — luminance 0.48→0.82 over ~8 px"
+(row-sampled); five fingers, glint, contact shadow, tail all PRESENT.
+
+Real finds, builder-confirmed:
+1. Whole-frame mean L 0.46–0.56 vs 0.21–0.45 in the refs; luminance
+   sd 0.14–0.17 vs 0.18–0.30. The build is high-key and flat: one sun,
+   an evenly lit sand plane, no dappling.
+2. Background-tree fronds pierce the hill skin (`c20-bc-frondhill`):
+   the second-rank trees were buried at a guessed height.
+3. Outline breaks into a black/white checker on the distant hero
+   (`c20-wg-legs`, 10x): the fixed 1.1 cm hull goes sub-pixel at 40 px
+   character height.
+4. The foam collar lay as a grey strip across the rock face
+   (`c20-wg-foamrock`): inner radius inside the rock's widest scale.
+5. The gap-platform crevice, now teal-dark instead of black, still
+   reads as a hole (`c20-wg-blackwedge`, min L 0.10 = the floor).
+6. Sand macro at ~3% luminance: present, unreadable (`c20-cc-sandcells`
+   — "not a texel-cell artifact, I checked").
+7. Fruit still names SphereGeometry at 5x (`c20-th-fruitseam`): lobes
+   read only at the terminator; no edge light.
+8. Crate-cluster: the hero covers the TNT label.
+
+Biggest gap per the critic: the mid-distance mass — "a smooth,
+untextured green hill with lollipop tree blobs" in four of five stills.
+
+Discounted: "stair-stepped shadow terminator" — the 1.3 cm shadow texel
+at 3 m is 3–4 px; PCF-radius and VSM are banned (pipeline note), no
+cheaper fix exists this round. "Palms are sawtooth ribbons with no
+midrib depth at corridor distance" — midrib present (round 17 crop).
+
+Self-score: character 4 · props 5 · dressing 5 · vegetation 3 · light 4
+· colour 4 · water 5 · backdrop 4 · motion UNMEASURED · composition 5.
+
+### Fixing this round (became round 21)
+
+Leaf shell: ~2000 instanced frond fans standing on sampled ridge
+vertices of the four near flanks (`leafShell` in backdrop.js; ridges
+now built first and expose surface samples). Second-rank trees stand
+on the sampled surface (`ridgeHeightAt`). Canopy DAPPLE: two invisible
+alpha-tested sheets up-sun of the corridor that only cast
+(`dappleCasters`, `dappleTexture`). Exposure 1.12→1.0 (mean L
+0.46–0.56 → 0.46–0.53 in the shots; sd unchanged — the dapple adds
+the local contrast). Outline hull pushed in the vertex shader, scaled
+with view distance past 3 m so the line holds on screen. Fruit gets a
+warm fresnel rim. Sand macro amplitudes ~3×. Lip undercut 0.45→0.28.
+Collar inner radius 1.15 s→1.75 s. Crate-cluster hero moved off the
+camera→TNT line.
+
+---
+
 ## Round 19 — 2026-09-03 (frames that don't cast, leaves that fold, an eye that's wet)
 
 Shot from `0719b39`, seed `0x5eed1e`, `shots/round19/`. Gates: build

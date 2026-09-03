@@ -7,7 +7,7 @@
  */
 import * as THREE from 'three';
 import {rand} from '../core/rng.js';
-import {toonMat} from '../art/materials.js';
+import {toonMat,dappleTexture} from '../art/materials.js';
 import {mergeGeoms,xform,fbm3,vcolor,hash3} from './geo.js';
 import {WATER_Y} from './masses.js';
 
@@ -46,6 +46,83 @@ function seaStack(x,z,h,r){
 }
 
 /** A jungle flank: a ridge mass buried under overlapping canopy mounds. */
+let ridgeSamples=[];
+/** Ridge surface height under (x,z) from the sampled vertices — the trees
+ * stand ON the flank instead of half inside it (round 20: fronds through
+ * the hill skin). */
+function ridgeHeightAt(x,z){
+  let best=-1e9,bd=1e9;
+  for(const s of ridgeSamples){
+    const d=(s.x-x)*(s.x-x)+(s.z-z)*(s.z-z);
+    if(d<bd){bd=d;best=s.y;}
+  }
+  return bd<16?best:null;
+}
+
+/**
+ * Leaf shell: instanced frond fans standing on the near flanks so the
+ * mass reads as a canopy of individual leaves, not a green skin (round
+ * 20, gap 1 — the largest surface in four of five stills).
+ */
+function leafShell(samples,mat){
+  const fan=[];
+  for(let i=0;i<4;i++){
+    const a=i/4*Math.PI*2+rand(-0.4,0.4),L=rand(1.1,1.9),w=L*0.22,droop=L*rand(0.3,0.55);
+    const b=new THREE.BufferGeometry();
+    b.setAttribute('position',new THREE.Float32BufferAttribute([
+      0,0.1,-w, 0,0.1,w, L*0.6,L*0.45,w*0.6, L*1.1,L*0.45-droop,0, L*0.6,L*0.45,-w*0.6],3));
+    b.setIndex([0,1,2, 0,2,4, 2,3,4]);
+    b.computeVertexNormals();
+    const g2=b.toNonIndexed();
+    g2.setAttribute('uv',new THREE.BufferAttribute(new Float32Array(g2.getAttribute('position').count*2),2));
+    xform(g2,{r:[0,a,rand(-0.2,0.2)]});
+    fan.push(g2);
+  }
+  const geo=mergeGeoms(fan);
+  const pick=samples.filter(()=>rand(0,1)<0.42);
+  const mesh=new THREE.InstancedMesh(geo,mat,pick.length);
+  const m=new THREE.Matrix4(),q=new THREE.Quaternion(),up=new THREE.Vector3(0,1,0),
+        n=new THREE.Vector3(),p=new THREE.Vector3(),sc=new THREE.Vector3(),yaw=new THREE.Quaternion();
+  for(let i=0;i<pick.length;i++){
+    const s=pick[i];
+    n.set(s.nx,s.ny,s.nz).normalize();
+    q.setFromUnitVectors(up,n);
+    yaw.setFromAxisAngle(up,rand(0,6.3));
+    q.multiply(yaw);
+    const k=rand(0.8,1.4);
+    sc.set(k,k*rand(0.8,1.2),k);
+    p.set(s.x,s.y-0.15,s.z);
+    m.compose(p,q,sc);
+    mesh.setMatrixAt(i,m);
+    mesh.setColorAt(i,_c.setHSL(rand(0.24,0.36),rand(0.5,0.68),rand(0.15,0.31)));
+  }
+  mesh.castShadow=false;
+  mesh.receiveShadow=false;
+  return mesh;
+}
+
+/**
+ * Canopy dapple over the corridor: invisible alpha-tested sheets that only
+ * CAST. Refs put the hero in a pool of light with dappled ground (form-1,
+ * form-3); the build had one sun on an evenly lit plane (round 20, gap 2).
+ * Sheets sit up-sun (+x,+z) of the corridor so their shadow lands on it.
+ */
+function dappleCasters(){
+  const tex=dappleTexture();
+  tex.repeat.set(2.2,5.5);
+  const mat=new THREE.MeshBasicMaterial({map:tex,alphaTest:0.5,colorWrite:false,depthWrite:false});
+  const g=new THREE.Group();
+  for(const [cx,cy,cz,w,h] of [[17,11,-18,36,90],[15,13,-56,34,40]]){
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),mat);
+    m.rotation.x=-Math.PI/2;
+    m.position.set(cx,cy,cz);
+    m.castShadow=true;
+    m.receiveShadow=false;
+    g.add(m);
+  }
+  return g;
+}
+
 function jungleRidge(x,z,len,w,h,dir){
   const parts=[];
   // 48×30, not 22×14: scaled to a ~36 m ridge, the coarse mesh spaced
@@ -85,6 +162,20 @@ function jungleRidge(x,z,len,w,h,dir){
       +(fbm3(px*0.55,py*0.9,(pz+3)*0.55)-0.5)*0.13
       +(fbm3(px*1.3,py*1.7,(pz+11)*1.3)-0.5)*0.08)));
   parts.push(ridge);
+  // Surface samples (world space) for the leaf shell and the tree placer.
+  const samples=[];
+  {
+    const rp2=ridge.getAttribute('position'),rn=ridge.getAttribute('normal');
+    const cd=Math.cos(dir),sd=Math.sin(dir);
+    for(let i=0;i<rp2.count;i++){
+      const lx=rp2.getX(i),ly=rp2.getY(i),lz=rp2.getZ(i);
+      if(ly<1.5||rn.getY(i)<0.2)continue;
+      // rotateY(dir): x' = x cos + z sin, z' = -x sin + z cos
+      samples.push({x:lx*cd+lz*sd+x,y:ly+WATER_Y,z:-lx*sd+lz*cd+z,
+        nx:rn.getX(i)*cd+rn.getZ(i)*sd,ny:rn.getY(i),nz:-rn.getX(i)*sd+rn.getZ(i)*cd});
+    }
+  }
+  ridgeSamples.push(...samples);
   // Canopy mounds over crest AND slopes — clustered on the crest alone they
   // hide inside the ridge and the visible inner wall stays bare.
   const N=Math.round(len*1.7);
@@ -226,6 +317,17 @@ function makeClouds(){
 export function createBackdrop(){
   const mat=toonMat({vertexColors:true,side:THREE.DoubleSide});
   const parts=[];
+  ridgeSamples=[];
+
+  // Mid layer: jungle flanks RUNNING ALONG the corridor (a ridge's long
+  // axis is X, so flanks need the quarter turn) from well outside it —
+  // close enough to read as terrain, far enough never to wall off a framing.
+  // Built FIRST: the trees and the leaf shell stand on their surface.
+  parts.push(jungleRidge(-30,-35,90,20,12,Math.PI/2+0.1));
+  parts.push(jungleRidge(32,-48,100,22,14,Math.PI/2-0.08));
+  parts.push(jungleRidge(-37,-105,80,24,16,Math.PI/2+0.15));
+  parts.push(jungleRidge(37,2,36,14,7,Math.PI/2-0.2));
+  const nearSamples=ridgeSamples.slice();
 
   // The treeline: crowds along the feet of the near flanks, silhouetted
   // against the ridge masses, framing the corridor with actual trees.
@@ -238,22 +340,16 @@ export function createBackdrop(){
     if(rand(0,1)<0.25)return;
     const x=side*(rand(20,30));
     list.push(bgTree(x,z+rand(-2,2),rand(4.5,9)));
-    // A second rank climbs the slope, half-buried, so the ridge inner wall
-    // reads as forested terrain and not a painted backdrop.
+    // A second rank climbs the slope, standing on the sampled surface
+    // (round 20: buried at a guessed height, their fronds pierced the skin).
     if(rand(0,1)<0.6){
-      const g=bgTree(side*rand(26,34),z+rand(-2,2),rand(5,10));
-      g.translate(0,rand(2,7),0);
+      const tx=side*rand(26,34),tz=z+rand(-2,2);
+      const hy=ridgeHeightAt(tx,tz);
+      const g=bgTree(tx,tz,rand(5,10));
+      g.translate(0,hy===null?rand(2,7):Math.max(0,hy-WATER_Y-0.2-0.6),0);
       list.push(g);
     }
   }
-
-  // Mid layer: jungle flanks RUNNING ALONG the corridor (a ridge's long
-  // axis is X, so flanks need the quarter turn) from well outside it —
-  // close enough to read as terrain, far enough never to wall off a framing.
-  parts.push(jungleRidge(-30,-35,90,20,12,Math.PI/2+0.1));
-  parts.push(jungleRidge(32,-48,100,22,14,Math.PI/2-0.08));
-  parts.push(jungleRidge(-37,-105,80,24,16,Math.PI/2+0.15));
-  parts.push(jungleRidge(37,2,36,14,7,Math.PI/2-0.2));
 
   // Mid layer, seaward: stacks scattered off both flanks — two of them
   // planted INSIDE the corridor's sight lines so the framed shots always
@@ -280,6 +376,7 @@ export function createBackdrop(){
   mesh.castShadow=false;   // far out of the cascade; shadows would just crawl
   mesh.receiveShadow=false;
   const group=new THREE.Group();
-  group.add(mesh,makeClouds());
+  const shellMat=toonMat({color:0xffffff,side:THREE.DoubleSide}); // white: instance colour IS the colour
+  group.add(mesh,leafShell(nearSamples,shellMat),dappleCasters(),makeClouds());
   return group;
 }
