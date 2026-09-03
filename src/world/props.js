@@ -13,7 +13,12 @@ const _c=new THREE.Color();
 let crateMat=null,tntMat=null,fuseMat=null,potMat=null;
 function mats(){
   if(!crateMat){
-    crateMat=toonMat({map:woodTexture(),vertexColors:true});
+    // emissiveMap = the wood itself: shaded crate faces sat AT the grade
+    // floor (L 0.12 vs a lit 0.36; the ref's shaded side is 0.46) because
+    // an away-facing face in a cast shadow gets hemi only. A grain-shaped
+    // lift keeps the planks legible; a flat one would wash them (round 27).
+    const wood=woodTexture();
+    crateMat=toonMat({map:wood,emissiveMap:wood,emissive:0x66584a,vertexColors:true});
     tntMat=toonMat({map:tntTexture(),vertexColors:true});
     fuseMat=toonMat({color:0x4a3a30});
     potMat=toonMat({color:0x8a7f74}); // a metal cap, not "an unshaded dark lump" (round 26)
@@ -117,6 +122,12 @@ export function makeTNT(x,y,z){
   const parts=[];
   const ao=(y)=>0.72+0.28*THREE.MathUtils.clamp(y/S+0.5,0,1);
   const core=new THREE.BoxGeometry(S*0.98,S*0.98,S*0.98);
+  // Top/bottom faces sample a plain red patch: with the full 0..1 map the
+  // label band ran across the lid as a cream stripe (round 27, crop).
+  {
+    const uv=core.getAttribute('uv');
+    for(let i=8;i<16;i++)uv.setXY(i,0.02+uv.getX(i)*0.1,0.05+uv.getY(i)*0.23);
+  }
   vcolor(core,(px,py)=>_c.setScalar(ao(py)));
   parts.push(core);
   for(const g of frameGeoms(S*0.98,0.11))

@@ -199,7 +199,9 @@ function jungleRidge(x,z,len,w,h,dir,near=true){
   vcolor(ridge,(px,py,pz)=>_c.setHSL(
     0.27+fbm3(px*0.10,py*0.3,3)*0.09+(1-THREE.MathUtils.clamp(py/h,0,1))*0.045,
     0.42+fbm3(px*0.23,py*0.5,9)*0.18,
-    Math.max(0.05,0.12+Math.max(0,py)/h*0.12
+    // The base shell shows only BETWEEN crowns now: painted dark, those
+    // gaps read as the under-canopy the refs have (p5 0.05 vs our 0.17).
+    Math.max(0.035,0.06+Math.max(0,py)/h*0.1
       +(fbm3(px*0.16,py*0.35,(pz+7)*0.16)-0.5)*0.24
       +(fbm3(px*0.55,py*0.9,(pz+3)*0.55)-0.5)*0.13
       +(fbm3(px*1.3,py*1.7,(pz+11)*1.3)-0.5)*0.08)));
@@ -259,7 +261,7 @@ function jungleRidge(x,z,len,w,h,dir,near=true){
     vcolor(mound,(px,py)=>{
       const cap=THREE.MathUtils.smoothstep(py,-R*0.25,R*0.55);
       return _c.setHSL(hue+fbm3(px*0.6,py*0.6,i)*0.03+(1-cap)*0.07,sat,
-        Math.max(0.05,base*(0.3+0.7*cap)+(fbm3(px*1.4,py*1.4,i+40)-0.5)*0.12));
+        Math.max(0.04,base*(0.18+0.82*cap)+(fbm3(px*1.4,py*1.4,i+40)-0.5)*0.12));
     });
     const sink=R*0.35;
     xform(mound,{p:[sm.lx-sm.lnx*sink,sm.ly-sm.lny*sink,sm.lz-sm.lnz*sink]});

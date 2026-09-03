@@ -70,7 +70,9 @@ function outline(mesh,px=0.011){
 // edge crops showed a faint pale line. Wider band, brighter.
 // 2.2 (was 1.6): round 24 measured the rim band at V 0.55 against a lit
 // body of 0.65 — present, but under the body, so it never separates.
-const RIM={color:0xffe4b8,strength:2.2,power:3.4};
+// 1.9 / 3.8: at 2.2 / 3.4 the band ran 24 px to near-white on the head
+// and read as bloom (round 27, measured 0.49→0.94).
+const RIM={color:0xffe4b8,strength:1.9,power:3.8};
 
 function part(geo,color,{shadow=true,line=true}={}){
   const m=new THREE.Mesh(geo,toonMat({color,rim:RIM}));
@@ -357,8 +359,11 @@ export function createHeroModel(){
     // Sole plate: "red hemispheres, no sole, heel" (round 26).
     // Inside the boot footprint: at 0.19x0.33 it read as a board the hero
     // stood on (round 27, builder crop).
-    const sole=part(new THREE.BoxGeometry(0.16,0.03,0.26),0x5a2210,{line:false});
-    sole.position.set(0,-0.378,0.05);
+    // A squashed sphere with the boot's own footprint — a box plate showed
+    // past the boot on three sides (round 27).
+    const sole=part(new THREE.SphereGeometry(0.1,10,8),0x5a2210,{line:false});
+    sole.position.set(0,-0.362,0.05);
+    sole.scale.set(0.97,0.22,1.62);
     hip.add(leg,pant,knee,shoe,sole);
     hips.add(hip);
     legs[s<0?'L':'R']=hip;
@@ -375,7 +380,10 @@ export function createHeroModel(){
   const tip=part(new THREE.ConeGeometry(0.05,0.13,6),FUR_DARK,{line:false});
   tip.position.set(0,0.44,-0.21);
   tip.rotation.x=0.35;
-  tailPivot.add(tail,tip);
+  // Cap the open tube at the hip: from behind the arm the open end showed
+  // as "a flat orange hexagonal end cap" (round 27, crop-verified).
+  const tailBase=part(new THREE.SphereGeometry(0.034,7,6),FUR_DARK,{line:false});
+  tailPivot.add(tail,tip,tailBase);
   hips.add(tailPivot);
 
   return {root,hips,head,ears,arms,legs,tailPivot};

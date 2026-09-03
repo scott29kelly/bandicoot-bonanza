@@ -5,6 +5,65 @@ on top, closed entries move to the round that closed them, nothing is deleted.
 Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
+## Round 27 — 2026-09-03 (X-braces, an elbow, soles, rocks below the rim)
+
+Shot from `fa2cac9`, seed `0x5eed1e`, `shots/round27/`. Gates: build
+green, det green (pair in 2 boots, max 0), 5/5 PASS.
+
+What landed: bevelled X-braces, metal fuse pot, capped shore rocks,
+varied glints, fruit row off the hero, elbows, soles, uneven crest,
+tilted leaf fans.
+
+### Critic verdict (blind, fresh context, measured) — measured
+
+Props 6 with the X-braces listed PRESENT ("X-braces with cast
+shadows, chamfered corner posts with caps"); performance 8; no pit,
+no identical-dash, no fruit-in-silhouette call. The most quantitative
+verdict yet: canopy p5/p95 0.17/0.61 vs the refs' 0.05/0.5; every
+frame's min exactly 0.101 = the grade floor.
+
+Real finds, builder-confirmed:
+1. Shaded crate faces at the floor (L 0.12; lit 0.36; ref shaded
+   side 0.46): an away-facing face inside a cast shadow gets hemi
+   only. Sand in shadow is fine (0.44 vs 0.57–0.68 lit, ratio 0.7 —
+   the ref's is 0.74).
+2. Canopy has no dark interior: nothing in a frame falls below the
+   floor, so the crowns have no dark band to sit against.
+3. Rim now OVER-strength: head edge 0.49→0.94 over 24 px, "reads as
+   bloom".
+4. Sole plates project past the boot on three sides
+   (`critic27-hero-closeup-soles`; builder crop `b27-soles` agrees).
+5. Tail: the TubeGeometry's open base shows as "a flat orange
+   hexagonal end cap" behind the arm.
+6. A cream stripe across the TNT lid: the label band wrapping onto
+   the top face through the box's default UVs.
+7. Shallows band "neutral grey, L 0.61, 120–150 px, reads as a fog
+   slab" — the widened halo of round 26 at 0.75 alpha.
+
+Discounted: "sand p5–p95 0.50–0.60, dapple does not read" — the
+mask is sand-HUE pixels, and shadowed sand shifts to olive (h62) and
+drops out of the mask, so the measurement excludes exactly the
+shadow it is looking for. "Grass blades straight, no base darkening"
+— two-segment bent blades with a 0.55 base vertex colour since round
+25; at crate-cluster range the bend is small. "Palm trunk zigzag
+repeats at 35 px" — the wavyLine ring texture; logged.
+
+Self-score: character 4 · props 6 · dressing 4 · vegetation 3 · light 4
+· colour 5 · water 5 · backdrop 5 · motion 5 · composition 5 ·
+performance 8.
+
+### Fixing this round (became round 28)
+
+Crate material gets the wood as an emissiveMap (0x66584a): a
+grain-shaped lift on the shaded faces. Grade floor lowered
+(0.0035,0.0065,0.011). Ridge base shell painted dark (L 0.06–0.16)
+so the gaps between crowns read as under-canopy; crown skirts 0.18.
+Rim 1.9 / power 3.8. Tail base capped. Sole as a squashed sphere in
+the boot's footprint. TNT lid UVs on a plain red patch. Shallows halo
+0.6, contact band 0.2.
+
+---
+
 ## Round 26 — 2026-09-03 (terraced skirts, dressed islets, fur where there were pegs)
 
 Shot from `d184242`, seed `0x5eed1e`, `shots/round26/`. Gates: build
