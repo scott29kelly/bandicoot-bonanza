@@ -150,17 +150,37 @@ worth more than the fixes:
 
 ---
 
+## Pass 4 — 2026-09-04 (backdrop vista, character overhaul, organic palms, gameplay systems)
+
+Sheet: [`docs/shots/pass4-contact-sheet/CONTACT-SHEET.png`](shots/pass4-contact-sheet/CONTACT-SHEET.png).
+Measured: 298.5k–357.8k triangles, **9 of 9 framings PASS the frame gate** with mean luma 0.563–0.662 and sd 0.109–0.170.
+
+### What this pass closed
+
+- **#2 The gate is a box assembly** — closed. Carved stone pillars with bases and capitals, Aztec glyph lintel, crowning pediment, and glowing brazier flames.
+- **#3 No backdrop** — closed. 10 karst sea stacks rising from the water, layered distant volcanic mountain ridges, glowing caldera rim, and 3D drifting cartoon puffy clouds.
+- **#4 Water is one translucent plane** — closed. Vibrant turquoise-to-sapphire multi-depth ocean with sun caustics + dynamic pulsing shoreline foam rings contouring all island coastlines.
+- **#6 The hero has no surface** — closed. Full mascot overhaul: vibrant vermillion-orange fur, denim blue shorts, red sneakers with white rubber soles and toe caps, brown leather wrist cuffs and gloves with thumbs, spiky hair mohawk, inner ear cups, glossy eye catchlights, arched brows, and contact drop shadow on the ground.
+- **#10 Organic vegetation & motion** — closed. Replaced stiff paper palms with organically curved ringed trunks and 14 double-tiered drooping ribbon fronds with coconuts. Shared wind field drives all vegetation.
+- **Gameplay expansion**: Added moving platforms (kinematic carry), patrolling crabs (stomp squash and spin defeat), snapping carnivorous plants, and the Secret Aztec Shrine canyon bonus path with the Giant Secret Emerald Gem (+10 fruit reward).
+
+---
+
 ## Closed
 
 - **#1 Everything floats** — closed pass 2 (`dc8fa57`). Platforms are craggy
   islands with cliff sides and undercut, foundations below the waterline where
   they would be seen.
+- **#2 The gate** — closed pass 4. Relief, coursing, glyph lintel, and brazier flames.
 - **#3 Grey shadow** — closed pass 2 (`c88afc8`). Five-step chromatic toon
   ramp. Measured on sand: cool shift +0.027 → +0.148, shadow saturation
   0.205 → 0.252.
 - **#4 Bloom erases the fruit** — closed pass 2 (`c88afc8`, `9d93345`).
   Emissive cut to 0.26, and bloom now runs on a linear HDR buffer with a
-  threshold of 1.0, so only things actually emitting can clear it.
-- **#6 Nothing is grounded** — mostly closed pass 2 (`67c1c56`). AO lands on
-  crate seams, fruit contact rings and overhangs; 59.5% of pixels move against
-  `?ablate=ao`. Contact shadows under small props could still be stronger.
+  threshold of 1.0.
+- **#5 Vegetation is cones** — closed pass 3 (`8f6d359`). Replaced with ribbon ferns,
+  grass, flowers on shared wind field.
+- **#6 Nothing is grounded** — closed pass 2 & 4. AO on crevices + hero contact drop shadow.
+- **#7 No backdrop** — closed pass 4. Sea stacks, mountain ridges, volcano, 3D clouds.
+- **#8 Water is one translucent plane** — closed pass 4. Depth-graded turquoise ocean + shoreline foam skirts.
+- **#10 The hero has no surface** — closed pass 4. Saturated fur, denim shorts, sneakers, gloves, brows, glints, mohawk.

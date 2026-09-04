@@ -1,0 +1,76 @@
+{
+  "seed": 6221086,
+  "w": 1280,
+  "h": 800,
+  "settle": 30,
+  "rows": [
+    {
+      "id": "title-hero",
+      "name": "Title hero",
+      "tests": "Pillar E — the first frame a player ever sees: hero silhouette, beach read, composed three-quarter",
+      "p": [
+        4.4,
+        2.95,
+        4.4
+      ],
+      "lookAt": [
+        0,
+        1.2,
+        0
+      ],
+      "fov": 58,
+      "file": "C:\\Users\\scott\\Documents\\repos\\other\\bandicoot-bonanza\\shots\\pass5-hero-final\\title-hero.png",
+      "stats": {
+        "frame": 59,
+        "fps": 60,
+        "ms": 16.7,
+        "triangles": 767948,
+        "drawCalls": 746,
+        "programs": 44,
+        "geometries": 372,
+        "textures": 31
+      },
+      "gate": {
+        "verdict": "PASS",
+        "luma": 0.6582966875528493,
+        "stdDev": 0.13709521609522657,
+        "spread": 0.10604144709967316,
+        "reasons": []
+      }
+    },
+    {
+      "id": "hero-closeup",
+      "name": "Hero close-up",
+      "tests": "Pillars A/B — character geometry at portrait range, and whether his shadow side carries colour or goes grey",
+      "p": [
+        1.55,
+        1.5,
+        2.35
+      ],
+      "lookAt": [
+        0,
+        1,
+        0
+      ],
+      "fov": 42,
+      "file": "C:\\Users\\scott\\Documents\\repos\\other\\bandicoot-bonanza\\shots\\pass5-hero-final\\hero-closeup.png",
+      "stats": {
+        "frame": 113,
+        "fps": 60,
+        "ms": 16.7,
+        "triangles": 767280,
+        "drawCalls": 762,
+        "programs": 44,
+        "geometries": 372,
+        "textures": 31
+      },
+      "gate": {
+        "verdict": "PASS",
+        "luma": 0.6492239922120098,
+        "stdDev": 0.1502147175698168,
+        "spread": 0.11610058466094772,
+        "reasons": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "seed": 6221086,
+  "w": 1280,
+  "h": 800,
+  "settle": 30,
+  "rows": [
+    {
+      "id": "crate-cluster",
+      "name": "Crate cluster and TNT",
+      "tests": "Pillars A/C — object relief at gameplay range: crate faces, bracing, the TNT read, and what dresses the sand around them",
+      "p": [
+        4.8,
+        3.4749999999999996,
+        -45.4
+      ],
+      "lookAt": [
+        0,
+        0.7749999999999999,
+        -52
+      ],
+      "fov": 45,
+      "file": "C:\\Users\\scott\\Documents\\repos\\other\\bandicoot-bonanza\\shots\\pass6-crates-master\\crate-cluster.png",
+      "stats": {
+        "frame": 56,
+        "fps": 60,
+        "ms": 16.7,
+        "triangles": 848402,
+        "drawCalls": 2374,
+        "programs": 46,
+        "geometries": 413,
+        "textures": 30
+      },
+      "gate": {
+        "verdict": "PASS",
+        "luma": 0.6308455283425245,
+        "stdDev": 0.1551701273062965,
+        "spread": 0.09827785947712417,
+        "reasons": []
+      }
+    }
+  ]
+}
