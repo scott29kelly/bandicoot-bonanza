@@ -89,7 +89,9 @@ export function buildBeach(scene){
     ground(x,z,y>0?0.7:1.35,y,y>0?0.55:1);
     return c;
   };
-  crateAt(-1.4,0,-14);crateAt(0,0,-14);crateAt(1.4,0,-14);
+  // Air between them: butted edge to edge the three read as one plank
+  // fence across the title frame (round 30).
+  crateAt(-1.8,0,-14);crateAt(0,0,-14.25);crateAt(1.8,0,-14);
   crateAt(-2.2,0,-52);crateAt(-1,0,-52);crateAt(1,0,-52);crateAt(2.2,0,-52);
   crateAt(-1.6,1.13,-52);crateAt(1.6,1.13,-52);
   const tnt=makeTNT(0,0,-52);

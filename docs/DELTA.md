@@ -5,6 +5,79 @@ on top, closed entries move to the round that closed them, nothing is deleted.
 Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
+## Round 30 — 2026-09-05 (pools of canopy shade over the corridor, deeper skirt strata)
+
+Shot from `0538ed2`, seed `0x5eed1e`, `shots/round30/`. Gates: build
+green, det green (pair in 2 boots, max 0), 5/5 PASS. Layout identical
+to round 29 (the mass layer runs its own generator).
+
+What landed: canopy-mass layer in the dapple casters, skirt strata
+relief 0.18 m and paint ±0.13.
+
+### Critic verdict (blind, fresh context, measured) — measured
+
+Told not to repeat the five standing items without a new number, the
+critic went to the hero's SHADING and found the round's real gap: a
+vertical profile down the belly runs L 0.713→0.675, a 0.04 turn across
+a sphere; form-3's torso runs 0.11→0.33. The cheek under the muzzle is
+brighter than the cheek top. "Every bit of form on this character
+comes from the 6–10 px outline, not from light." New whole-frame
+number: 2nd-percentile luminance 0.09–0.18 in the stills vs 0.015–0.067
+in the refs. PRESENT list held everything from round 29 plus the eye
+sclera, crate faces turning (front 0.355 vs sun-facing end 0.544),
+canopy shade on the corridor sand, and the skirt strata ("present but
+faint").
+
+Real finds, builder-confirmed:
+1. Hero form shading flat (numbers above; `critic30-hero-closeup-hero-
+   belly-hands`). Builder root cause: in the portrait framing the key
+   sits on the camera side, so N·L is ~1 over the whole visible belly
+   and the ramp has nothing to turn. Second root cause, found while
+   fixing: three's toon shader samples only the RED channel of the
+   gradientMap (`gradientmap_pars_fragment.glsl.js`, checked on the
+   r0.184 CDN source) — the "coloured ramp that tints the shade" of
+   round 1 never tinted anything; the cool shade has always been the
+   hemisphere light. The ramp's red values are all that ever mattered.
+2. Black point lifted in every frame (p2 0.09–0.18 vs ≤0.067).
+3. Pebbles are faceted 20-face chunks within a few metres of the
+   camera, cool grey on warm sand (`critic30-hero-closeup-pebbles-right`).
+4. Boots and hands undesigned: red capsules with no sole line or toe
+   cap; fingers 3× the ref's size; chest tuft "broken glass".
+5. Water has no specular life: 0.0% of near-water pixels above L 0.9
+   vs 62.7% in light-3's comparable region.
+6. The three title-frame crates butt edge to edge and read as one
+   plank fence (`critic30-title-hero-crate-row`).
+7. Grass root band L 0.555 vs tip 0.593: the 0.55 base vertex colour
+   is swallowed by the lit ramp; clumps read only by cast shadow.
+8. Sea-stack paint two-tone at framing distance (top L 0.50, base
+   0.48) — the round-29 strata do not carry 60 m.
+9. Face rig decals on a smooth head; eyes are the one match.
+10. Sky two-band gradient with cut-out cloud pills.
+
+Discounted: none contradicted. "Composition 4 — hero ≥15% of frame
+height in the title" repeats the round-28 item; held as a debt.
+
+Self-score: character 3 · props 5 · dressing 4 · vegetation 4 · light 3
+· colour 5 · water 3 · backdrop 4 · motion 5 · composition 4 ·
+performance 7.
+
+### Fixing this round (became round 31)
+
+Ramp goes to five stops with a mid-value terminator texel (red 158)
+so the lit half has a gradient at all — no change on the belly
+profile (0.716→0.674 top to bottom), which proved the key-angle root
+cause. So: a view-space FORM term on every rim material (hero, fruit):
+`diffuse *= 1 − 0.42·(1 − N·V)^1.6`, a core-shadow band inside the
+rim whatever the key does. Belly profile now 0.687→0.636 across the
+sphere with a visible dark band at the lower-left edge; still short
+of the refs' 3× swing — the rest is the key angle, a later round.
+Grass root colour 0.38 (was 0.55). Pebbles subdivided once, jitter
+±22% (was ±45%), warmer, sunk 4 cm. Title crates spaced 1.8 m with
+the middle one set back 0.25 m. Tris +12% (573k title-hero) from the
+pebbles — inside the ceiling.
+Not touched: boots/hands, water specular, face, sky.
+
+---
 ## Round 29 — 2026-09-05 (a dark canopy interior, a lower floor, strata on the stacks)
 
 Shot from `fa993b9`, seed `0x5eed1e`, `shots/round29/`. Gates: build

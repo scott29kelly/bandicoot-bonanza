@@ -26,10 +26,16 @@ function makeRamp(stops){
   t.needsUpdate=true;
   return t;
 }
+// Five stops, not four (round 30): the toon shader maps N·L 0..1 onto
+// the upper HALF of this strip, so with four texels the whole lit
+// hemisphere ran 214→255 — the hero's belly measured a 0.04 L turn
+// across a sphere and "every bit of form came from the outline". A
+// mid-value texel at the terminator gives the lit side a gradient.
 export const RAMP=makeRamp([
   [46,82,112],   // deep shade — decisively blue; warm albedo will pull it teal
   [88,126,142],  // mid shade — cool green-blue
-  [214,200,168], // lit — warming up
+  [158,148,126], // terminator — half-lit, still cool-grey
+  [226,212,182], // lit — warming up
   [255,250,238]  // full sun
 ]);
 
@@ -44,15 +50,25 @@ export function toonMat(opts={}){
     const color=new THREE.Color(rim.color??0xffe4b8);
     const strength=rim.strength??0.32;
     const power=rim.power??4.5;
+    // Form term (round 31): the key sits on the camera side in the
+    // portrait framing, so N·L is ~1 over the whole visible belly and the
+    // ramp cannot turn it — measured 0.04 L across the sphere. A view-
+    // space darkening toward the silhouette gives every round part a core
+    // shadow band inside the rim, whatever the key angle.
+    const formK=rim.formK??0.42,formP=rim.formP??1.6;
     m.onBeforeCompile=(sh)=>{
       sh.uniforms.uRimColor={value:color};
       sh.uniforms.uRimK={value:strength};
       sh.uniforms.uRimP={value:power};
+      sh.uniforms.uFormK={value:formK};
+      sh.uniforms.uFormP={value:formP};
       sh.fragmentShader=sh.fragmentShader
         .replace('void main() {',
 `uniform vec3 uRimColor;
 uniform float uRimK;
 uniform float uRimP;
+uniform float uFormK;
+uniform float uFormP;
 void main() {`)
         .replace('#include <emissivemap_fragment>',
 `#include <emissivemap_fragment>
@@ -61,6 +77,7 @@ void main() {`)
   vec3 rimV=normalize(vViewPosition);
   float rimF=pow(1.0-clamp(dot(rimN,rimV),0.0,1.0),uRimP);
   totalEmissiveRadiance+=uRimColor*rimF*uRimK;
+  diffuseColor.rgb*=1.0-uFormK*pow(1.0-clamp(dot(rimN,rimV),0.0,1.0),uFormP);
 }`);
     };
   }

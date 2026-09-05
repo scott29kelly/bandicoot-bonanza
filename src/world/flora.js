@@ -193,7 +193,9 @@ function tuftGeom(){
     const pos=[
       sx*w,0,sz*w,  -sx*w,0,-sz*w,  mx-sx*wm,my,mz-sz*wm,  mx+sx*wm,my,mz+sz*wm,
       tx-sx*wt,ty,tz-sz*wt, tx+sx*wt,ty,tz+sz*wt];
-    const col=[0.55,0.6,0.5, 0.55,0.6,0.5, 0.85,0.88,0.8, 0.85,0.88,0.8, 1,1,1, 1,1,1];
+    // Root 0.38 (was 0.55): measured root band L 0.555 vs tip 0.593 —
+    // the clump only read because of its cast shadow (round 30).
+    const col=[0.38,0.44,0.36, 0.38,0.44,0.36, 0.74,0.78,0.7, 0.74,0.78,0.7, 1,1,1, 1,1,1];
     const blade=new THREE.BufferGeometry();
     blade.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
     blade.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
@@ -389,17 +391,19 @@ function debrisMesh(geo,mats,spots,colorFn,{yJitter=0.02,sMin=0.6,sMax=1.5,yBase
 }
 
 export function makePebbles(spots){
-  const g=new THREE.IcosahedronGeometry(0.14,0);
-  // Knock the icosahedron out of shape so no instance reads as a primitive.
+  // Subdivided once and jittered less: the 20-face icosahedron with ±45%
+  // jitter was "6–10 face blue-grey chunks sitting on the sand" within a
+  // few metres of the camera — the banned dodecahedron-as-rock (round 30).
+  const g=new THREE.IcosahedronGeometry(0.14,1);
   const p=g.getAttribute('position');
   for(let i=0;i<p.count;i++){
-    const k=0.6+fbm3(p.getX(i)*8,p.getY(i)*8,p.getZ(i)*8)*0.9;
+    const k=0.78+fbm3(p.getX(i)*8,p.getY(i)*8,p.getZ(i)*8)*0.45;
     p.setXYZ(i,p.getX(i)*k,p.getY(i)*k*0.7,p.getZ(i)*k);
   }
   g.computeVertexNormals();
   // Sunk 4 cm: sitting on the plane they "float" as faceted solids (round 23).
   return debrisMesh(g,toonMat({color:0xffffff}),spots,
-    ()=>_c.setHSL(rand(0.05,0.13),rand(0.08,0.3),rand(0.3,0.62)),{yBase:-0.025});
+    ()=>_c.setHSL(rand(0.05,0.12),rand(0.16,0.34),rand(0.3,0.58)),{yBase:-0.04}); // warmer, sunk 4 cm
 }
 
 export function makeShells(spots){
