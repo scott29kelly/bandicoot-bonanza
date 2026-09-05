@@ -72,6 +72,10 @@ make_obj(lambda: bpy.ops.mesh.primitive_cylinder_add(vertices=20, radius=0.26, d
 make_obj(lambda: bpy.ops.mesh.primitive_cone_add(vertices=6, radius1=0.22, depth=0.55),
          "Hero_ChestCrest", m_chest_cream, loc=(0, 0.26, 1.22), rot=(-0.42, 0, 0), scale=(1.15, 0.55, 1.0), subsurf=1)
 
+# Trapezius muscular neck collar bridging torso to cranium
+make_obj(lambda: bpy.ops.mesh.primitive_cone_add(vertices=12, radius1=0.22, radius2=0.15, depth=0.24),
+         "Hero_Traps", m_fur_orange, loc=(0, 0.01, 1.54), scale=(1.05, 0.85, 1.0), subsurf=1)
+
 # ==============================================================================
 # 2. FITTED DENIM SHORTS & BELT (Clean athletic contour, NO bloomer ruffles)
 # ==============================================================================
@@ -103,43 +107,58 @@ make_obj(lambda: bpy.ops.mesh.primitive_cone_add(vertices=8, radius1=0.065, dept
 make_obj(lambda: bpy.ops.mesh.primitive_cube_add(size=0.68),
          "Hero_Skull", m_fur_orange, loc=(0, 0.02, 1.82), scale=(1.05, 0.95, 0.95), subsurf=2)
 
-# Swept cheeky sideburns
+# Swept cheeky sideburns with sleek tapered cheekbone wedges (no bulbous chipmunk pouches)
 for sx in [-0.34, 0.34]:
-    make_obj(lambda: bpy.ops.mesh.primitive_cone_add(vertices=6, radius1=0.11, depth=0.34),
-             f"Hero_Sideburn_{sx}", m_fur_orange, loc=(sx, 0.08, 1.70), rot=(0.25, sx*0.85, -sx*0.65), subsurf=1)
+    # Swept diamond-wedge cheek flare blending flush with cranium and jaw
+    make_obj(lambda: bpy.ops.mesh.primitive_cube_add(size=0.22),
+             f"Hero_CheekRoot_{sx}", m_fur_orange, loc=(sx*0.74, 0.08, 1.68), rot=(0.14, sx*0.35, -sx*0.25), scale=(0.74, 0.52, 1.10), subsurf=1)
+    # Primary swept cheek tuft emerging seamlessly from cheekbone
+    make_obj(lambda: bpy.ops.mesh.primitive_cone_add(vertices=6, radius1=0.10, depth=0.34),
+             f"Hero_Sideburn_{sx}", m_fur_orange, loc=(sx*0.82, 0.08, 1.68), rot=(0.18, sx*0.82, -sx*0.62), scale=(0.85, 0.68, 1.05), subsurf=1)
+    # Secondary lower cheek flare bridging cleanly into muzzle
+    make_obj(lambda: bpy.ops.mesh.primitive_cone_add(vertices=6, radius1=0.075, depth=0.26),
+             f"Hero_Sideburn_Lower_{sx}", m_fur_orange, loc=(sx*0.78, 0.10, 1.58), rot=(0.28, sx*0.95, -sx*0.75), scale=(0.80, 0.62, 0.95), subsurf=1)
 
 # WIDE CRESCENT CARTOON MOUTH (Ear-to-Ear Crash Grin)
 # Lower jaw / chin
 make_obj(lambda: bpy.ops.mesh.primitive_uv_sphere_add(segments=16, ring_count=12, radius=0.22),
-         "Hero_MuzzleChin", m_chest_cream, loc=(0, 0.22, 1.55), scale=(1.15, 0.95, 0.9), subsurf=1)
+         "Hero_MuzzleChin", m_chest_cream, loc=(0, 0.22, 1.48), scale=(1.10, 0.85, 0.70), subsurf=1)
 
-# Deep open mouth cavity
-make_obj(lambda: bpy.ops.mesh.primitive_cube_add(size=0.32),
-         "Hero_MouthHole", m_mouth_dark, loc=(0, 0.28, 1.62), rot=(0.3, 0, 0), scale=(1.25, 0.65, 0.55), subsurf=1)
+# Sculpted smiling mouth cavity (crescent-arched, shallow depth so teeth sit proudly on lip borders)
+make_obj(lambda: bpy.ops.mesh.primitive_cube_add(size=0.28),
+         "Hero_MouthHole", m_mouth_dark, loc=(0, 0.38, 1.63), rot=(0.14, 0, 0), scale=(1.35, 0.46, 0.32), subsurf=1)
 
-# Full arched row of stylized white teeth
-for i, tx in enumerate([-0.16, -0.09, -0.03, 0.03, 0.09, 0.16]):
-    tooth_h = 0.08 if (i in [1, 4]) else 0.06  # Canines slightly longer
-    tooth_w = 0.055 if (i in [2, 3]) else 0.045 # Buck teeth wider
+# Upper & lower cartoon lip borders framing the grin
+make_obj(lambda: bpy.ops.mesh.primitive_cylinder_add(vertices=16, radius=0.045, depth=0.38),
+         "Hero_UpperLip", m_chest_cream, loc=(0, 0.44, 1.70), rot=(0, math.pi/2, 0), scale=(1.0, 0.65, 0.65), subsurf=1)
+make_obj(lambda: bpy.ops.mesh.primitive_cylinder_add(vertices=16, radius=0.040, depth=0.34),
+         "Hero_LowerLip", m_chest_cream, loc=(0, 0.42, 1.54), rot=(0, math.pi/2, 0), scale=(1.0, 0.65, 0.65), subsurf=1)
+
+# Full arched row of stylized white teeth (firmly anchored along lip borders)
+for i, tx in enumerate([-0.15, -0.09, -0.03, 0.03, 0.09, 0.15]):
+    tooth_h = 0.065 if (i in [1, 4]) else 0.055  # Canines slightly longer
+    tooth_w = 0.050 if (i in [2, 3]) else 0.042 # Buck teeth wider
     make_obj(lambda: bpy.ops.mesh.primitive_cube_add(size=1.0),
-             f"Hero_UpperTooth_{i}", m_teeth_white, loc=(tx, 0.36, 1.70), rot=(-0.18, 0, -tx*0.3), scale=(tooth_w, 0.025, tooth_h))
+             f"Hero_UpperTooth_{i}", m_teeth_white, loc=(tx, 0.46, 1.66), rot=(-0.18, 0, -tx*0.25), scale=(tooth_w, 0.030, tooth_h))
 
 # Lower teeth row
-for i, tx in enumerate([-0.12, -0.04, 0.04, 0.12]):
+for i, tx in enumerate([-0.11, -0.04, 0.04, 0.11]):
     make_obj(lambda: bpy.ops.mesh.primitive_cube_add(size=1.0),
-             f"Hero_LowerTooth_{i}", m_teeth_white, loc=(tx, 0.34, 1.56), rot=(0.18, 0, -tx*0.2), scale=(0.04, 0.022, 0.05))
+             f"Hero_LowerTooth_{i}", m_teeth_white, loc=(tx, 0.44, 1.56), rot=(0.15, 0, -tx*0.18), scale=(0.042, 0.026, 0.050))
 
 # Arched pink tongue
 make_obj(lambda: bpy.ops.mesh.primitive_uv_sphere_add(segments=12, ring_count=8, radius=0.12),
-         "Hero_Tongue", m_tongue_pink, loc=(0, 0.28, 1.58), scale=(0.95, 1.25, 0.4))
+         "Hero_Tongue", m_tongue_pink, loc=(0, 0.38, 1.54), scale=(0.95, 1.15, 0.38))
 
-# Upper snout bridge & nose button
+# Upper snout bridge & nose button (seamless organic contouring)
+make_obj(lambda: bpy.ops.mesh.primitive_cube_add(size=0.24),
+         "Hero_SnoutRoot", m_fur_orange, loc=(0, 0.20, 1.82), rot=(-0.16, 0, 0), scale=(0.88, 0.72, 0.54), subsurf=1)
 make_obj(lambda: bpy.ops.mesh.primitive_uv_sphere_add(segments=16, ring_count=12, radius=0.20),
-         "Hero_SnoutBridge", m_chest_cream, loc=(0, 0.24, 1.78), scale=(1.05, 0.95, 1.15), subsurf=1)
+         "Hero_SnoutBridge", m_chest_cream, loc=(0, 0.26, 1.74), scale=(0.96, 0.84, 0.82), subsurf=1)
 
 # Big glossy cartoon nose button
 make_obj(lambda: bpy.ops.mesh.primitive_uv_sphere_add(segments=14, ring_count=10, radius=0.085),
-         "Hero_NoseButton", m_nose_black, loc=(0, 0.46, 1.84), scale=(1.25, 0.85, 0.95))
+         "Hero_NoseButton", m_nose_black, loc=(0, 0.48, 1.80), scale=(1.25, 0.85, 0.95))
 
 # Swept wild mohawk spikes
 for i, (z_off, y_off, pitch, s, len_m) in enumerate([
@@ -162,50 +181,58 @@ for sx in [-0.22, 0.22]:
 for sx in [-0.13, 0.13]:
     # Eye Sclera (White)
     make_obj(lambda: bpy.ops.mesh.primitive_uv_sphere_add(segments=16, ring_count=14, radius=0.11),
-             f"Hero_EyeWhite_{sx}", m_eye_white, loc=(sx, 0.24, 1.90), scale=(0.92, 0.85, 1.15))
+             f"Hero_EyeWhite_{sx}", m_eye_white, loc=(sx, 0.28, 1.90), scale=(0.95, 0.85, 1.15))
     # Eyelid hood
-    make_obj(lambda: bpy.ops.mesh.primitive_uv_sphere_add(segments=14, ring_count=10, radius=0.118),
-             f"Hero_Eyelid_{sx}", m_fur_orange, loc=(sx, 0.23, 1.94), rot=(0.25, 0, 0), scale=(1.02, 0.82, 0.85), subsurf=1)
-    # Pupil
-    make_obj(lambda: bpy.ops.mesh.primitive_uv_sphere_add(segments=12, ring_count=10, radius=0.055),
-             f"Hero_Pupil_{sx}", m_eye_black, loc=(sx*0.95, 0.33, 1.91), scale=(0.92, 0.5, 1.1))
-    # Glint
-    make_obj(lambda: bpy.ops.mesh.primitive_uv_sphere_add(segments=8, ring_count=6, radius=0.024),
-             f"Hero_Glint_{sx}", m_glint, loc=(sx*0.95 + 0.02, 0.37, 1.94))
-    # Fierce arched brow
-    make_obj(lambda: bpy.ops.mesh.primitive_cube_add(size=0.13),
-             f"Hero_Brow_{sx}", m_leather_brown, loc=(sx, 0.27, 2.01), rot=(0.14, 0, -sx*0.35), scale=(1.2, 0.26, 0.30), subsurf=1)
+    make_obj(lambda: bpy.ops.mesh.primitive_uv_sphere_add(segments=14, ring_count=10, radius=0.115),
+             f"Hero_Eyelid_{sx}", m_fur_orange, loc=(sx, 0.27, 1.95), rot=(-0.35, 0, 0), scale=(1.0, 0.85, 0.65), subsurf=1)
+    # Pupil (Dark)
+    make_obj(lambda: bpy.ops.mesh.primitive_uv_sphere_add(segments=10, ring_count=8, radius=0.052),
+             f"Hero_Pupil_{sx}", m_eye_black, loc=(sx + sx*0.015, 0.36, 1.91), scale=(1.0, 0.65, 1.0))
+    # Glossy Specular Glint
+    make_obj(lambda: bpy.ops.mesh.primitive_uv_sphere_add(segments=8, ring_count=6, radius=0.022),
+             f"Hero_Glint_{sx}", m_glint, loc=(sx + 0.02, 0.385, 1.94))
+    # Determined Eyebrow arch
+    make_obj(lambda: bpy.ops.mesh.primitive_cube_add(size=0.15),
+             f"Hero_Brow_{sx}", m_leather_brown, loc=(sx, 0.30, 2.01), rot=(0.14, 0, -sx*0.35), scale=(1.2, 0.26, 0.30), subsurf=1)
 
 # ==============================================================================
-# 4. LONG DYNAMIC ARMS & SCULPTED 4-FINGER GLOVES (Reaches down past hips)
+# 4. LONG DYNAMIC ARMS & SCULPTED 4-FINGER GLOVES (Continuous muscular contours)
 # ==============================================================================
 for sx in [-0.42, 0.42]:
-    # Shoulder deltoid
-    make_obj(lambda: bpy.ops.mesh.primitive_uv_sphere_add(segments=14, ring_count=12, radius=0.14),
-             f"Hero_Shoulder_{sx}", m_fur_orange, loc=(sx*0.96, 0.02, 1.40), scale=(1.1, 0.95, 0.95))
-    # Upper arm (tapering down)
-    make_obj(lambda: bpy.ops.mesh.primitive_cylinder_add(vertices=14, radius=0.08, depth=0.40),
-             f"Hero_ArmUpper_{sx}", m_fur_orange, loc=(sx*1.04, 0.01, 1.20), rot=(-0.16, -sx*0.08, 0), subsurf=1)
-    # Elbow joint
-    make_obj(lambda: bpy.ops.mesh.primitive_uv_sphere_add(segments=10, ring_count=8, radius=0.082),
-             f"Hero_Elbow_{sx}", m_fur_orange, loc=(sx*1.06, -0.01, 1.00))
-    # Forearm
-    make_obj(lambda: bpy.ops.mesh.primitive_cylinder_add(vertices=14, radius=0.085, depth=0.38),
-             f"Hero_Forearm_{sx}", m_fur_orange, loc=(sx*1.06, 0.08, 0.82), rot=(-0.35, 0, 0), subsurf=1)
+    # Clavicle / pectoral bridge connecting torso to deltoid cap
+    make_obj(lambda: bpy.ops.mesh.primitive_cube_add(size=0.18),
+             f"Hero_Clavicle_{sx}", m_fur_orange, loc=(sx*0.72, 0.06, 1.34), rot=(0.10, -sx*0.22, -sx*0.32), scale=(1.10, 0.70, 0.85), subsurf=1)
+    # Smooth anatomical shoulder deltoid cap tucked snug into chest
+    make_obj(lambda: bpy.ops.mesh.primitive_uv_sphere_add(segments=16, ring_count=12, radius=0.15),
+             f"Hero_Shoulder_{sx}", m_fur_orange, loc=(sx*0.86, 0.03, 1.30), rot=(0, -sx*0.15, -sx*0.10), scale=(1.08, 0.95, 1.15), subsurf=1)
+
+# Asymmetrical expressive stance:
+# Left arm (sx = -0.42): dynamic flared gauntlet arm
+# Right arm (sx = 0.42): cocked heroic fist angled forward with swagger
+for sx, arm_rot_x, arm_rot_y, arm_rot_z, fa_rot_x, fa_rot_y in [
+    (-0.42, -0.14,  0.06,  0.05, -0.32,  0.05),
+    ( 0.42, -0.26, -0.12, -0.10, -0.48, -0.14)
+]:
+    # Tapered bicep
+    make_obj(lambda: bpy.ops.mesh.primitive_cylinder_add(vertices=16, radius=0.095, depth=0.38),
+             f"Hero_ArmUpper_{sx}", m_fur_orange, loc=(sx*0.98, 0.02, 1.12), rot=(arm_rot_x, arm_rot_y, arm_rot_z), subsurf=1)
+    # Athletic muscular forearm
+    make_obj(lambda: bpy.ops.mesh.primitive_cylinder_add(vertices=16, radius=0.09, depth=0.42),
+             f"Hero_Forearm_{sx}", m_fur_orange, loc=(sx*1.02, 0.08, 0.80), rot=(fa_rot_x, fa_rot_y, arm_rot_z), scale=(1.05, 1.15, 1.0), subsurf=1)
     # Flared leather gauntlet cuff
     make_obj(lambda: bpy.ops.mesh.primitive_cone_add(vertices=16, radius1=0.13, radius2=0.10, depth=0.11),
-             f"Hero_GloveCuff_{sx}", m_leather_brown, loc=(sx*1.06, 0.16, 0.67), rot=(-0.35, 0, 0))
+             f"Hero_GloveCuff_{sx}", m_leather_brown, loc=(sx*1.02, 0.16, 0.67), rot=(fa_rot_x, fa_rot_y, arm_rot_z))
 
     # Sculpted Cartoon Glove (Palm + 3 Curled Fingers + Thumb in active grip pose)
     make_obj(lambda: bpy.ops.mesh.primitive_cube_add(size=0.18),
-             f"Hero_GlovePalm_{sx}", m_leather_brown, loc=(sx*1.06, 0.20, 0.58), scale=(1.10, 0.82, 1.10), subsurf=1)
+             f"Hero_GlovePalm_{sx}", m_leather_brown, loc=(sx*1.02, 0.20, 0.58), rot=(0, fa_rot_y, arm_rot_z), scale=(1.10, 0.82, 1.10), subsurf=1)
     # Opposable Thumb with knuckle break
     make_obj(lambda: bpy.ops.mesh.primitive_cylinder_add(vertices=10, radius=0.046, depth=0.15),
-             f"Hero_Thumb_{sx}", m_leather_brown, loc=(sx*1.06 - sx*0.09, 0.26, 0.62), rot=(0.6, 0, -sx*0.75), subsurf=1)
+             f"Hero_Thumb_{sx}", m_leather_brown, loc=(sx*1.02 - sx*0.09, 0.26, 0.62), rot=(0.6, fa_rot_y, -sx*0.75), subsurf=1)
     # 3 Curled Fingers (active cartoon fist/grip)
     for f_idx, f_x in enumerate([-0.045, 0.0, 0.045]):
         make_obj(lambda: bpy.ops.mesh.primitive_cylinder_add(vertices=8, radius=0.040, depth=0.15),
-                 f"Hero_Finger_{sx}_{f_idx}", m_leather_brown, loc=(sx*1.06 + f_x, 0.27, 0.52), rot=(1.15, 0, sx*0.18), subsurf=1)
+                 f"Hero_Finger_{sx}_{f_idx}", m_leather_brown, loc=(sx*1.02 + f_x, 0.27, 0.52), rot=(1.15, fa_rot_y, sx*0.18), subsurf=1)
 
 # ==============================================================================
 # 5. ATHLETIC LEGS & ELONGATED HIGH-TOP SNEAKERS

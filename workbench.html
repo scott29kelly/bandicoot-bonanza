@@ -169,7 +169,7 @@
   <div class="stats-bar">
     <div class="stat-card">
       <div class="stat-label">Active Loop</div>
-      <div class="stat-val active">Track 3: Terrain & Vista</div>
+      <div class="stat-val active" style="color:var(--green)">Pass 14: Final Sign-Off</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Model Engine</div>
@@ -177,10 +177,10 @@
     </div>
     <div class="stat-card">
       <div class="stat-label">Quality Target</div>
-      <div class="stat-val">Crash 4 (1080p)</div>
+      <div class="stat-val">Crash 4 / Astro Bot</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Track 2 Props</div>
+      <div class="stat-label">Production Status</div>
       <div class="stat-val" style="color:var(--green)">Passed / Locked</div>
     </div>
   </div>
@@ -189,10 +189,10 @@
     <div class="card">
       <div class="card-header">
         <span>Current Visual Contact Sheet</span>
-        <span style="font-size:12px; color:var(--text-muted);">Auto-captured via tools/shots.mjs</span>
+        <span style="font-size:12px; color:var(--text-muted);">Auto-captured via tools/shots.mjs (Pass 14)</span>
       </div>
       <div class="sheet-container">
-        <img src="docs/shots/pass6-contact-sheet/crate-cluster.png" alt="Current Props Render" onerror="this.src='docs/shots/pass4-contact-sheet/CONTACT-SHEET.png'">
+        <img src="docs/shots/pass14/CONTACT-SHEET.png" alt="Pass 14 Contact Sheet" onerror="this.src='docs/shots/pass13/CONTACT-SHEET.png'">
       </div>
     </div>
 
@@ -203,45 +203,45 @@
       <div class="track-list">
         <div class="track-item">
           <div>
-            <div class="track-title">1. Hero Mascot 3D Model</div>
-            <div style="font-size:12px; color:var(--text-muted);">V-taper torso, toothy grin, tailored denim shorts, sneakers, gloves</div>
+            <div class="track-title">1. Hero Mascot 3D Model & Procedural Idle</div>
+            <div style="font-size:12px; color:var(--text-muted);">Sculpted V-taper, organic cheek roots, toothy grin, procedural breathing & rhythmic head tilt</div>
           </div>
           <span class="track-status status-done">PASSED</span>
         </div>
         <div class="track-item">
           <div>
-            <div class="track-title">2. Environment Props</div>
-            <div style="font-size:12px; color:var(--text-muted);">Multi-material 3D beveled crates, TNT spark & fuse, Wumpa fruit with leaves</div>
+            <div class="track-title">2. Environment Props & Moving Rafts</div>
+            <div style="font-size:12px; color:var(--text-muted);">Modeled pontoon raft chassis with logs & rope lashings, 3D crates, TNT, drop shadows</div>
           </div>
           <span class="track-status status-done">PASSED</span>
         </div>
-        <div class="track-item in-progress">
+        <div class="track-item">
           <div>
-            <div class="track-title">3. Terrain & Vista</div>
-            <div style="font-size:12px; color:var(--text-muted);">Natural dunes, karst sea stacks, volcano backdrop, canyon formations</div>
+            <div class="track-title">3. Terrain, Vista & Temple Twilight Biome</div>
+            <div style="font-size:12px; color:var(--text-muted);">Karst sea stacks, volcano, stepped battlements, portal vortex, tropical twilight dusk (#1b122e)</div>
           </div>
-          <span class="track-status status-wip">BUILDING</span>
+          <span class="track-status status-done">PASSED</span>
         </div>
         <div class="track-item">
           <div>
-            <div class="track-title">4. Tropical Ocean & Surf Foam</div>
-            <div style="font-size:12px; color:var(--text-muted);">Depth caustics, shoreline surf rings, wave displacement</div>
+            <div class="track-title">4. Tropical Ocean, Waterlines & Surf Foam</div>
+            <div style="font-size:12px; color:var(--text-muted);">Depth caustics, batched wet-rock algae skirts, localized wake rings, sun-crest sparkles</div>
           </div>
-          <span class="track-status status-pending">PENDING</span>
+          <span class="track-status status-done">PASSED</span>
         </div>
         <div class="track-item">
           <div>
             <div class="track-title">5. Enemies & Hazards</div>
-            <div style="font-size:12px; color:var(--text-muted);">Sculpted crabs, carnivorous snapping plants</div>
+            <div style="font-size:12px; color:var(--text-muted);">Sculpted crabs with scuttle animation, carnivorous snapping plants with leafy collars</div>
           </div>
-          <span class="track-status status-pending">PENDING</span>
+          <span class="track-status status-done">PASSED</span>
         </div>
         <div class="track-item">
           <div>
             <div class="track-title">6. Lighting & Shaders</div>
-            <div style="font-size:12px; color:var(--text-muted);">AgX HDR grading, chromatic toon ramp, contact AO</div>
+            <div style="font-size:12px; color:var(--text-muted);">AgX HDR grading, chromatic toon ramp, dynamic twilight sky lerp, torch embers & bloom</div>
           </div>
-          <span class="track-status status-done">STABLE</span>
+          <span class="track-status status-done">PASSED</span>
         </div>
       </div>
     </div>
@@ -262,6 +262,62 @@
         </tr>
       </thead>
       <tbody>
+        <tr>
+          <td>Pass 14 (Final Production Lock)</td>
+          <td>Phantom Skirt Purge, Dusk Clouds/Mountains, Organic Ivy Fronds, Rock Geometries & Crate AO</td>
+          <td>Static waterline skirt severed under moving raft in water gap; daytime white clouds at twilight; inverted cone geometry gate vines; banned dodecahedron rocks; circular shadow decal under square crates</td>
+          <td>Purged static skirt and foam at (0, -43.5); attached dynamic wake foam directly to moving raft group; masked scatter zones to keep ocean/raft pristine; dynamic dusk lerp for 3D clouds (white to bruised purple/sunset amber) and volcanic mountains (slate indigo) at z &lt; -115; replaced cone vines with draped ribbonGeo ivy fronds and leaf clusters; replaced dodecahedrons with custom organic rock geometries; replaced radial shadow with rounded-box contact AO distance falloff; merged cloud parts saving 80 scene meshes</td>
+          <td><span class="track-status status-done">PASSED</span></td>
+        </tr>
+        <tr>
+          <td>Pass 13 (Sprint Iteration)</td>
+          <td>Moving Raft Chassis, Temple Twilight Dusk Biome, Hero Procedural Idle & Batching</td>
+          <td>Moving platforms read as bare extruded box slabs in water gap; temple biome lacked atmospheric dusk transition; hero character was completely static while idling; draw call spikes in long corridor views</td>
+          <td>Modeled wooden raft / pontoon chassis with 4 longitudinal buoyancy logs, 3 transverse cross-beams, lateral log rails, and rope bindings in MovingPlatform; added dynamic tropical twilight/dusk sky and fog transition at z &lt; -140 with deep indigo (#1b122e) fog, golden horizon glow, and warm amber torch/portal contrast; added procedural idle breathing chest scale (Math.sin(t*3.2)*0.04) and rhythmic head tilt to hero; batched waterline skirts, driftwood, starfish, and gate stone into unified geometries</td>
+          <td><span class="track-status status-done">PASSED</span></td>
+        </tr>
+        <tr>
+          <td>Pass 12 (Track 3.6)</td>
+          <td>Hero Anatomy Continuity, Waterline Wet-Rock Decals & Geometry Batching</td>
+          <td>Snout-to-cranium and shoulder deltoid CSG intersection lines in portrait view; sharp polygonal cut where stone pillars penetrate ocean surface; non-batched bridge and gate draw calls</td>
+          <td>Sculpted organic brow shelf, snout root bridge, rounded deltoid caps, and trapezius collar in Blender; added dark wet-rock algae skirts and localized wake foam rings around ocean pillars; batched bridge rails and gate battlements/vines into unified geometries</td>
+          <td><span class="track-status status-done">PASSED</span></td>
+        </tr>
+        <tr>
+          <td>Pass 11 (Track 3.5)</td>
+          <td>Hero Cheek Sculpt Polish, Item Drop Shadows, Portal Vortex & Torch Embers</td>
+          <td>Cheek roots read as swollen chipmunk pouches; floating wumpa fruit & secret gems lacked ground contact projection; temple gate skyline was a flat slab with dark void portal; torches lacked rising embers & high-frequency flicker</td>
+          <td>Resculpted hero cheekbones in Blender into sleek swept wedges with active comic arm posture; added instanced ground contact drop shadows beneath floating Wumpa fruit and secret gems; built ruined stepped battlements, Mayan apex crest, overhanging ivy fronds, and shimmering swirling mystical portal vortex with amber glow; added rising ember point particles and high-frequency light flicker to torches</td>
+          <td><span class="track-status status-done">PASSED</span></td>
+        </tr>
+        <tr>
+          <td>Pass 10 (Track 3.4)</td>
+          <td>Hero Cheek Tuft Integration, Crate Impact VFX & Sunlit Ocean Glint</td>
+          <td>Cheek tufts/sideburns read as isolated floating cones; crate smashing lacked kinetic comic feedback; ocean surface lacked directional specular sun-crest glints</td>
+          <td>Blended hero cheek tuft base smoothly into cranium and muzzle chin in Blender 5.2 LTS with organic cheek root mounds and secondary jaw tufts; added 4 comic diamond starburst particles (OctahedronGeometry) and expanding radial dust puff ring to Crate.break_(); added directional sun-crest specular glint streaks and wave-peak diamond sparkles to TEX.water</td>
+          <td><span class="track-status status-done">PASSED</span></td>
+        </tr>
+        <tr>
+          <td>Track 3.3</td>
+          <td>Hero Facial Grin Sculpt, Totem Bloom Seam & Stacked Crate Occlusion</td>
+          <td>Hero mouth cavity buried inside muzzle sphere; totem gold specular glare streak across crown base; stacked crates lacked contact occlusion</td>
+          <td>Re-sculpted hero head in Blender with proud toothy crescent grin (12 prominent upper/lower fangs), continuous tapered muscular arms, and hid fallback mohawk spikes; re-calibrated totem collar to dark carved timber with satin gold relief to eliminate specular reflection spike into camera; added stacked crate contact AO darkening decals</td>
+          <td><span class="track-status status-done">PASSED</span></td>
+        </tr>
+        <tr>
+          <td>Track 3.2</td>
+          <td>Organic Logs, Ground Dressing & Totem Bloom Tuning</td>
+          <td>Mechanical slat artifact on rolling logs; bloom blowout on totem crown gem; decapitated hero-closeup framing; sterile sand without debris in crate cluster</td>
+          <td>Re-modeled rolling logs with continuous organic redwood trunk, staggered chiseled puzzle plates, burls, and clustered moss; retuned totem timber to saturated tropical mahogany and calibrated gem emissive to eliminate bloom glare; retargeted hero-closeup portrait framing; expanded scatter zones to populate crate cluster with 1200 pebbles, 520 shells, and 300 driftwood sticks, plus grounded wide contact AO shadows under crates and TNT</td>
+          <td><span class="track-status status-done">PASSED</span></td>
+        </tr>
+        <tr>
+          <td>Track 3.1</td>
+          <td>Terrain Props & Spin VFX</td>
+          <td>Cone spin VFX encased hero; logs were primitive cylinders without relief; checkpoint totems were stamped grey blocks</td>
+          <td>Built horizontal comic speed ribbons with orbiting starbursts, sculpted 3D rolling logs with chiseled bark fissures and concentric growth rings, and carved Aztec/Tiki totem with expressive wooden grimace and bobbing glowing jade crown gem</td>
+          <td><span class="track-status status-done">PASSED</span></td>
+        </tr>
         <tr>
           <td>Track 2.2</td>
           <td>Environment Props</td>
