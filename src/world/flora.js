@@ -250,7 +250,10 @@ export function makeGrassField(spots){
     m.compose(new THREE.Vector3(x,y-0.02,z),q.setFromEuler(e),
       new THREE.Vector3(rand(0.55,1.2),rand(0.45,1.1),rand(0.55,1.2)));
     mesh.setMatrixAt(i,m);
-    mesh.setColorAt(i,_c.setHSL(rand(0.16,0.36),rand(0.5,0.75),rand(0.32,0.62)));
+    // Darker and greener than the sand (round 34): blades measured 1.1–1.2×
+    // the sand's value where the refs' grass sits at 0.53× — "pale straw
+    // cards, the brightest thing on the ground". L 0.20–0.42 (was 0.32–0.62).
+    mesh.setColorAt(i,_c.setHSL(rand(0.18,0.36),rand(0.6,0.85),rand(0.13,0.32)));
   }
   mesh.castShadow=true;
   function update(t,heroPos){

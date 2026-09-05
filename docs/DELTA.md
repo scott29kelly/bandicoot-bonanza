@@ -5,6 +5,60 @@ on top, closed entries move to the round that closed them, nothing is deleted.
 Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
+## Round 34 — 2026-09-05 (lit sea stacks beat the sky bounce, pebble sockets, a milder crate lift)
+
+Shot from `5a36970`, seed `0x5eed1e`, `shots/round34/`. Gates: build
+green, det green (pair in 2 boots, max 0), 5/5 PASS. Tris 533k–608k.
+
+What landed: sea-stack bands L 0.30–0.50, crate emissive 0x4a4036,
+contactField under the pebbles.
+
+### Critic verdict (blind, fresh context, measured) — measured
+
+Top find, new: GRASS VALUE INVERTED. Blades measure 1.10–1.21× the
+sand's value in all three ground shots; the refs' grass sits at 0.53×
+the path with a 0.10–0.12 sd per blade (dark roots, lit tips). "Pale
+straw cards, the brightest thing on the ground — the reason every
+ground-level shot reads sunburnt rather than lush." Sea stack no
+longer inverted (lit 0.489 vs shade 0.405) but the shade facet is GREY
+(sat 0.075) — the banned outcome. The hero's core-shadow band goes
+grey-blue at the belly terminator (rgb 108,115,107, sat 0.05 over 5–6
+px). Crates 0.22 below the sand in value where the ref's crate is
+0.07 below its path.
+
+Real finds, builder-confirmed:
+1. Grass brighter than sand, one value per blade (`critic34-grass-
+   closeup`).
+2. Sea-stack shade grey.
+3. Belly terminator band desaturated (`critic34-belly-band`) — the
+   form term is a plain multiply; under the blue hemi it lands grey.
+4. Crates read as dark furniture, not golden pick-ups.
+5. Near platform top bare in water-gap (the beach's south tip, thin
+   scatter) — logged, dressing.
+6. Water carries no colour from the jungle above it.
+7. Twigs flat cards; tail a flat fin; two sand values between beach
+   and islets (the islets sit in the palm's shade) — logged.
+
+Discounted: "the crate stack casts no shadow in crate-cluster" — the
+sun is at +x+z and so is the camera; the stack's shadow falls behind
+it, out of frame. The critic's own PRESENT list has crates casting in
+title-hero and beach-corridor. "Pebble under-rim strip unchanged" —
+the strip (340,602 45×4) is the pebble's lit rim, not its socket; the
+socket disc sits under the stone.
+
+Self-score: character 3 · props 6 · dressing 5 · vegetation 3 · light 4
+· colour 5 · water 4 · backdrop 4 · motion 5 · composition 4 ·
+performance 8.
+
+### Fixing this round (became round 35)
+
+Grass instance colour L 0.20–0.42, sat 0.55–0.8 (was 0.32–0.62 /
+0.5–0.75). Form term made warm and saturating: mix toward
+diffuse×(0.62,0.36,0.22) instead of a plain multiply. Sea-stack body
+saturation 0.50 (was 0.30), cap 0.62. Crate core vcolor L 0.80–0.90.
+Not touched: platform-tip dressing, water reflection, twigs, tail.
+
+---
 ## Round 33 — 2026-09-05 (knee-high grass, smaller fruit, contact discs under every tuft)
 
 Shot from `12d9ad7`, seed `0x5eed1e`, `shots/round33/`. Gates: build

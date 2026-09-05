@@ -57,10 +57,12 @@ function seaStack(x,z,h,r){
         *THREE.MathUtils.smoothstep(fbm3(wx*1.1,wy*1.1,17),0.45,0.6);
       const under=THREE.MathUtils.smoothstep(-ny,0.1,0.6);
       let hh,ss,ll;
-      if(t>0.72){hh=0.30;ss=0.5;ll=0.17+fbm3(wx,wy,1)*0.09;}          // green cap
+      if(t>0.72){hh=0.30;ss=0.62;ll=0.17+fbm3(wx,wy,1)*0.09;}         // green cap
       else if(t<0.2){hh=0.1;ss=0.22;ll=0.16;}                         // wet base
       else{
-        hh=0.09+fbm3(wy*0.5,wx*0.5,8)*0.05;ss=0.30;
+        // 0.50 (was 0.30): tan × blue hemi + fog went grey on the shade
+        // facets (sat 0.075, round 34); the albedo has to carry the hue.
+        hh=0.09+fbm3(wy*0.5,wx*0.5,8)*0.05;ss=0.68;
         ll=bandL+(fbm3(wx*0.5,wy*0.5,2)-0.5)*0.10;
         hh+=(0.30-hh)*ledge*0.8;ss+=0.2*ledge;ll+=0.03*ledge;         // moss on ledges
       }

@@ -109,7 +109,9 @@ export function makeCrate(x,y,z){
   // wood texture, and the product put lit faces at L 0.33 and shaded
   // faces on the floor (round 22, measured). Same bug class as the
   // multiply finds of rounds 7 and 16, third instance.
-  vcolor(core,(px,py)=>_c.setHSL(0.08+hueJ,0.55,rand(0.72,0.82)*ao(py)));
+  // 0.80–0.90 (was 0.72–0.82): crate faces sat 0.22 below the sand where
+  // the ref's crate is 0.07 below its path (round 34).
+  vcolor(core,(px,py)=>_c.setHSL(0.08+hueJ,0.55,rand(0.80,0.90)*ao(py)));
   for(const g of frameGeoms(S,beam))
     parts.push(vcolor(g,(px,py)=>_c.setHSL(0.07+hueJ,0.5,0.52*ao(py))));
   const mesh=splitCaster(core,parts,crateMat);

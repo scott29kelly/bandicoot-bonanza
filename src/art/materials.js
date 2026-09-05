@@ -77,7 +77,12 @@ void main() {`)
   vec3 rimV=normalize(vViewPosition);
   float rimF=pow(1.0-clamp(dot(rimN,rimV),0.0,1.0),uRimP);
   totalEmissiveRadiance+=uRimColor*rimF*uRimK;
-  diffuseColor.rgb*=1.0-uFormK*pow(1.0-clamp(dot(rimN,rimV),0.0,1.0),uFormP);
+  // Warm, saturating darkening — a plain multiply left a grey-blue band
+  // (rgb 108,115,107, sat 0.05) at the belly terminator (round 34).
+  {
+    float fk=uFormK*pow(1.0-clamp(dot(rimN,rimV),0.0,1.0),uFormP);
+    diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*vec3(0.62,0.36,0.22),fk);
+  }
 }`);
     };
   }
