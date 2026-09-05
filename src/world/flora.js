@@ -265,20 +265,39 @@ export function makeGrassField(spots){
  * "two species readable in-frame" — both recurring verdicts).
  */
 export function makeFlowerField(spots){
+  // Five petals round a gold eye, not three spheres on a stick: at 2–4 m
+  // the sphere cluster read as "pink mushrooms" (round 31, crop-verified).
   const parts=[];
-  for(let i=0;i<3;i++){
-    const b=new THREE.SphereGeometry(0.035,6,5);
-    b.translate(Math.cos(i*2.1)*0.035,0.14+(i%2)*0.02,Math.sin(i*2.1)*0.035);
-    parts.push(b.toNonIndexed());
+  const PET=5;
+  for(let i=0;i<PET;i++){
+    const a=i/PET*Math.PI*2;
+    const petal=new THREE.PlaneGeometry(0.055,0.032,2,1);
+    const pp=petal.getAttribute('position');
+    for(let j=0;j<pp.count;j++){ // round the tip, cup the petal
+      const t=(pp.getX(j)+0.0275)/0.055;
+      pp.setY(j,pp.getY(j)*(t<0.5?0.6+t*0.8:1.0-(t-0.5)*0.9));
+      pp.setZ(j,-t*t*0.012);
+    }
+    petal.rotateX(-Math.PI/2);
+    petal.translate(0.032,0,0);
+    petal.rotateY(a);
+    petal.translate(0,0.15,0);
+    parts.push(petal.toNonIndexed());
   }
-  const stem=new THREE.CylinderGeometry(0.008,0.012,0.14,5);
-  stem.translate(0,0.07,0);
+  const eye=new THREE.SphereGeometry(0.014,6,5);
+  eye.translate(0,0.153,0);
+  parts.push(eye.toNonIndexed());
+  const stem=new THREE.CylinderGeometry(0.008,0.012,0.15,5);
+  stem.translate(0,0.075,0);
   parts.push(stem.toNonIndexed());
   const geo=mergeGeoms(parts);
   const uv=new Float32Array(geo.getAttribute('position').count*2);
   geo.setAttribute('uv',new THREE.BufferAttribute(uv,2));
-  vcolor(geo,(px,py)=>py>0.12?_c.set(0xffffff):_c.setHSL(0.30,0.5,0.22));
-  const mat=toonMat({vertexColors:true});
+  vcolor(geo,(px,py)=>{
+    if(py>0.151&&Math.hypot(px)<0.016&&Math.abs(py-0.153)<0.016)return _c.set(0xffd452);
+    return py>0.12?_c.set(0xffffff):_c.setHSL(0.30,0.5,0.22);
+  });
+  const mat=toonMat({vertexColors:true,side:THREE.DoubleSide});
   const mesh=new THREE.InstancedMesh(geo,mat,spots.length);
   const m=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler();
   for(let i=0;i<spots.length;i++){

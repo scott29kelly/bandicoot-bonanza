@@ -5,6 +5,72 @@ on top, closed entries move to the round that closed them, nothing is deleted.
 Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
+## Round 31 — 2026-09-05 (a form term on the hero, a five-stop ramp, rounder pebbles, air between the crates)
+
+Shot from `423f544`, seed `0x5eed1e`, `shots/round31/`. Gates: build
+green, det green (pair in 2 boots, max 0), 5/5 PASS. Tris 503k–577k.
+
+What landed: five-stop ramp, view-space form term on rim materials,
+grass root colour 0.38, subdivided warm pebbles sunk 4 cm, title crates
+spaced.
+
+### Critic verdict (blind, fresh context, measured) — measured
+
+Told the standing items, the critic found the frame-level cause behind
+them: "the stills are open-sky dioramas; the refs are enclosed rooms."
+Sky-blue share at 640 px: form-1 0.000, form-3 0.004, form-2 0.014,
+light-4 0.000; the stills 15.7% (title), 28.5% (corridor), 28.9%
+(water-gap). "No amount of grading will make up the dark share while a
+third of the frame is a 0.68-luminance gradient." Second find with
+numbers: lit sand hue 49° sat 0.63 vs the ref's 35° / 0.91, and colder
+than the crates (27°) — the colour script inverted. Detail energy
+(mean |Laplacian|) now inside the ref band in four of five stills; "the
+flatness that remains is value and hue, not detail count."
+
+Real finds, builder-confirmed:
+1. Overhead enclosure missing in the three wide shots (numbers above).
+2. Sand olive, not gold; colder than the crates.
+3. Belly still a disc: 0.68–0.71 for 170 px then a 20 px drop to 0.46
+   at the edge — the round-31 form term is the edge band, the middle
+   has no turn (`critic31-belly-hands`).
+4. Nose is a smear: the one head part with no outline and no
+   highlight, 6 px blur (`critic31-face`).
+5. Grass blades one tone each, hard hue jumps between neighbours; the
+   0.38 root shows only in the clump cores (`critic31-grass-mid`).
+6. Water-gap slab top ~20% of frame bare within 12 m; dressing stops
+   120 px from the edge.
+7. Blossoms read as pink mushrooms: spheres on a stick at 2–4 m
+   (`critic31-ground-right`).
+8. "Pebbles blue-grey, sitting on the surface" — builder crop: the
+   round-31 pebbles are tan and sunk; the blue-grey shards are pebbles
+   in SHADE, tinted by the hemisphere sky. Half a find.
+9. Palm fronds one fill, no midrib shadow, no leaflet split.
+10. Rim under-strength on the arm: rim 0.57 vs lit 0.70; the refs put
+    the rim above the lit value.
+
+Discounted: none contradicted; item 8 half.
+
+Self-score: character 4 · props 5 · dressing 5 · vegetation 4 · light 4
+· colour 4 · water 3 · backdrop 4 · motion 4 · composition 4 ·
+performance 8.
+
+### Fixing this round (became round 32)
+
+Sand texture rotated to gold: base #e4bd74, blotches warmed, the cool
+drift halved. Blossoms rebuilt as five cupped petals round a gold eye.
+Islet dressing: grass 110 each (was 60), broadleaf 18, debris share
+0.18. Two composed palms built LAST in buildBeach (so the seeded
+stream ahead of them is unchanged): one over the title camera, one over
+the water-gap camera. First placement put the water-gap trunk across
+the foreground and over the hero (caught on the sheet); moved to 68°
+off the view axis so only the crown hangs in — and its cast shadow now
+lays a 4 m dark shape across the near slab. Sky share moved little
+(title 16.7→15.8%, corridor 30.4→28.9%, water-gap 36.6→35.6%): a palm
+crown is a thin lid. A real lid needs a canopy layer, not more palms.
+Not touched: belly mid-turn, nose, blade gradient, frond midribs, rim
+strength.
+
+---
 ## Round 30 — 2026-09-05 (pools of canopy shade over the corridor, deeper skirt strata)
 
 Shot from `0538ed2`, seed `0x5eed1e`, `shots/round30/`. Gates: build

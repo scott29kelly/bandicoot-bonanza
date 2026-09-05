@@ -135,11 +135,14 @@ function blotches(g,size,n,rMin,rMax,color,aMin,aMax){
 /* ---------- surfaces ----------------------------------------------------- */
 export function sandTexture(){
   return canvasTex(512,(g,s)=>{
-    g.fillStyle='#dcc186';g.fillRect(0,0,s,s);
-    blotches(g,s,10,s*0.25,s*0.45,'170,132,78',0.18,0.32);   // ~12 m scale
-    blotches(g,s,26,s*0.06,s*0.14,'240,216,160',0.16,0.3);   // ~3 m scale
-    blotches(g,s,14,s*0.08,s*0.18,'160,120,76',0.05,0.11); // was 0.10–0.2: polka dots (round 22)
-    blotches(g,s,6,s*0.3,s*0.5,'132,150,120',0.05,0.1);      // faint cool drift
+    // Gold, not olive (round 31): lit sand measured hue 49° sat 0.63
+    // against the ref's 35° / 0.91, and colder than the crates — the
+    // colour script inverted. Base and blotches rotated toward orange.
+    g.fillStyle='#e4bd74';g.fillRect(0,0,s,s);
+    blotches(g,s,10,s*0.25,s*0.45,'178,124,56',0.18,0.32);   // ~12 m scale
+    blotches(g,s,26,s*0.06,s*0.14,'248,214,140',0.16,0.3);   // ~3 m scale
+    blotches(g,s,14,s*0.08,s*0.18,'166,114,58',0.05,0.11); // was 0.10–0.2: polka dots (round 22)
+    blotches(g,s,6,s*0.3,s*0.5,'150,146,110',0.03,0.06);     // faint cool drift, halved
     // Wind-ripple bands, broken and jittered so they never read as stripes.
     // Alpha kept LOW: at 0.13 the 9 m tiling period of these strokes read
     // as a ruled grid across the crate-yard sand (round-7 verdict, gap 10).

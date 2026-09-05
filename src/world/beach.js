@@ -113,7 +113,9 @@ export function buildBeach(scene){
     ...scatter(300,beach.solid,0.8,avoid),
     // 60 each (was 28): the water-gap foreground platform measured 75%
     // bare sand (round 25).
-    ...scatter(60,gapA.solid,0.5,avoid),...scatter(60,gapB.solid,0.5,avoid),
+    // 110 each (was 60): the water-gap slab top still measured bare
+    // over ~20% of the frame within 12 m (round 31).
+    ...scatter(110,gapA.solid,0.5,avoid),...scatter(110,gapB.solid,0.5,avoid),
     ...scatter(120,yard.solid,0.8,avoid)];
   const grass=makeGrassField(grassSpots);
   scene.add(grass.mesh);
@@ -121,7 +123,7 @@ export function buildBeach(scene){
 
   const broadSpots=[
     ...scatter(90,beach.solid,0.9,avoid),
-    ...scatter(10,gapA.solid,0.6,avoid),...scatter(10,gapB.solid,0.6,avoid),
+    ...scatter(18,gapA.solid,0.6,avoid),...scatter(18,gapB.solid,0.6,avoid),
     ...scatter(45,yard.solid,0.9,avoid)];
   const broad=makeBroadleafField(broadSpots);
   scene.add(broad.mesh);
@@ -138,8 +140,8 @@ export function buildBeach(scene){
   // in the framing that judges prop relief (round 22, crop-verified).
   const spots=(n)=>[
     ...scatter(Math.round(n*0.62),beach.solid,0.4,avoid),
-    ...scatter(Math.round(n*0.11),gapA.solid,0.3),
-    ...scatter(Math.round(n*0.11),gapB.solid,0.3),
+    ...scatter(Math.round(n*0.18),gapA.solid,0.3),
+    ...scatter(Math.round(n*0.18),gapB.solid,0.3),
     ...scatter(Math.round(n*0.24),yard.solid,0.4,avoid)];
   scene.add(makePebbles(spots(950)));
   scene.add(makeShells(spots(400)));
@@ -246,6 +248,17 @@ export function buildBeach(scene){
     p:at('tnt1',5.2,1.5,4.5),lookAt:at('tnt1',-0.3,0.3,-0.8),fov:44,
     // Off the camera→TNT line: at [2.6,-50] the hero covered the label.
     player:[3.2,0,-51.0,0.9,0.25]}));
+
+  // Two more composed palms close the lid of the title and water-gap
+  // frames (round 31: sky 16% / 29% of those frames, ≤1.4% in every
+  // ref). Built LAST so the seeded stream ahead of them is unchanged and
+  // nothing else moves.
+  for(const [x,z,h,lean,leanDir] of [[-6.3,-7.5,5.2,3.2,-1.10],[5.9,-27.4,4.8,3.0,-2.18]]){
+    const p=makePalm(x,0,z,h,{lean,leanDir,yaw:0});
+    scene.add(p.group);
+    updates.push(p.update);
+    ground(x,z,0.85);
+  }
 
   return {
     solids,
