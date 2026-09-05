@@ -5,6 +5,76 @@ on top, closed entries move to the round that closed them, nothing is deleted.
 Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
+## Round 28 — 2026-09-05 (grain-lit shade, a dark under-canopy, a capped tail)
+
+Shot from `d8ce837`, seed `0x5eed1e`, `shots/round28/`. Gates: build
+green, det green, 5/5 PASS. Crate shaded-face mean L 0.245 (was 0.12);
+canopy p5 0.123 (was 0.17); frame min L 0.071.
+
+What landed: crate wood as emissiveMap on the shaded faces, grade floor
+lowered, dark ridge shell between crowns, tail base cap, sole plates
+trimmed, TNT lid UVs remapped, shallows halo thinned.
+
+### Critic verdict (blind, fresh context, measured) — measured
+
+The most measured verdict yet, and the first to go whole-frame: a 16-bin
+luminance histogram of every still against every ref. Refs put 21–36%
+of pixels below L 0.20 and 3–8% below 0.0625; the stills put 2–11%
+below 0.20 and **0.0% below 0.0625** — "the floor is the bottom of the
+picture in every frame". Nothing from round 27's list was repeated as
+absent; the PRESENT list carried crate AO, contact shadow, gloves, thumb,
+eye glint, X-braces, bent blades, dapple, fruit not blown out, and the
+damp-sand octave (called by name, hue-checked).
+
+Real finds, builder-confirmed:
+1. Jungle mass reads as faceted low-poly blobs with no dark interior
+   (`critic28-jungle-facets`, hero-closeup 0,0 520×300: mean L 0.357,
+   min 0.133). The round-28 dark shell is there but the crown carpet
+   covers it; the crowns themselves had no depth term.
+2. No deep shadow anywhere: the grade floor (linear 0.011 blue) clips
+   at L ~0.07, so the bottom histogram bin is empty in all five stills.
+3. Sea stacks: "a faceted convex hull in desaturated tan" with a green
+   vertex-gradient cap (`critic28-seastack`). The sine strata never
+   read as bands; the same silhouette clones at three sizes.
+4. Hero chest is one flat cream ellipse (mean L 0.628) with three
+   triangles pasted on; arms smooth tubes (`critic28-hero-chest`).
+5. Face still assembled primitives: flat cheek triangles, capsule
+   muzzle, hard-edged mask decal, no brow mass. Eye at ref quality.
+6. Foam a milky sheet over ~35% of the water in water-gap; the cliff
+   meets water on a 1-px light seam with no wet band.
+7. Platform foundation un-modelled: one flat brown face, two crack
+   strokes.
+8. Pebbles are flat 4–6-vertex shards lighter than the sand, no contact
+   shadow.
+9. Palm trunk a cylinder with a chevron decal; fronds one plane.
+10. title-hero composition: hero 14% of frame height, camera at eye
+    level, 45% empty sand and sky.
+
+Discounted: rim light "narrow, +0.22 L over 6 px" — sampled at one row
+and called under-strength, not absent; noted, not a contradiction.
+Performance UNMEASURED — the tri/draw counts are on the sheet, which
+the critic was told to ignore. Shadow-map staircase seen and not ranked.
+
+Self-score: character 4 · props 6 · dressing 4 · vegetation 4 · light 3
+· colour 5 · water 3 · backdrop 4 · motion 5 · composition 4 ·
+performance —.
+
+### Fixing this round (became round 29)
+
+Grade floor halved (0.0018,0.0033,0.0055): frame min L 0.041, and
+0.26–0.99% of title-hero / hero-closeup below 0.0625 (was 0.00%).
+Crown carpet: 9×6 spheres with ±14% jitter (was 7×5, ±20%), base
+lightness scaled by depth on the flank (0.5 at the foot), underside
+0.07 (was 0.18) — pixels below L 0.2 in title-hero 10.8→13.7%. Sea
+stacks painted after the flat normals: four stepped strata bands, moss
+on up-facing faces gated by a noise patch (gated on the normal alone it
+rendered a checkerboard — fixed before the shot), overhangs 45% darker.
+Chest bib: darkening toward the bib edge and gut plus a slanted streak
+field; at portrait range the toon ramp swallows most of it — logged,
+the chest wants geometry, not paint. Shallows halo alpha 0.6→0.5.
+Not touched: face, foundation, pebbles, palm, composition.
+
+---
 ## Round 27 — 2026-09-03 (X-braces, an elbow, soles, rocks below the rim)
 
 Shot from `fa2cac9`, seed `0x5eed1e`, `shots/round27/`. Gates: build

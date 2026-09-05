@@ -72,7 +72,10 @@ export function createPost(renderer){
         // landed at rgb sum ~5 in round-19/20 stills (magenta-clear probe:
         // rendered surfaces, not holes). A soft floor, teal like every other
         // shadow here: unchanged above ~0.03, never flat below it.
-        vec3 fl=vec3(0.0035,0.0065,0.011); // round 27: every frame's min was the floor at L 0.101
+        // Round 29: halved again. The critic's histogram put 0.0% of every
+        // frame below L 0.0625 against 3–8% in the refs; the floor was
+        // the bottom of the picture in every still.
+        vec3 fl=vec3(0.0018,0.0033,0.0055);
         c=sqrt(c*c+fl*fl);
         c=clamp(c,0.0,1.0);
         // Manual sRGB OETF — this pass owns the canvas, nothing runs after.

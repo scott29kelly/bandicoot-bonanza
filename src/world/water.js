@@ -61,7 +61,7 @@ function depthCanvas(islands){
       }
   };
   const halo=(s)=>Math.min(5,Math.min(s.maxX-s.minX,s.maxZ-s.minZ)*0.5);
-  g.filter='blur(20px)';g.fillStyle='rgba(52,168,172,0.6)';
+  g.filter='blur(20px)';g.fillStyle='rgba(52,168,172,0.5)'; // 0.6→0.5 (r29: milky sheet over 35% of the gap)
   // 0.7 (was 0.45): beach-corridor measured the water at the sand edge
   // the same blue as at 40 m (round 25).
   for(const s of islands){

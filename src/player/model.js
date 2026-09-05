@@ -112,8 +112,17 @@ function torsoGeom(){
     // there entirely (measured — ±77° showed zero belly pixels).
     const ang=Math.abs(Math.atan2(x,z));
     const wav=Math.sin(y*16+Math.atan2(x,z)*5)*0.10;
-    if(y<0.58&&ang<1.6-Math.max(0,y-0.38)*2.6+wav)
-      return _c.set(BELLY);
+    const bibEdge=1.6-Math.max(0,y-0.38)*2.6+wav;
+    if(y<0.58&&ang<bibEdge){
+      // Fur, not a flat ellipse (round 28: "one flat cream ellipse, mean
+      // L 0.63"): the bib darkens toward its edge and the gut, and a
+      // slanted streak field gives the surface a direction. Streak period
+      // ≥ two lathe segments so the 30-segment mesh does not alias it.
+      const edge=THREE.MathUtils.clamp((ang-bibEdge+0.55)/0.55,0,1);
+      const gut=THREE.MathUtils.clamp((0.30-y)/0.12,0,1);
+      const streak=Math.sin(ang*12+y*9)*0.5+0.5;
+      return _c.set(BELLY).lerp(_c2.set(0xb8905c),edge*0.32+gut*0.12+streak*0.14);
+    }
     // vertex colors MULTIPLY the material color, so the material must stay
     // white and the fur painted here — cream × orange material rendered as
     // orange, which is why the round-5 belly and stripe never once read

@@ -29,22 +29,44 @@ function seaStack(x,z,h,r){
     p.setX(i,wx*cut*n);
     p.setZ(i,wz*cut*n);
   }
-  vcolor(g,(wx,wy)=>{
-    const t=(wy+h/2)/h;
-    if(t>0.72)return _c.setHSL(0.30,0.5,0.17+fbm3(wx,wy,1)*0.09); // green cap
-    if(t<0.2)return _c.setHSL(0.1,0.22,0.18);                     // wet base
-    // Strata bands wobbled by noise — a smooth grey-to-tan gradient was
-    // the round-8 "single flat value" call on every stack in water-gap.
-    // Doubled round 11: at ±0.055 the bands vanished at framing distance.
-    const strata=Math.sin(wy*1.8+fbm3(wx*0.8,wy*0.8,5)*3.2)*0.10;
-    return _c.setHSL(0.09+fbm3(wy*0.5,wx*0.5,8)*0.05,0.26,
-      0.26+fbm3(wx*0.5,wy*0.5,2)*0.13+strata);
-  });
   // FLAT normals (recomputed after unsharing vertices): smooth-shaded, the
   // carved stacks still read as untouched lathe primitives — three critics
   // running. Faceted, they read as hewn rock.
   const g2=g.toNonIndexed();
   g2.computeVertexNormals();
+  // Painted AFTER the flat normals so the paint can read the facet:
+  // ledges (up-facing) carry moss, overhangs (down-facing) go dark.
+  // Strata are STEPPED bands, not a sine — the sine was a smooth tan
+  // gradient that read as "a faceted convex hull in desaturated tan"
+  // (round 28); the round-8 call was the same thing in other words.
+  {
+    const p2=g2.getAttribute('position'),n2=g2.getAttribute('normal');
+    const col=new Float32Array(p2.count*3);
+    for(let i=0;i<p2.count;i++){
+      const wx=p2.getX(i),wy=p2.getY(i),ny=n2.getY(i);
+      const t=(wy+h/2)/h;
+      const band=((Math.floor(wy*1.6+fbm3(wx*0.8,wy*0.8,5)*2.5)%4)+4)%4;
+      const bandL=[0.19,0.31,0.24,0.36][band];
+      // Moss only on faces that are really up AND inside a noise patch:
+      // gated on the normal alone, the two triangles of every displaced
+      // quad split lit/unlit and the stack rendered as a checkerboard.
+      const ledge=THREE.MathUtils.smoothstep(ny,0.5,0.9)
+        *THREE.MathUtils.smoothstep(fbm3(wx*1.1,wy*1.1,17),0.45,0.6);
+      const under=THREE.MathUtils.smoothstep(-ny,0.1,0.6);
+      let hh,ss,ll;
+      if(t>0.72){hh=0.30;ss=0.5;ll=0.17+fbm3(wx,wy,1)*0.09;}          // green cap
+      else if(t<0.2){hh=0.1;ss=0.22;ll=0.16;}                         // wet base
+      else{
+        hh=0.09+fbm3(wy*0.5,wx*0.5,8)*0.05;ss=0.30;
+        ll=bandL+(fbm3(wx*0.5,wy*0.5,2)-0.5)*0.10;
+        hh+=(0.30-hh)*ledge*0.8;ss+=0.2*ledge;ll+=0.03*ledge;         // moss on ledges
+      }
+      ll*=1-under*0.45;
+      _c.setHSL(hh,ss,ll);
+      col[i*3]=_c.r;col[i*3+1]=_c.g;col[i*3+2]=_c.b;
+    }
+    g2.setAttribute('color',new THREE.BufferAttribute(col,3));
+  }
   return xform(g2,{p:[x,h/2+WATER_Y-1.5,z]});
 }
 
@@ -250,18 +272,25 @@ function jungleRidge(x,z,len,w,h,dir,near=true){
   for(let i=0;i<N;i++){
     const sm=samples[Math.floor(rand(0,samples.length))];
     if(!sm||sm.ly<0.8)continue;
-    const mound=new THREE.SphereGeometry(rand(1.2,2.6),7,5); // 6×4 read as polyhedra (round 24)
+    // 6×4 read as polyhedra (round 24); 7×5 with ±20% jitter still read as
+    // "faceted low-poly blobs" at 12 m (round 28). 9×6, jitter ±14%.
+    const mound=new THREE.SphereGeometry(rand(1.2,2.6),9,6);
     const mp=mound.getAttribute('position');
     for(let j=0;j<mp.count;j++){
-      const k=0.8+hash3(mp.getX(j)*3+i,mp.getY(j)*3,mp.getZ(j)*3)*0.4;
+      const k=0.86+hash3(mp.getX(j)*3+i,mp.getY(j)*3,mp.getZ(j)*3)*0.28;
       mp.setXYZ(j,mp.getX(j)*k,mp.getY(j)*k*0.75,mp.getZ(j)*k);
     }
     mound.computeVertexNormals();
-    const hue=0.26+rand(0,0.13),sat=rand(0.45,0.68),base=rand(0.14,0.3),R=mound.parameters.radius;
+    // Depth into the mass: crowns low on the flank sit under the ones
+    // above and get half the light — the mass had no dark interior, so
+    // it read as "green-on-green with no occluded gaps" (round 28).
+    const depth=THREE.MathUtils.clamp(sm.ly/h,0,1);
+    const hue=0.26+rand(0,0.13),sat=rand(0.45,0.68),
+      base=rand(0.11,0.28)*(0.5+0.5*depth),R=mound.parameters.radius;
     vcolor(mound,(px,py)=>{
       const cap=THREE.MathUtils.smoothstep(py,-R*0.25,R*0.55);
       return _c.setHSL(hue+fbm3(px*0.6,py*0.6,i)*0.03+(1-cap)*0.07,sat,
-        Math.max(0.04,base*(0.18+0.82*cap)+(fbm3(px*1.4,py*1.4,i+40)-0.5)*0.12));
+        Math.max(0.03,base*(0.07+0.93*cap)+(fbm3(px*1.4,py*1.4,i+40)-0.5)*0.10));
     });
     const sink=R*0.35;
     xform(mound,{p:[sm.lx-sm.lnx*sink,sm.ly-sm.lny*sink,sm.lz-sm.lnz*sink]});
