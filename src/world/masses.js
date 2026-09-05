@@ -76,7 +76,7 @@ export function islandMass({x,z,w,d,topY=0}){
       // Terraced strata: the same band function the paint uses, stepping
       // the face 12 cm so the bands are relief (round 25: "three
       // scribbled strata lines on a flat plane").
-      const band=Math.sin(py*6.5+fbm3((px+x)*0.5,py*0.8,(pz+z)*0.5)*4.5)>0.2?0.12:0;
+      const band=Math.sin(py*6.5+fbm3((px+x)*0.5,py*0.8,(pz+z)*0.5)*4.5)>0.2?0.18:0; // 0.12→0.18 (r29: "flat brown face, L spread 0.035")
       const bulge=(0.3+down*1.6)*(0.55+n*2.6)+lip+band*Math.min(1,down*4);
       const dirX=px/halfW,dirZ=pz/halfD;
       const dl=Math.hypot(dirX,dirZ)||1;
@@ -143,7 +143,7 @@ export function islandMass({x,z,w,d,topY=0}){
     if(py>WATER_Y+0.55)_c.copy(cSandLow).lerp(cRockHi,Math.min(1,(yTop-py)/0.9));
     else if(py>WATER_Y-0.8)_c.copy(cWet); // the tide-wet band
     else _c.copy(cRockLo).lerp(cWet,THREE.MathUtils.clamp((py-yBot)/3,0,1)*0.5);
-    const strata=Math.sin(py*6.5+fbm3((px+x)*0.5,py*0.8,(pz+z)*0.5)*4.5)*0.06;
+    const strata=Math.sin(py*6.5+fbm3((px+x)*0.5,py*0.8,(pz+z)*0.5)*4.5)*0.13; // 0.06→0.13 (r29)
     _c.offsetHSL(0,0,strata);
     if(py<WATER_Y+0.2&&py>WATER_Y-0.35)_c.multiplyScalar(0.74);
     return _c;

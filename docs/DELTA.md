@@ -5,6 +5,82 @@ on top, closed entries move to the round that closed them, nothing is deleted.
 Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
+## Round 29 — 2026-09-05 (a dark canopy interior, a lower floor, strata on the stacks)
+
+Shot from `fa993b9`, seed `0x5eed1e`, `shots/round29/`. Gates: build
+green, det green (pair in 2 boots, max 0), 5/5 PASS. Frame min L 0.041;
+title-hero pixels below L 0.2: 13.7% (was 10.8%).
+
+What landed: grade floor halved, crown carpet darkened by depth on the
+flank (9×6 spheres, ±14% jitter), sea stacks painted after the flat
+normals with stepped strata and noise-gated moss ledges, chest bib fur
+gradient, shallows halo alpha 0.5.
+
+### Critic verdict (blind, fresh context, measured) — measured
+
+Whole-frame again, now with a 12 px blur before counting: refs put
+25–43% of pixels below L 0.25 and 5–17% below 0.15; the stills 2.6–7.1%
+and 0.0–0.6%. "The sun exists (crisp shadows, contact shadows, a
+chromatic ramp), but there are no casters big enough to make a shape."
+Scores rose on colour (6), dressing (5), water (5), backdrop (5),
+motion (6), composition (6), performance 8 (counts supplied). Long
+PRESENT list: chromatic shadow on sand with numbers (sat 0.30, B/R
+0.69 in shade vs 0.39 in sun), contact shadows, outline contours,
+crate relief incl. AO in the rail-post corner, TNT lettering and fuse
+pot, three plant species, debris classes named (pebbles, shells, pink
+flowers, mushrooms, twigs, a striped blue shell), depth-graded water,
+three distance layers, mid-stride pose, eye glint.
+
+Real finds, builder-confirmed:
+1. No shadow MASS: the corridor sand is one lit plane with only
+   blade-thin shadows on it (`critic29-beach-corridor-sand`).
+2. Jungle mass still faceted polyhedra with hard facet edges
+   (`critic29-title-hero-jungle`); the round-29 depth darkening reads
+   as interior but the lumps are still lumps.
+3. Hero surface "an inflated toy": no fur break on any silhouette
+   edge, ears flat lozenges, cheek fins, chest tuft reads as detached
+   shards on a blank cream sphere (L 0.68–0.88, no ramp step).
+4. Platform undersides: a flat brown face, L spread 0.035 over
+   100×40 px, one crack stroke (`critic29-water-gap-skirt`).
+5. Sea stacks: symmetric vase silhouette, two-tone paint; the new
+   strata bands do not read at framing distance.
+6. Sand albedo flat within 12 m: one ochre plus a 3–4 px horizontal
+   stripe (the wrap texture) (`critic29-hero-closeup-sandfg`).
+7. Palm trunk cylinder + chevron decal, no ring relief.
+8. Foam a milky sheet L 0.69 over 200×80 px, no wet-sand band, hard
+   straight platform/water line.
+9. Fruit a Lambert sphere with a leaf sprite, no stem dimple.
+10. Clouds flat translucent discs, no lit top / shaded base.
+
+Discounted: "the eye has no white" — `critic29-hero-closeup-head` shows
+the sclera left of each iris; small at this angle, present. "Rim +0.03
+L at the crown" — measured against sky at one column; on the ears the
+same crop shows the band clearly. "hero-closeup hero dead-centre" — he
+stands right of centre by design (round 23).
+
+Self-score: character 4 · props 6 · dressing 5 · vegetation 4 · light 4
+· colour 6 · water 5 · backdrop 5 · motion 6 · composition 6 ·
+performance 8.
+
+### Fixing this round (became round 30)
+
+Dapple texture gets a canopy-MASS layer (7 clusters of 3.5–5.5 m
+ellipses) so the corridor sheets cast pools of shade, not only leaf
+dapple. Measured: pools now land on the sand in hero-closeup and
+beach-corridor, but the whole-frame share below L 0.25 did not move
+(hero-closeup 15.1→14.6%, beach-corridor 8.9→8.6%): shaded sand sits
+at L 0.30–0.45, above the count, and its lit:shade ratio already
+matches the refs (0.70 vs 0.74, round 27). The refs' dark quarter is
+undergrowth interiors and occluded hollows, not sand — that is where
+round 31 has to go (dark bases under grass clumps and broadleaf, the
+jungle-mass interior). Lesson: the mass layer first pulled the world
+RNG and rerolled every placement downstream (a grass tuft landed on the
+hero's boots in hero-closeup, caught on the sheet); it now runs its own
+generator so the layout matches round 29. Island skirts: strata relief
+0.12→0.18 m, strata paint ±0.06→±0.13.
+Not touched: hero fur, palm, foam, fruit, clouds.
+
+---
 ## Round 28 — 2026-09-05 (grain-lit shade, a dark under-canopy, a capped tail)
 
 Shot from `d8ce837`, seed `0x5eed1e`, `shots/round28/`. Gates: build

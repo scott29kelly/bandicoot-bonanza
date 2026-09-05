@@ -280,8 +280,24 @@ export function dappleTexture(){
   const t=canvasTex(512,(g,s)=>{
     g.clearRect(0,0,s,s);
     g.fillStyle='rgba(0,0,0,1)';
-    // Big crowns first (1.3–2.8 m), then the leaf-scale clusters — one
-    // scale of dapple read as a uniform dot pattern (round 23).
+    // Canopy MASS first (3–5 m pools of shade): two critics running
+    // measured 3–7% of each frame below L 0.25 against 25–43% in the
+    // refs — the sun had casters, but none big enough to make a shape
+    // (round 29, gap 1). Then the crowns (1.3–2.8 m), then the
+    // leaf-scale clusters — one scale of dapple read as a uniform dot
+    // pattern (round 23).
+    // Own generator: pulled from the world RNG this layer shifted every
+    // placement downstream and a grass tuft rerolled onto the hero.
+    let st=0x5eed1e;const lr=(lo,hi)=>{st=(st+0x6D2B79F5)|0;let t=Math.imul(st^(st>>>15),1|st);t=(t+Math.imul(t^(t>>>7),61|t))^t;return lo+((t^(t>>>14))>>>0)/4294967296*(hi-lo);};
+    for(let i=0;i<7;i++){
+      const cx=lr(0,s),cy=lr(0,s),n=Math.floor(lr(2,4));
+      for(let k=0;k<n;k++){
+        const r=lr(110,170),a=lr(0,6.3),d=lr(0,70);
+        g.beginPath();
+        g.ellipse((cx+Math.cos(a)*d+s)%s,(cy+Math.sin(a)*d+s)%s,r,r*rand(0.55,0.85),a,0,7);
+        g.fill();
+      }
+    }
     for(let i=0;i<9;i++){
       const cx=rand(0,s),cy=rand(0,s),n=Math.floor(rand(3,6));
       for(let k=0;k<n;k++){
