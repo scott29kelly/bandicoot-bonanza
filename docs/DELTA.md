@@ -5,6 +5,67 @@ on top, closed entries move to the round that closed them, nothing is deleted.
 Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
+## Round 32 — 2026-09-05 (gold sand, petal blossoms, dressed islets, two composed palms)
+
+Shot from `25cf4fe`, seed `0x5eed1e`, `shots/round32/`. Gates: build
+green, det green (pair in 2 boots, max 0), 5/5 PASS. Tris 506k–581k.
+
+What landed: sand texture rotated to gold, five-petal blossoms, islet
+grass 110 / broadleaf 18 / debris 0.18, composed palms over the title
+and water-gap cameras.
+
+### Critic verdict (blind, fresh context, measured) — measured
+
+A new top find, the first in four rounds that no earlier critic named:
+SCALE. Grass at the hero's depth stands 0.40 of his height (form-3:
+~0.19); fruit at his depth 0.31 (form-1: ~0.15); a foreground blade
+crosses his muzzle in the portrait. "Every prop is 1.7–2× too large
+for him, so the hero reads as a toy dropped into a garden." Second:
+vegetation not grounded — sand at a tuft base L 0.579 vs open sand
+0.542, the base BRIGHTER. Third: the ink outline is on the hero only
+(near-black 4.6% of his box vs 0.4% crates, 0.0% fruit) — "a sticker
+pasted on a different render." Moved/not-moved paragraph with the
+previous critic's numbers: dark share unchanged within 0.004; water-gap
+sky 28.9→17.9% (real, the crown); lit sand darker and more saturated
+by a step.
+
+Real finds, builder-confirmed:
+1. Vegetation and fruit 1.7–2× too large for the hero
+   (`critic32-title-grass-tufts`, `critic32-closeup-face`).
+2. Nothing under the tufts and rosettes (`critic32-bc-tuft-base`).
+3. Outline on the hero only — a style decision (rounds 4–6), now the
+   only outlined object in frame. Held as a debt; not fixed here.
+4. Grass blades single-value planes at portrait range.
+5. "A pebble buried in the platform skirt" (`critic32-wg-buried-
+   pebble`) — builder: a SHORE ROCK set into the skirt face at the
+   islet lip, in shade. Half a find; the debris margin is raised
+   anyway.
+6. Islet tops bare (the round-32 dressing shows in the sheet; the
+   near slab's outer third is still bare).
+7. Lollipop trees on the jungle mass (ball-on-stick at 60 m).
+8. Face rig: cheek spikes, flat crest fan, dot mouth.
+9. Blossoms at 4×: a bar with a cross of petals — the new flowers,
+   at range.
+10. Sea stacks fade to sky value in the title (L 0.58 vs sky 0.67).
+
+Discounted: item 5 half. Sky share "by a stricter classifier" —
+different classifier, not comparable to the round-31 number; only the
+water-gap drop is trusted.
+
+Self-score: character 4 · props 6 · dressing 5 · vegetation 4 · light 6
+· colour 6 · water 5 · backdrop 4 · motion 5 · composition 5 ·
+performance 8.
+
+### Fixing this round (became round 33)
+
+Grass instance height 0.45–1.1 (was 0.5–1.6), footprint 0.55–1.2;
+broadleaf 0.6–1.15 (was 0.7–1.5); fruit instance scale 0.8. A
+`contactField` (instanced contact discs, no rng draws) under every
+grass and broadleaf spot, r 0.30 / 0.42. Islet debris margin 0.7.
+Not touched: outline policy, blade shading, lollipop trees, face,
+sea-stack fog contrast.
+
+---
 ## Round 31 — 2026-09-05 (a form term on the hero, a five-stop ramp, rounder pebbles, air between the crates)
 
 Shot from `423f544`, seed `0x5eed1e`, `shots/round31/`. Gates: build

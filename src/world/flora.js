@@ -244,8 +244,11 @@ export function makeGrassField(spots){
     // LOUD per-instance spread — round-2 verdict: subtle variation reads
     // as clones after the tonemapper compresses it.
     e.set(rand(-0.28,0.28),rand(0,Math.PI*2),rand(-0.28,0.28));
+    // Knee height, not waist (round 32): tufts at the hero's depth stood
+    // 0.40 of his height against ~0.19 in form-3, and a blade crossed his
+    // muzzle in the portrait. Height 0.45–1.1 (was 0.5–1.6).
     m.compose(new THREE.Vector3(x,y-0.02,z),q.setFromEuler(e),
-      new THREE.Vector3(rand(0.6,1.4),rand(0.5,1.6),rand(0.6,1.4)));
+      new THREE.Vector3(rand(0.55,1.2),rand(0.45,1.1),rand(0.55,1.2)));
     mesh.setMatrixAt(i,m);
     mesh.setColorAt(i,_c.setHSL(rand(0.16,0.36),rand(0.5,0.75),rand(0.32,0.62)));
   }
@@ -381,7 +384,7 @@ export function makeBroadleafField(spots){
     const [x,y,z]=spots[i];
     e.set(rand(-0.15,0.15),rand(0,Math.PI*2),rand(-0.15,0.15));
     m.compose(new THREE.Vector3(x,y-0.02,z),q.setFromEuler(e),
-      new THREE.Vector3(rand(0.7,1.5),rand(0.7,1.5),rand(0.7,1.5)));
+      new THREE.Vector3(rand(0.6,1.15),rand(0.6,1.15),rand(0.6,1.15))); // 0.7–1.5 was 1.7× the ref's rosette (round 32)
     mesh.setMatrixAt(i,m);
     mesh.setColorAt(i,_c.setHSL(rand(0.22,0.38),rand(0.5,0.7),rand(0.35,0.6)));
   }

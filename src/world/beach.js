@@ -17,7 +17,7 @@ import {createBackdrop} from './backdrop.js';
 import {makeCrate,makeTNT} from './props.js';
 import {makePalm,makeFern,makeGrassField,makeBroadleafField,
         makeFlowerField,makePebbles,makeShells,makeTwigs} from './flora.js';
-import {contactBlob} from './contact.js';
+import {contactBlob,contactField} from './contact.js';
 
 /** Seeded scatter over an island top, thinning toward the corridor centre. */
 function scatter(n,s,inset=0.8,avoid=[]){
@@ -120,6 +120,7 @@ export function buildBeach(scene){
   const grass=makeGrassField(grassSpots);
   scene.add(grass.mesh);
   updates.push(grass.update);
+  scene.add(contactField(grassSpots,0.30,0.5));
 
   const broadSpots=[
     ...scatter(90,beach.solid,0.9,avoid),
@@ -128,6 +129,7 @@ export function buildBeach(scene){
   const broad=makeBroadleafField(broadSpots);
   scene.add(broad.mesh);
   updates.push(broad.update);
+  scene.add(contactField(broadSpots,0.42,0.55));
 
   // Blossoms keep clear of the broadleaf clumps: a stem under a leaf
   // showed as a bare dark peg through the whorl (round 21, crop-verified).
@@ -140,8 +142,10 @@ export function buildBeach(scene){
   // in the framing that judges prop relief (round 22, crop-verified).
   const spots=(n)=>[
     ...scatter(Math.round(n*0.62),beach.solid,0.4,avoid),
-    ...scatter(Math.round(n*0.18),gapA.solid,0.3),
-    ...scatter(Math.round(n*0.18),gapB.solid,0.3),
+    // Margin 0.7 (was 0.3): a pebble on the islet lip showed as a ghost
+    // polygon half inside the skirt face (round 32, crop-verified).
+    ...scatter(Math.round(n*0.18),gapA.solid,0.7),
+    ...scatter(Math.round(n*0.18),gapB.solid,0.7),
     ...scatter(Math.round(n*0.24),yard.solid,0.4,avoid)];
   scene.add(makePebbles(spots(950)));
   scene.add(makeShells(spots(400)));
@@ -153,7 +157,7 @@ export function buildBeach(scene){
     for(let i=0;i<n;i++){
       const z=z0+(z1-z0)*i/(n-1);
       fruitPos.push([x,y+0.62,z]);
-      ground(x,z,0.24,y,0.5); // hovering fruit still throws a soft pool
+      ground(x,z,0.20,y,0.5); // hovering fruit still throws a soft pool
     }
   };
   // Off the centreline: on it, the corridor and title framings stack the
@@ -206,7 +210,9 @@ export function buildBeach(scene){
              rim:{color:0xffe0a0,strength:1.2,power:3.2}}),
     toonMat({color:0x4e7d2a})],fruitPos.length);
   const _m=new THREE.Matrix4(),_e=new THREE.Euler(),_q=new THREE.Quaternion(),
-        _v=new THREE.Vector3(),_s=new THREE.Vector3(1,1,1);
+        // 0.8: at 1.0 a wumpa at the hero's depth was 0.31 of his height
+        // against form-1's ~0.15 (round 32).
+        _v=new THREE.Vector3(),_s=new THREE.Vector3(0.8,0.8,0.8);
   const phases=fruitPos.map(()=>rand(0,Math.PI*2));
   function fruitUpdate(t){
     for(let i=0;i<fruitPos.length;i++){
