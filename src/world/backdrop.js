@@ -46,7 +46,10 @@ function seaStack(x,z,h,r){
       const wx=p2.getX(i),wy=p2.getY(i),ny=n2.getY(i);
       const t=(wy+h/2)/h;
       const band=((Math.floor(wy*1.6+fbm3(wx*0.8,wy*0.8,5)*2.5)%4)+4)%4;
-      const bandL=[0.19,0.31,0.24,0.36][band];
+      // Lighter bands (round 33): at L 0.19–0.36 the sun side (tan × sun)
+      // came out DARKER than the shade side (tan × blue hemi + fog) and
+      // the stack read concave — the lit facet must beat the sky bounce.
+      const bandL=[0.30,0.44,0.36,0.50][band];
       // Moss only on faces that are really up AND inside a noise patch:
       // gated on the normal alone, the two triangles of every displaced
       // quad split lit/unlit and the stack rendered as a checkerboard.

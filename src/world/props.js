@@ -18,7 +18,9 @@ function mats(){
     // an away-facing face in a cast shadow gets hemi only. A grain-shaped
     // lift keeps the planks legible; a flat one would wash them (round 27).
     const wood=woodTexture();
-    crateMat=toonMat({map:wood,emissiveMap:wood,emissive:0x66584a,vertexColors:true});
+    // 0x4a4036 (was 0x66584a): the lift flattened the box — two faces
+    // meeting at a corner post measured L 0.376 and 0.377 (round 33).
+    crateMat=toonMat({map:wood,emissiveMap:wood,emissive:0x4a4036,vertexColors:true});
     tntMat=toonMat({map:tntTexture(),vertexColors:true});
     fuseMat=toonMat({color:0x4a3a30});
     potMat=toonMat({color:0x8a7f74}); // a metal cap, not "an unshaded dark lump" (round 26)

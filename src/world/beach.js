@@ -147,7 +147,11 @@ export function buildBeach(scene){
     ...scatter(Math.round(n*0.18),gapA.solid,0.7),
     ...scatter(Math.round(n*0.18),gapB.solid,0.7),
     ...scatter(Math.round(n*0.24),yard.solid,0.4,avoid)];
-  scene.add(makePebbles(spots(950)));
+  // Pebble sockets: sand directly under a pebble measured LIGHTER than
+  // beside it (round 33). Same spots, one draw set — the discs draw none.
+  const pebbleSpots=spots(950);
+  scene.add(makePebbles(pebbleSpots));
+  scene.add(contactField(pebbleSpots,0.13,0.5));
   scene.add(makeShells(spots(400)));
   scene.add(makeTwigs(spots(280)));
 

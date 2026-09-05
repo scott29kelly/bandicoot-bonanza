@@ -5,6 +5,64 @@ on top, closed entries move to the round that closed them, nothing is deleted.
 Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
+## Round 33 — 2026-09-05 (knee-high grass, smaller fruit, contact discs under every tuft)
+
+Shot from `12d9ad7`, seed `0x5eed1e`, `shots/round33/`. Gates: build
+green, det green (pair in 2 boots, max 0), 5/5 PASS. Tris 517k–592k.
+
+What landed: grass height 0.45–1.1, broadleaf 0.6–1.15, fruit 0.8,
+contactField under grass and broadleaf, islet debris margin 0.7.
+
+### Critic verdict (blind, fresh context, measured) — measured
+
+Scale confirmed moved: grass at the hero's depth 0.23–0.28 of his
+height (was 0.40), fruit 0.26 (was 0.31); tuft bases now 0.024 darker
+than open sand (were 0.037 lighter). Top find: "props do not turn under
+the key" — two crate faces meeting at a post measured L 0.376 and
+0.377. Second: crates are clones (albedo within 2/255, same grain, no
+wear). Third: debris floats — sand under a pebble lighter than beside
+it. New measurements: far water L 0.369 sat 0.74 at the horizon, no
+aerial fade; sea-stack shade facet BRIGHTER than its lit facet (0.556
+vs 0.522) so the rock reads concave; canopy shade on sand hue 54–80°
+against the script's blue-green; hero contact shadow a 0.015 step.
+
+Real finds, builder-confirmed:
+1. Sea stacks invert in fog: tan × sun is darker than tan × blue hemi
+   + fog (`critic33-seastack`). Real, and the mechanism is clear.
+2. Debris has no socket (`critic33-crate-ground`).
+3. Crates identical per instance (hue drift ±0.012 is below the
+   grade's resolution).
+4. Hero 0.13–0.14 of frame height in corridor and water-gap: a
+   composition debt, logged twice now.
+5. No aerial perspective on the water at 100–300 m (`critic33-
+   horizon`): the base plane fogs, the grade's saturation push
+   re-saturates it. Logged, render owner.
+6. Canopy shade hue olive (54–80°), not blue-green.
+7. Hero contact shadow weak in crate-cluster (a 0.015 step).
+8. Fruit has no specular glint; reads as clay.
+9. Chest tufts read as claw scratches; mouth a flat polygon.
+
+Discounted: "two crate faces meeting at a corner post, L 0.376 vs
+0.377" — builder crop `b34-crate`: the post at x≈777 is the CENTRE
+post of one front face; the two panels face the same way and should
+match. The face-turn claim is unsupported at that sample; the real
+face turn (front vs sun-facing end, 0.355 vs 0.544) was measured and
+listed PRESENT by round 30's critic.
+
+Self-score: character 4 · props 5 · dressing 5 · vegetation 4 · light 4
+· colour 5 · water 4 · backdrop 3 · motion 4 · composition 4 ·
+performance 8.
+
+### Fixing this round (became round 34)
+
+Sea-stack strata bands lifted to L 0.30–0.50 (were 0.19–0.36) so the
+lit facet beats the sky bounce. Crate emissive lift 0x4a4036 (was
+0x66584a), a mild widening of the face range. Pebble sockets: a
+contactField under the same 950 pebble spots (no extra draws). Left
+for later: per-instance crate wear, water aerial fade (grade), shade
+hue, fruit glint, hero framing size.
+
+---
 ## Round 32 — 2026-09-05 (gold sand, petal blossoms, dressed islets, two composed palms)
 
 Shot from `25cf4fe`, seed `0x5eed1e`, `shots/round32/`. Gates: build
