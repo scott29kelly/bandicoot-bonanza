@@ -6,8 +6,8 @@ session; see `CONTRACT.md`.
 ## Where things stand
 
 - Branch `claude/gauntlet-v2` in worktree
-  `.claude/worktrees/elevenlabs-local-setup-dd4b2e`, local only, NOT
-  pushed. Rounds 1–35 committed under the old protocol; M1 committed on
+  `.claude/worktrees/elevenlabs-local-setup-dd4b2e`, pushed 2026-09-08 to
+  origin/claude/gauntlet-v2 (tracking). Rounds 1–35 committed under the old protocol; M1 committed on
   top. `origin/main` (7a36b69) is the other device's Blender-asset line
   and shares no history with this branch.
 - Accepted baseline for A/B comparison: **round 28 stills**
@@ -79,13 +79,11 @@ Open `index.html` in Chrome (`start chrome index.html`). URL params:
 Pick ONE: (a) WO-V06 + WO-R01 — form step and shadow edge (the
 critic's top pick; render owner, measurable by face-turn ratio and an
 edge-step count); or (b) WO-F01..F03 — gameplay rules (functional
-blockers the method ranks above polish). Recommendation: (b) first,
-because no review to date has covered the game as a game, then (a).
+blockers the method ranks above polish). Decision 2026-09-08 (Scott): (b) gameplay rules first — M2 = WO-F01..F03.
 
 ## Manual actions needed from Scott
 
-1. Push: `git push -u origin claude/gauntlet-v2` (non-destructive) —
-   not done; needs your go-ahead.
+1. Push: done 2026-09-08 (Scott approved). Further pushes still need an in-session go-ahead.
 2. Decide the two-line question: adopt the Blender `hero.glb` from
    `origin/main` into this line (WO-V03's stalled tactic), or not.
 3. A real-browser playtest for G7/G8 and a `?perf` run for G9.
