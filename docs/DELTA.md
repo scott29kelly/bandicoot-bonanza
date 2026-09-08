@@ -5,6 +5,53 @@ on top, closed entries move to the round that closed them, nothing is deleted.
 Judged blind against `refs/proposed/` by a fresh-context critic each round.
 
 ---
+## Round 35 — 2026-09-05 (grass darker than the sand, a warm core shadow, saturated stack shade, brighter crates)
+
+Shot from `154835c`, seed `0x5eed1e`, `shots/round35/`. Gates: build
+green, det green (pair in 2 boots, max 0), 5/5 PASS. Tris 533k–608k.
+Last round under the old protocol; from here the method in
+`docs/gauntlet/` applies and findings go to `WORK-ORDERS.md`.
+
+What landed: grass instance L 0.13–0.32 sat 0.6–0.85, warm saturating
+form term, sea-stack body sat 0.68, crate core vcolor 0.80–0.90.
+
+### Critic verdict (blind, fresh context, measured) — measured
+
+Moved: blade/sand ratio 0.92 (was 1.18; refs ~0.53) — right direction,
+"a high-chroma yellow-green rather than a darker green"; sea-stack
+shade sat 0.38 (was 0.075) — painted, no longer grey; belly band sat
+0.10 (was 0.05) — marginal. Not moved: crate face Y 0.376 vs sand
+0.561; dark share unchanged. New top find: NO DIRECTIONAL STEP on
+mid-facing surfaces — three crate faces at 0.360 / 0.350 / 0.362, the
+jaw underside (0.708) brighter than the sunlit cheek (0.702); "the
+picture is held together by outlines and contact AO alone." Second,
+new: the ground dressing has no spatial design — green share per
+sixth of the corridor 0.22/0.15/0.19/0.33/0.30/0.18, the play path as
+dense as the banks. Third: fruit floats with no ground shadow (column
+under the middle title fruit reads full lit sand) and is 0.37 of hero
+height. Fourth: no shoreline band on beach edges (≤6 px transition).
+Rim: intensity fine (+45–74%), width 1–3 px on a 240 px head.
+
+All findings carried to WORK-ORDERS: WO-V06 (form step), WO-V07 (path
+mask), WO-L06 (fruit shadow/glint), WO-L03 (shoreline band), WO-L08
+(rim width, blade gradient), WO-L01 (stack paint), WO-L05 (pebbles),
+WO-V08 (crate grain stamp), WO-V03 (cheek fins), WO-L10/L08 (per-
+instance variation on rosettes).
+
+Discounted: none contradicted. "Crate cast shadow falls behind the
+stack" correctly read as geometry.
+
+Self-score: character 3 · props 5 · dressing 4 · vegetation 4 · light 3
+· colour 5 · water 4 · backdrop 4 · motion 5 · composition 4 ·
+performance 8.
+
+### Fixing this round (became M1 under the new method)
+
+No visual change. Milestone M1 sets up the method: frozen critic prompt
+v1, blind A/B packet tool, work-order backlog, an ordinary-play
+framing (`play-camera`), and one A/B review of round 28 vs round 35.
+
+---
 ## Round 34 — 2026-09-05 (lit sea stacks beat the sky bounce, pebble sockets, a milder crate lift)
 
 Shot from `5a36970`, seed `0x5eed1e`, `shots/round34/`. Gates: build

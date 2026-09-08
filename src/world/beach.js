@@ -9,6 +9,7 @@
 import * as THREE from 'three';
 import {rand} from '../core/rng.js';
 import {mark,addFraming} from '../review/framings.js';
+import {CFG} from '../game/cfg.js';
 import {toonMat} from '../art/materials.js';
 import {mergeGeoms} from './geo.js';
 import {islandMass,shoreRocks} from './masses.js';
@@ -253,6 +254,11 @@ export function buildBeach(scene){
   addFraming(at=>({id:'water-gap',name:'Water gap',
     tests:'Pillars B/F — depth-graded water, foam at the shoreline, visible flow',
     p:at('gapA',8.5,1.9,7),lookAt:at('gapB',-1.5,0.4,1),fov:47,player:[0,0,-35]}));
+  // Ordinary play, not a composed shot (method §4): the follow camera at
+  // its gameplay offset, hero running mid-corridor. What a player sees.
+  addFraming(at=>({id:'play-camera',name:'Play camera',
+    tests:'Ordinary use — the follow camera; every pillar as a player meets it',
+    p:at('beach',0+CFG.camOffX,CFG.camOffY,-12+CFG.camOffZ),lookAt:at('beach',0,1.2,-14),fov:55,player:[0,0,-12,0,0.6]}));
   addFraming(at=>({id:'crate-cluster',name:'Crate cluster',
     tests:'Pillars A/C — prop relief, and ground that is dressed, not bare',
     p:at('tnt1',5.2,1.5,4.5),lookAt:at('tnt1',-0.3,0.3,-0.8),fov:44,

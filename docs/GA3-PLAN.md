@@ -52,6 +52,18 @@ Physics baseline: the old `CFG` block (gravity 26, runSpeed 8.2, jumpVel
 
 ## The round protocol
 
+**Superseded 2026-09-05 by the evidence-driven Gauntlet Loop.** The
+records now live in `docs/gauntlet/`: `CONTRACT.md` (goal, milestone,
+acceptance ledger), `CRITIC-PROMPT-v1.md` (frozen critic prompt and
+rubric), `REFERENCES.md` (provenance), `WORK-ORDERS.md` (every finding,
+with tactic history), `STATUS.md` (handoff). What changes: the critic
+gets a blind, randomized A/B packet (`tools/packet.mjs`) of the accepted
+baseline vs the candidate, with the frozen prompt and nothing from the
+builder; every tell becomes a work order; a tactic ends after three
+ties/rejections and an order's retry loop after two failed attempts;
+one milestone + one review + a handoff per run. Gates 2–4 below stand.
+The historical protocol follows for reference.
+
 Every round, in order, no exceptions:
 
 1. Build the increment. Commit.
