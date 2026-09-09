@@ -97,5 +97,6 @@ try{
     process.exitCode=1;
   }
 }finally{
-  await browser.close();
+  try{ await Promise.race([browser.close(),new Promise(r=>setTimeout(r,1500))]); }catch(e){}
+  process.exit(process.exitCode || 0);
 }

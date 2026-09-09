@@ -169,7 +169,7 @@
   <div class="stats-bar">
     <div class="stat-card">
       <div class="stat-label">Active Loop</div>
-      <div class="stat-val active" style="color:var(--green)">Pass 15: Movement &amp; VFX</div>
+      <div class="stat-val active" style="color:var(--green)">Pass 16: Polish &amp; Progression</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Model Engine</div>
@@ -181,7 +181,7 @@
     </div>
     <div class="stat-card">
       <div class="stat-label">Production Status</div>
-      <div class="stat-val" style="color:var(--green)">Sprint 1 Complete</div>
+      <div class="stat-val" style="color:var(--green)">Sprint 2 Complete</div>
     </div>
   </div>
 
@@ -189,10 +189,10 @@
     <div class="card">
       <div class="card-header">
         <span>Current Visual Contact Sheet</span>
-        <span style="font-size:12px; color:var(--text-muted);">Auto-captured via tools/shots.mjs (Pass 15)</span>
+        <span style="font-size:12px; color:var(--text-muted);">Auto-captured via tools/shots.mjs (Pass 16)</span>
       </div>
       <div class="sheet-container">
-        <img src="docs/shots/pass15/CONTACT-SHEET.png" alt="Pass 15 Contact Sheet" onerror="this.src='docs/shots/pass14/CONTACT-SHEET.png'">
+        <img src="docs/shots/pass16/CONTACT-SHEET.png" alt="Pass 16 Contact Sheet" onerror="this.src='docs/shots/pass15/CONTACT-SHEET.png'">
       </div>
     </div>
 
@@ -250,6 +250,13 @@
           </div>
           <span class="track-status status-done">PASSED</span>
         </div>
+        <div class="track-item">
+          <div>
+            <div class="track-title">8. Low-Clearance Crawl Arches, Cascading Crates & Facial Rig</div>
+            <div style="font-size:12px; color:var(--text-muted);">Slide crawl arches in jungle & temple, continuous tunnel crawl hold, cascading crate collapse (26ms/tier), GPU facial deformation, 4-surface audio</div>
+          </div>
+          <span class="track-status status-done">PASSED</span>
+        </div>
       </div>
     </div>
   </div>
@@ -269,6 +276,13 @@
         </tr>
       </thead>
       <tbody>
+        <tr>
+          <td>Pass 16 (Sprint 2)</td>
+          <td>Low-Clearance Slide Arches, Cascading Crate Collapse, Mascot Facial Rig & Surface Audio</td>
+          <td>Level lacked low-clearance slide obstacles/crawl arches requiring low-profile hitbox; body slam simultaneously shattered all crates without vertical weight; hero face was static during high-drama moments; slide audio lacked surface texture modulation</td>
+          <td>Built multi-piece stone & vine slide crawl arches in jungle (z=-71) and temple (z=-185.5) with 0.86m clearance that block standing hero but allow sliding hero through with auto-crouch hold; implemented staggered cascading crate collapse (26ms delay per vertical tier + 14ms radial delay); added GPU vertex shader facial deformation for apex stall open-mouth gasp, dive grimace squint, and impact accordion squash; implemented 4-surface audio synthesis for slide-kick (sand crunch, moss rustle, stone scrape, wood rumble) and matching confetti dust</td>
+          <td><span class="track-status status-done">PASSED</span></td>
+        </tr>
         <tr>
           <td>Pass 15 (Sprint 1)</td>
           <td>Crouch Slide-Kick, Mid-Air Body Slam / Belly Flop & Tactile Comic VFX</td>

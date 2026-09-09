@@ -1,0 +1,314 @@
+{
+  "seed": 6221086,
+  "w": 1280,
+  "h": 800,
+  "settle": 12,
+  "rows": [
+    {
+      "id": "title-hero",
+      "name": "Title hero",
+      "tests": "Pillar E — the first frame a player ever sees: hero silhouette, beach read, composed three-quarter",
+      "p": [
+        4.4,
+        2.95,
+        4.4
+      ],
+      "lookAt": [
+        0,
+        1.2,
+        0
+      ],
+      "fov": 58,
+      "file": "C:\\Users\\scott\\Documents\\repos\\other\\bandicoot-bonanza\\docs\\shots\\pass16\\title-hero.png",
+      "stats": {
+        "frame": 37,
+        "fps": 60,
+        "ms": 16.7,
+        "triangles": 1031378,
+        "drawCalls": 1760,
+        "programs": 52,
+        "geometries": 436,
+        "textures": 32
+      },
+      "gate": {
+        "verdict": "PASS",
+        "luma": 0.6698072674195772,
+        "stdDev": 0.13548307223288672,
+        "spread": 0.08729735498366012,
+        "reasons": []
+      }
+    },
+    {
+      "id": "hero-closeup",
+      "name": "Hero close-up",
+      "tests": "Pillars A/B — character geometry at portrait range, and whether his shadow side carries colour or goes grey",
+      "p": [
+        1.05,
+        1.7,
+        1.75
+      ],
+      "lookAt": [
+        0,
+        1.62,
+        0
+      ],
+      "fov": 38,
+      "file": "C:\\Users\\scott\\Documents\\repos\\other\\bandicoot-bonanza\\docs\\shots\\pass16\\hero-closeup.png",
+      "stats": {
+        "frame": 70,
+        "fps": 60,
+        "ms": 16.7,
+        "triangles": 977554,
+        "drawCalls": 1746,
+        "programs": 52,
+        "geometries": 436,
+        "textures": 32
+      },
+      "gate": {
+        "verdict": "PASS",
+        "luma": 0.6334287764024203,
+        "stdDev": 0.1592839692759421,
+        "spread": 0.08454334916258166,
+        "reasons": []
+      }
+    },
+    {
+      "id": "beach-corridor",
+      "name": "Beach corridor",
+      "tests": "Pillars D/E — the opening establishing shot: does the corridor hold depth, or does fog eat it?",
+      "p": [
+        7.2,
+        6.4,
+        8.5
+      ],
+      "lookAt": [
+        0,
+        0.19999999999999996,
+        -21.5
+      ],
+      "fov": 55,
+      "file": "C:\\Users\\scott\\Documents\\repos\\other\\bandicoot-bonanza\\docs\\shots\\pass16\\beach-corridor.png",
+      "stats": {
+        "frame": 101,
+        "fps": 60,
+        "ms": 16.7,
+        "triangles": 1105630,
+        "drawCalls": 3810,
+        "programs": 52,
+        "geometries": 436,
+        "textures": 32
+      },
+      "gate": {
+        "verdict": "PASS",
+        "luma": 0.6510923273253676,
+        "stdDev": 0.13329188732662395,
+        "spread": 0.11926479268790854,
+        "reasons": []
+      }
+    },
+    {
+      "id": "water-gap",
+      "name": "Water gap",
+      "tests": "Pillars B/F — the water surface, its margin against the sand, and whether anything about it moves",
+      "p": [
+        7.6,
+        3.5999999999999996,
+        -31.65
+      ],
+      "lookAt": [
+        0,
+        -0.8,
+        -39.25
+      ],
+      "fov": 50,
+      "file": "C:\\Users\\scott\\Documents\\repos\\other\\bandicoot-bonanza\\docs\\shots\\pass16\\water-gap.png",
+      "stats": {
+        "frame": 132,
+        "fps": 60,
+        "ms": 16.7,
+        "triangles": 1025724,
+        "drawCalls": 2150,
+        "programs": 52,
+        "geometries": 436,
+        "textures": 32
+      },
+      "gate": {
+        "verdict": "PASS",
+        "luma": 0.6037670970618871,
+        "stdDev": 0.1398288094568564,
+        "spread": 0.1325111647263072,
+        "reasons": []
+      }
+    },
+    {
+      "id": "crate-cluster",
+      "name": "Crate cluster and TNT",
+      "tests": "Pillars A/C — object relief at gameplay range: crate faces, bracing, the TNT read, and what dresses the sand around them",
+      "p": [
+        4.8,
+        3.4749999999999996,
+        -45.4
+      ],
+      "lookAt": [
+        0,
+        0.7749999999999999,
+        -52
+      ],
+      "fov": 45,
+      "file": "C:\\Users\\scott\\Documents\\repos\\other\\bandicoot-bonanza\\docs\\shots\\pass16\\crate-cluster.png",
+      "stats": {
+        "frame": 166,
+        "fps": 60,
+        "ms": 16.7,
+        "triangles": 1068074,
+        "drawCalls": 2536,
+        "programs": 52,
+        "geometries": 436,
+        "textures": 32
+      },
+      "gate": {
+        "verdict": "PASS",
+        "luma": 0.6206980974287682,
+        "stdDev": 0.15978289759133016,
+        "spread": 0.09849715073529412,
+        "reasons": []
+      }
+    },
+    {
+      "id": "jungle-totem",
+      "name": "Jungle ledge and totem",
+      "tests": "Pillars C/D/F — the mossy ledge as an ecosystem: palms, ferns, grass, the checkpoint totem, and canopy motion",
+      "p": [
+        2.3999999999999995,
+        8.2,
+        -65.2
+      ],
+      "lookAt": [
+        -3.6,
+        4.4,
+        -81
+      ],
+      "fov": 52,
+      "file": "C:\\Users\\scott\\Documents\\repos\\other\\bandicoot-bonanza\\docs\\shots\\pass16\\jungle-totem.png",
+      "stats": {
+        "frame": 197,
+        "fps": 60,
+        "ms": 16.7,
+        "triangles": 1108656,
+        "drawCalls": 3040,
+        "programs": 52,
+        "geometries": 436,
+        "textures": 32
+      },
+      "gate": {
+        "verdict": "PASS",
+        "luma": 0.5711026332927388,
+        "stdDev": 0.1429767697914881,
+        "spread": 0.13896664624183006,
+        "reasons": []
+      }
+    },
+    {
+      "id": "pillar-pit",
+      "name": "Pillar hops over the pit",
+      "tests": "Pillar D — silhouette legibility: do the stone pillars read as distinct volumes against sky and fog at depth?",
+      "p": [
+        8.4,
+        8.2,
+        -108
+      ],
+      "lookAt": [
+        0,
+        2.8,
+        -124
+      ],
+      "fov": 52,
+      "file": "C:\\Users\\scott\\Documents\\repos\\other\\bandicoot-bonanza\\docs\\shots\\pass16\\pillar-pit.png",
+      "stats": {
+        "frame": 228,
+        "fps": 60,
+        "ms": 16.7,
+        "triangles": 604920,
+        "drawCalls": 2524,
+        "programs": 52,
+        "geometries": 436,
+        "textures": 32
+      },
+      "gate": {
+        "verdict": "PASS",
+        "luma": 0.5870220871813725,
+        "stdDev": 0.11940098343925679,
+        "spread": 0.11702167330473856,
+        "reasons": []
+      }
+    },
+    {
+      "id": "temple-torches",
+      "name": "Temple landing at torchlight",
+      "tests": "Pillar B — the no-dead-black law: torch pools, totem glow, and whether stone shadow carries any sky fill",
+      "p": [
+        5.6,
+        5.4,
+        -153.4
+      ],
+      "lookAt": [
+        0,
+        3.3,
+        -164
+      ],
+      "fov": 50,
+      "file": "C:\\Users\\scott\\Documents\\repos\\other\\bandicoot-bonanza\\docs\\shots\\pass16\\temple-torches.png",
+      "stats": {
+        "frame": 262,
+        "fps": 60,
+        "ms": 16.7,
+        "triangles": 1028856,
+        "drawCalls": 1808,
+        "programs": 52,
+        "geometries": 436,
+        "textures": 32
+      },
+      "gate": {
+        "verdict": "PASS",
+        "luma": 0.5458291058578432,
+        "stdDev": 0.11964524196400136,
+        "spread": 0.06341895424836598,
+        "reasons": []
+      }
+    },
+    {
+      "id": "gate-hero",
+      "name": "Temple gate (money shot)",
+      "tests": "Pillar E — the composed pay-off: gate massing, the gem, torchlight, and the final yard leading the eye into it",
+      "p": [
+        6.2,
+        12.2,
+        -199
+      ],
+      "lookAt": [
+        0,
+        8.2,
+        -219
+      ],
+      "fov": 52,
+      "file": "C:\\Users\\scott\\Documents\\repos\\other\\bandicoot-bonanza\\docs\\shots\\pass16\\gate-hero.png",
+      "stats": {
+        "frame": 296,
+        "fps": 60,
+        "ms": 16.7,
+        "triangles": 992904,
+        "drawCalls": 1684,
+        "programs": 52,
+        "geometries": 436,
+        "textures": 32
+      },
+      "gate": {
+        "verdict": "PASS",
+        "luma": 0.5162067289537378,
+        "stdDev": 0.13063987844046174,
+        "spread": 0.03851683517156864,
+        "reasons": []
+      }
+    }
+  ]
+}

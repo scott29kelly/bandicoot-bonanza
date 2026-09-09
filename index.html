@@ -271,7 +271,28 @@ const audio={
   jump(){if(this.sfxClip('jump',0.55))return;this.tone({f:320,f2:640,d:0.16,type:'sine',v:0.22});},
   doubleJump(){if(this.sfxClip('doublejump',0.55)||this.sfxClip('jump',0.6))return;this.tone({f:430,f2:900,d:0.18,type:'sine',v:0.22});this.tone({f:640,f2:1200,d:0.14,type:'triangle',v:0.1,at:0.03});},
   spin(){if(this.sfxClip('spin',0.6))return;this.noise({d:0.28,v:0.24,fq:1600,type:'bandpass',q:1.6});},
-  slide(){if(this.sfxClip('slide',0.5))return;this.noise({d:0.28,v:0.35,fq:1300,type:'bandpass',q:1.8});this.tone({f:340,f2:130,d:0.25,type:'sine',v:0.18});},
+  slide(surface){
+    if(this.sfxClip('slide',0.5))return;
+    const s=surface||'sand';
+    if(s==='sand'){
+      this.noise({d:0.32,v:0.38,fq:1450,type:'bandpass',q:2.2});
+      this.tone({f:280,f2:95,d:0.28,type:'sine',v:0.20});
+      this.noise({d:0.14,v:0.22,fq:2800,type:'highpass'});
+    }else if(s==='moss'){
+      this.noise({d:0.34,v:0.32,fq:850,type:'lowpass',q:1.0});
+      this.tone({f:220,f2:120,d:0.26,type:'sine',v:0.14});
+    }else if(s==='stone'){
+      this.noise({d:0.30,v:0.42,fq:2200,type:'bandpass',q:3.0});
+      this.tone({f:480,f2:180,d:0.24,type:'triangle',v:0.22});
+      this.noise({d:0.12,v:0.35,fq:3800,type:'highpass'});
+    }else if(s==='wood'){
+      this.noise({d:0.28,v:0.36,fq:980,type:'bandpass',q:1.6});
+      this.tone({f:190,f2:75,d:0.25,type:'sine',v:0.25});
+    }else{
+      this.noise({d:0.28,v:0.35,fq:1300,type:'bandpass',q:1.8});
+      this.tone({f:340,f2:130,d:0.25,type:'sine',v:0.18});
+    }
+  },
   slamStall(){if(this.sfxClip('slam_stall',0.4))return;this.tone({f:580,f2:880,d:0.13,type:'triangle',v:0.24});},
   slamDive(){if(this.sfxClip('slam_dive',0.4))return;this.tone({f:640,f2:160,d:0.26,type:'sawtooth',v:0.26});this.noise({d:0.22,v:0.24,fq:750});},
   slamLand(){if(this.sfxClip('slam_land',0.6))return;this.noise({d:0.42,v:0.65,fq:420});this.tone({f:150,f2:34,d:0.38,type:'sine',v:0.62});this.noise({d:0.12,v:0.45,fq:2600,type:'highpass'});},
@@ -1336,6 +1357,7 @@ const GOLD=()=>[1,rand(0.6,0.85),0.1];
 const GREEN=()=>[rand(0.2,0.5),1,rand(0.2,0.5)];
 const TAN=()=>{const v=rand(0.75,0.95);return[v,v*0.83,v*0.55];};
 const WOODC=()=>{const v=rand(0.4,0.7);return[v,v*0.62,v*0.3];};
+const STONEC=()=>{const v=rand(0.55,0.85);return[v*0.88,v*0.92,v];};
 const FIRE=()=>[1,rand(0.25,0.7),0.05];
 const PARTY=()=>{const h=rnd()*6;const f=(n)=>clamp(Math.abs(((h+n)%6)-3)-1,0,1);return[f(0),f(4),f(2)];};
 
@@ -1519,7 +1541,7 @@ const skidVFX={rings:[],cursor:0};
     skidVFX.rings.push({mesh:m,life:0,maxLife:0.32,vel:new THREE.Vector3()});
   }
 })();
-function spawnSkidPuff(p,dir,count=1){
+function spawnSkidPuff(p,dir,count=1,surface){
   const d=dir||{x:0,z:0};
   for(let i=0;i<count;i++){
     const r=skidVFX.rings[skidVFX.cursor];
@@ -1535,7 +1557,8 @@ function spawnSkidPuff(p,dir,count=1){
     r.mesh.scale.setScalar(0.35);
     r.mesh.material.opacity=0.82;
   }
-  const colFn=p.z>-60?TAN:(p.z>-155?GREEN:TAN);
+  const s=surface||(p.z>-60?'sand':(p.z>-155?'moss':'stone'));
+  const colFn=s==='sand'?TAN:(s==='moss'?GREEN:(s==='stone'?STONEC:(s==='wood'?WOODC:TAN)));
   confetti.burst({x:p.x-(d.x*0.15),y:p.y+0.05,z:p.z-(d.z*0.15)},Math.min(3,count*2),0.7,0.35,colFn,0.6);
 }
 function updateSkidVFX(dt){
@@ -1910,12 +1933,18 @@ class Crate{
       this.shadow=shadow;
     }
 
-    this.solid=addSolid(x,baseY+CRATE_S/2,z,CRATE_S,CRATE_S,CRATE_S,{type:'crate',obj:this});
+    this.solid=addSolid(x,baseY+CRATE_S/2,z,CRATE_S,CRATE_S,CRATE_S,{type:'crate',obj:this,mat:'wood'});
     this.broken=false;
+    this.breakTimer=-1;
     this.fruits=[];
   }
-  break_(){
+  break_(delay){
     if(this.broken)return;
+    if(delay&&delay>0&&this.breakTimer<0){
+      this.breakTimer=delay;
+      return;
+    }
+    this.breakTimer=-1;
     this.broken=true;this.solid.dead=true;this.mesh.visible=false;
     if(this.shadow)this.shadow.visible=false;
     game.stats.crates++;updateHUD();
@@ -1927,8 +1956,14 @@ class Crate{
     for(const f of this.fruits)f.launch(p,this.baseY);
     camRig.trauma=Math.min(camRig.trauma+0.1,1);
   }
+  update(dt){
+    if(!this.broken&&this.breakTimer>0){
+      this.breakTimer-=dt;
+      if(this.breakTimer<=0)this.break_();
+    }
+  }
   reset(){
-    this.broken=false;this.solid.dead=false;this.mesh.visible=true;
+    this.broken=false;this.breakTimer=-1;this.solid.dead=false;this.mesh.visible=true;
     if(this.shadow)this.shadow.visible=true;
   }
 }
@@ -1958,7 +1993,7 @@ class TNT{
       this.shadow=null;
     }
 
-    this.solid=addSolid(x,baseY+CRATE_S/2,z,CRATE_S,CRATE_S,CRATE_S,{type:'tnt',obj:this});
+    this.solid=addSolid(x,baseY+CRATE_S/2,z,CRATE_S,CRATE_S,CRATE_S,{type:'tnt',obj:this,mat:'wood'});
     this.armed=false;this.fuse=0;this.exploded=false;this.tickT=0;
   }
   arm(delay){
@@ -2808,7 +2843,7 @@ function plat(x,topY,z,w,d,matName,th,noSolid,noFoundation){
   m.position.set(x,topY-th/2,z);
   m.castShadow=m.receiveShadow=true;
   scene.add(m);
-  if(!noSolid)addSolid(x,topY-th/2,z,w,th,d);
+  if(!noSolid)addSolid(x,topY-th/2,z,w,th,d,{type:'platform',mat:matName});
   // Only grow a foundation where one would actually be seen. Below the
   // waterline it is triangles nobody will ever look at.
   if(!noFoundation&&topY-th>WATER_Y+0.5)foundation(x,topY,z,w,d,th);
@@ -2913,7 +2948,7 @@ function bridge(x,topY,z,w,d){
   m.position.set(x,topY-0.25,z);
   m.castShadow=m.receiveShadow=true;
   scene.add(m);
-  addSolid(x,topY-0.25,z,w,0.5,d);
+  addSolid(x,topY-0.25,z,w,0.5,d,{type:'bridge',mat:'wood'});
   const railParts=[];
   for(const sx of[-1,1]){
     const rail=new THREE.BoxGeometry(0.12,0.55,d);
@@ -2929,6 +2964,83 @@ function bridge(x,topY,z,w,d){
   railsMesh.position.set(x,topY,z);
   railsMesh.castShadow=true;
   scene.add(railsMesh);
+}
+function slideArch(x,topY,z,w,clearance,lintelH,theme,withFruit){
+  w=w||4.6;
+  clearance=clearance||0.86;
+  lintelH=lintelH||1.35;
+  theme=theme||'jungle';
+  const g=new THREE.Group();
+  g.position.set(x,topY,z);
+
+  const stoneParts=[];
+  const colW=0.9,colD=1.25,totalH=clearance+lintelH+0.5;
+
+  for(const sx of[-1,1]){
+    const colX=sx*(w/2+colW/2);
+    const plinth=new THREE.BoxGeometry(colW*1.28,0.45,colD*1.2);
+    plinth.translate(colX,0.225,0);
+    stoneParts.push(plinth);
+    const shaft=new THREE.BoxGeometry(colW,totalH-0.8,colD);
+    shaft.translate(colX,(totalH-0.8)/2+0.45,0);
+    stoneParts.push(shaft);
+    const cap=new THREE.BoxGeometry(colW*1.22,0.35,colD*1.15);
+    cap.translate(colX,totalH-0.175,0);
+    stoneParts.push(cap);
+  }
+
+  const beamY=clearance+lintelH/2;
+  const lintel=new THREE.BoxGeometry(w+colW*2+0.5,lintelH,colD*1.08);
+  lintel.translate(0,beamY,0);
+  stoneParts.push(lintel);
+
+  const lowTrim=new THREE.BoxGeometry(w+colW*2+0.3,0.16,colD*1.18);
+  lowTrim.translate(0,clearance+0.08,0);
+  stoneParts.push(lowTrim);
+  const upCornice=new THREE.BoxGeometry(w+colW*2+0.7,0.22,colD*1.24);
+  upCornice.translate(0,clearance+lintelH-0.11,0);
+  stoneParts.push(upCornice);
+
+  const stoneMesh=new THREE.Mesh(mergeGeos(stoneParts),MATS.stone());
+  stoneMesh.castShadow=stoneMesh.receiveShadow=true;
+  g.add(stoneMesh);
+
+  if(theme==='jungle'){
+    const vineParts=[];
+    for(const sx of[-1.4,-0.5,0.6,1.5]){
+      const v=ribbonGeo(1.6,0.28,5,0.6,rand(-0.2,0.2));
+      v.rotateX(0.12);
+      v.translate(sx,clearance+lintelH*0.6,colD*0.56);
+      vineParts.push(v);
+    }
+    const vineMesh=new THREE.Mesh(mergeGeos(vineParts),toonMat({map:TEX.leaf,color:0x288a2a,side:THREE.DoubleSide}));
+    vineMesh.castShadow=true;
+    g.add(vineMesh);
+
+    const crest=new THREE.Mesh(new THREE.CylinderGeometry(0.38,0.38,0.22,8),MATS.wood());
+    crest.rotation.x=Math.PI/2;
+    crest.position.set(0,beamY,colD*0.58);
+    crest.castShadow=true;
+    g.add(crest);
+  }else{
+    const runeMesh=new THREE.Mesh(new THREE.BoxGeometry(w*0.75,0.32,colD*1.12),
+      toonMat({color:0xffaa22,emissive:0xff8800,emissiveIntensity:1.4,noCache:true}));
+    runeMesh.position.set(0,beamY,0);
+    g.add(runeMesh);
+  }
+
+  scene.add(g);
+
+  addSolid(x,topY+clearance+lintelH/2,z,w+colW*0.6,lintelH,colD,{type:'arch_lintel',mat:theme==='jungle'?'moss':'stone'});
+  addSolid(x-(w/2+colW/2),topY+totalH/2,z,colW*1.1,totalH,colD,{type:'arch_post',mat:'stone'});
+  addSolid(x+(w/2+colW/2),topY+totalH/2,z,colW*1.1,totalH,colD,{type:'arch_post',mat:'stone'});
+
+  if(withFruit){
+    fruitAt(x-0.85,topY+0.42,z);
+    fruitAt(x,topY+0.42,z);
+    fruitAt(x+0.85,topY+0.42,z);
+  }
+  return g;
 }
 function buildGate(z){
   gateZ=z;
@@ -3245,6 +3357,7 @@ function buildLevel(){
   LM.jungle=plat(0,3,-84.5,12,47,'moss');
   fruitRow(0,3,-63,-69,4);
   plant(2.6,3,-68);
+  slideArch(0,3,-71,4.6,0.86,1.35,'jungle',true);
   // -- beat 5: checkpoint totem 1
   checkpoint(-4.2,3,-75,1);
   crate(-3.5,3,-72);crate(3.5,3,-73);
@@ -3304,6 +3417,7 @@ function buildLevel(){
   for(let i=0;i<6;i++)fruitAt(i%2?2.4:-2.4,4.35+i*0.5,-169.5-3*i);
   LM.finalYard=plat(0,6,-206,12,40,'stone');
   plant(0,6,-182);
+  slideArch(0,6,-185.5,4.8,0.88,1.4,'temple',true);
   log_(0,6,-190,9.5,2.6,3.2,1);
   log_(0,6,-194.5,9.5,2.6,3.6,3.5);
   torch(-4.5,6,-187,false);torch(4.5,6,-187,false);
@@ -3800,6 +3914,9 @@ const player={
     P.armR=mkLimb(0.48,1.32,0.08,0.58,0.1,false);
 
     // Load sculpted Blender 5.2 master mascot mesh
+    this.uFace={value:new THREE.Vector4(0,0,0,0)};
+    this.faceTarget=new THREE.Vector4(0,0,0,0);
+    this.slamRecoverT=0;
     if(window.THREE&&THREE.GLTFLoader&&window.HERO_GLB_BASE64){
       try{
         const loader=new THREE.GLTFLoader();
@@ -3809,12 +3926,40 @@ const player={
         loader.parse(buf.buffer,'',gltf=>{
           const model=gltf.scene;
           model.name="Hero_Blender_Sculpted";
+          const uF=this.uFace;
           model.traverse(o=>{
             if(o.isMesh){
               o.castShadow=true;
               o.receiveShadow=true;
               if(o.material){
                 o.material.gradientMap=toonRamp;
+                o.material.onBeforeCompile=shader=>{
+                  shader.uniforms.uFace=uF;
+                  shader.vertexShader='uniform vec4 uFace;\n'+shader.vertexShader;
+                  shader.vertexShader=shader.vertexShader.replace(
+                    '#include <begin_vertex>',
+                    [
+                      '#include <begin_vertex>',
+                      'if(transformed.y>2.8){',
+                      '  if(transformed.y<3.32&&transformed.z>0.55){',
+                      '    float mDrop=smoothstep(3.32,2.95,transformed.y);',
+                      '    transformed.y-=uFace.x*0.18*mDrop;',
+                      '    transformed.z+=uFace.x*0.09*mDrop;',
+                      '  }',
+                      '  if(transformed.y>=3.35&&transformed.z>0.40){',
+                      '    transformed.y+=uFace.z*0.12;',
+                      '    transformed.z+=uFace.y*0.08;',
+                      '    transformed.x*=(1.0+uFace.y*0.10);',
+                      '  }',
+                      '  if(uFace.w>0.001){',
+                      '    transformed.y=2.8+(transformed.y-2.8)*(1.0-uFace.w*0.35);',
+                      '    transformed.x*=(1.0+uFace.w*0.25);',
+                      '    transformed.z*=(1.0+uFace.w*0.20);',
+                      '  }',
+                      '}'
+                    ].join('\n')
+                  );
+                };
                 o.material.needsUpdate=true;
               }
             }
@@ -3906,6 +4051,38 @@ const player={
     audio.spin();
     sparks.burst({x:this.pos.x,y:this.pos.y+0.8,z:this.pos.z},12,3.4,0.35,()=>[1,0.85,0.4],0);
   },
+  getSurface(){
+    if(this.groundPlatform){
+      if(this.groundPlatform.mat)return this.groundPlatform.mat;
+      return 'wood';
+    }
+    const py=this.pos.y,px=this.pos.x,pz=this.pos.z;
+    for(const s of solids){
+      if(s.dead)continue;
+      if(px>=s.x0-0.15&&px<=s.x1+0.15&&pz>=s.z0-0.15&&pz<=s.z1+0.15){
+        if(Math.abs(py-s.y1)<0.35){
+          if(s.ent&&s.ent.mat)return s.ent.mat;
+          if(s.ent&&s.ent.type==='crate')return 'wood';
+          if(s.ent&&s.ent.type==='tnt')return 'wood';
+          if(s.ent&&s.ent.type==='moving_platform')return s.ent.obj.mat||'wood';
+        }
+      }
+    }
+    if(pz>-60)return 'sand';
+    if(pz>-125)return 'moss';
+    return 'stone';
+  },
+  hasCeilingAbove(){
+    const hw=0.35,px=this.pos.x,pz=this.pos.z,py=this.pos.y;
+    for(const s of solids){
+      if(s.dead)continue;
+      if(s.z0>pz+1.0||s.z1<pz-1.0)continue;
+      if(px+hw<=s.x0||px-hw>=s.x1)continue;
+      if(pz+hw<=s.z0||pz-hw>=s.z1)continue;
+      if(py+0.45<s.y1&&py+1.42>s.y0)return true;
+    }
+    return false;
+  },
   trySlide(){
     if(game.state!=='PLAYING'||this.dead||!this.grounded||this.slideT>0||this.slamState!==0||this.slideCdT>0)return;
     this.slideT=CFG.slideDur;
@@ -3920,8 +4097,9 @@ const player={
     const boost=CFG.slideSpeed;
     this.vel.x=this.slideDir.x*boost;
     this.vel.z=this.slideDir.z*boost;
-    audio.slide();
-    spawnSkidPuff(this.pos,this.slideDir,5);
+    const surf=this.getSurface();
+    audio.slide(surf);
+    spawnSkidPuff(this.pos,this.slideDir,5,surf);
     this.slideHits();
   },
   slideHits(){
@@ -3961,22 +4139,40 @@ const player={
     this.grounded=false;
     this.canDouble=true;
     this.squash=-0.55;
+    this.slamRecoverT=0.28;
     camRig.trauma=Math.min(camRig.trauma+0.25,1);
     audio.slamLand();
     spawnSlamShockwave(this.pos);
     this.slamHits();
   },
   slamHits(){
-    const px=this.pos.x,py=this.pos.y,pz=this.pos.z,R=2.2;
+    const px=this.pos.x,py=this.pos.y,pz=this.pos.z,R=2.4;
+    const hitCrates=[];
     for(const c of crates){
-      if(c.broken)continue;
+      if(c.broken||c.breakTimer>0)continue;
       const m=c.mesh.position;
-      if(Math.hypot(m.x-px,m.z-pz)<R&&Math.abs(m.y-py)<2.2)c.break_();
+      const dist=Math.hypot(m.x-px,m.z-pz);
+      if(dist<R&&Math.abs(m.y-py)<2.4){
+        hitCrates.push({crate:c,dist:dist,y:m.y});
+      }
+    }
+    if(hitCrates.length>0){
+      let maxY=-Infinity;
+      for(const h of hitCrates)if(h.y>maxY)maxY=h.y;
+      for(const h of hitCrates){
+        const tier=Math.max(0,Math.round((maxY-h.y)/CRATE_S));
+        const delay=tier*0.026+h.dist*0.014;
+        h.crate.break_(delay);
+      }
     }
     for(const t of tnts){
       if(t.exploded||t.armed)continue;
       const m=t.mesh.position;
-      if(Math.hypot(m.x-px,m.z-pz)<R&&Math.abs(m.y-py)<2.2){t.arm(0.1);audio.fuseTick();}
+      if(Math.hypot(m.x-px,m.z-pz)<R&&Math.abs(m.y-py)<2.4){
+        const tier=Math.max(0,Math.round((py-m.y)/CRATE_S));
+        t.arm(Math.max(0.01,tier*0.03));
+        audio.fuseTick();
+      }
     }
     for(const e of enemies){
       if(e.dead)continue;
@@ -3987,6 +4183,27 @@ const player={
       const dx=f.pos.x-px,dy=f.pos.y-py,dz=f.pos.z-pz;
       if(dx*dx+dy*dy+dz*dz<(R+0.5)*(R+0.5))f.collect();
     }
+  },
+  updateFace(dt){
+    if(this.slamState===1){
+      this.faceTarget.set(1.0,1.0,1.0,0.0);
+    }else if(this.slamState===2){
+      this.faceTarget.set(0.1,-0.85,-0.95,0.0);
+    }else if(this.slamRecoverT>0){
+      const sq=clamp(this.slamRecoverT/0.28,0,1);
+      this.faceTarget.set(0.4,-0.3,0.5,sq);
+    }else if(this.slideT>0){
+      this.faceTarget.set(0.2,0.35,0.5,0.0);
+    }else if(this.spinT>0){
+      this.faceTarget.set(0.4,0.5,0.1,0.0);
+    }else{
+      this.faceTarget.set(0,0,0,0);
+    }
+    const spd=this.slamState===1?24:(this.slamRecoverT>0?18:12);
+    this.uFace.value.x=moveToward(this.uFace.value.x,this.faceTarget.x,spd*dt);
+    this.uFace.value.y=moveToward(this.uFace.value.y,this.faceTarget.y,spd*dt);
+    this.uFace.value.z=moveToward(this.uFace.value.z,this.faceTarget.z,spd*dt);
+    this.uFace.value.w=moveToward(this.uFace.value.w,this.faceTarget.w,spd*dt);
   },
   spinHits(){
     const px=this.pos.x,py=this.pos.y+0.8,pz=this.pos.z,R=CFG.spinRadius;
@@ -4108,23 +4325,31 @@ const player={
         this.groundPlatform=null;
       }
     }
+    if(this.slamRecoverT>0)this.slamRecoverT-=dt;
     if(this.slideT>0){
       this.slideT-=dt;
+      if(this.slideT<0.08&&this.hasCeilingAbove()){
+        this.slideT=0.12;
+      }
       this.vel.x=moveToward(this.vel.x,this.slideDir.x*CFG.runSpeed*0.75,13*dt);
       this.vel.z=moveToward(this.vel.z,this.slideDir.z*CFG.runSpeed*0.75,13*dt);
       this.slideSkidT+=dt;
       if(this.slideSkidT>0.045){
         this.slideSkidT=0;
-        spawnSkidPuff(this.pos,this.slideDir,2);
+        spawnSkidPuff(this.pos,this.slideDir,2,this.getSurface());
       }
       this.slideHits();
       if(this.jumpBuf>0&&this.grounded){
-        this.slideT=0;
-        this.vel.y=CFG.jumpVel*1.08;
-        this.grounded=false;this.coyote=0;this.jumpBuf=0;
-        this.groundPlatform=null;
-        audio.jump();this.squash=0.32;
-        sparks.burst({x:this.pos.x,y:this.pos.y+0.2,z:this.pos.z},10,2.6,0.4,()=>[1,0.92,0.5],1);
+        if(!this.hasCeilingAbove()){
+          this.slideT=0;
+          this.vel.y=CFG.jumpVel*1.08;
+          this.grounded=false;this.coyote=0;this.jumpBuf=0;
+          this.groundPlatform=null;
+          audio.jump();this.squash=0.32;
+          sparks.burst({x:this.pos.x,y:this.pos.y+0.2,z:this.pos.z},10,2.6,0.4,()=>[1,0.92,0.5],1);
+        }else{
+          this.jumpBuf=0;
+        }
       }
     }else{
       let ix=(keys.d?1:0)-(keys.a?1:0),iz=(keys.s?1:0)-(keys.w?1:0);
@@ -4369,6 +4594,7 @@ const player={
     P.earL.rotation.z=0.22+Math.sin(t*3.1)*0.09;
     P.earR.rotation.z=-0.22-Math.sin(t*3.3+1)*0.09;
     P.tail.rotation.y=Math.sin(t*4)*0.35;
+    this.updateFace(dt);
   },
   die(cause,srcPos){
     if(this.dead||game.state!=='PLAYING')return;
@@ -4403,7 +4629,9 @@ const player={
     this.groundPlatform=null;
     this.dead=false;this.spinT=0;this.squash=0;
     this.slideT=0;this.slideCdT=0;this.slideSkidT=0;
-    this.slamState=0;this.slamStallT=0;
+    this.slamState=0;this.slamStallT=0;this.slamRecoverT=0;
+    if(this.faceTarget)this.faceTarget.set(0,0,0,0);
+    if(this.uFace)this.uFace.value.set(0,0,0,0);
     this.prevVel.set(0,0,0);this.prevY=p.y;
     if(this.spinMesh)this.spinMesh.visible=false;
     this.root.scale.setScalar(1);
@@ -4831,6 +5059,7 @@ function frameBody(){
     case 'PLAYING':{
       game.time+=dt;
       player.update(dt);
+      for(const c of crates)c.update(dt);
       for(const lg of logs)lg.update(dt,t);
       for(const tn of tnts)tn.update(dt);
       for(const e of enemies)e.update(dt,t);
