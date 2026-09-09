@@ -169,7 +169,7 @@
   <div class="stats-bar">
     <div class="stat-card">
       <div class="stat-label">Active Loop</div>
-      <div class="stat-val active" style="color:var(--green)">Pass 14: Final Sign-Off</div>
+      <div class="stat-val active" style="color:var(--green)">Pass 15: Movement &amp; VFX</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Model Engine</div>
@@ -181,7 +181,7 @@
     </div>
     <div class="stat-card">
       <div class="stat-label">Production Status</div>
-      <div class="stat-val" style="color:var(--green)">Passed / Locked</div>
+      <div class="stat-val" style="color:var(--green)">Sprint 1 Complete</div>
     </div>
   </div>
 
@@ -189,10 +189,10 @@
     <div class="card">
       <div class="card-header">
         <span>Current Visual Contact Sheet</span>
-        <span style="font-size:12px; color:var(--text-muted);">Auto-captured via tools/shots.mjs (Pass 14)</span>
+        <span style="font-size:12px; color:var(--text-muted);">Auto-captured via tools/shots.mjs (Pass 15)</span>
       </div>
       <div class="sheet-container">
-        <img src="docs/shots/pass14/CONTACT-SHEET.png" alt="Pass 14 Contact Sheet" onerror="this.src='docs/shots/pass13/CONTACT-SHEET.png'">
+        <img src="docs/shots/pass15/CONTACT-SHEET.png" alt="Pass 15 Contact Sheet" onerror="this.src='docs/shots/pass14/CONTACT-SHEET.png'">
       </div>
     </div>
 
@@ -243,6 +243,13 @@
           </div>
           <span class="track-status status-done">PASSED</span>
         </div>
+        <div class="track-item">
+          <div>
+            <div class="track-title">7. Signature Mascot Movement & Impact VFX</div>
+            <div style="font-size:12px; color:var(--text-muted);">Crouch slide-kick with low profile hitbox, mid-air body slam with comedic stall, skid dust puffs, slam shockwave, water splash</div>
+          </div>
+          <span class="track-status status-done">PASSED</span>
+        </div>
       </div>
     </div>
   </div>
@@ -262,6 +269,13 @@
         </tr>
       </thead>
       <tbody>
+        <tr>
+          <td>Pass 15 (Sprint 1)</td>
+          <td>Crouch Slide-Kick, Mid-Air Body Slam / Belly Flop & Tactile Comic VFX</td>
+          <td>Hero lacked signature Crash-style athletic floor slide and mid-air body slam/belly flop; ground movement lacked tactile skidding feedback; body landing lacked radial shockwaves; water lacked conical entry spray</td>
+          <td>Implemented athletic Crouch & Slide-Kick with forward speed boost (13.2 m/s), low-profile collision box (0.5m height) allowing clearance under low hazards/crates, wooden crate smashing and enemy knockback, and dynamic sliding pose interpolation; implemented Mid-Air Body Slam with 0.15s comedic apex freeze/stall, rapid dive (-22 m/s), radial shockwave impact ring (RingGeometry with additive blend), camera trauma kick (+0.25), and pop-up recovery; added directional and hard-stop sneaker skid dust puffs, radial comic starbursts, and conical water entry splash droplets with expanding ripple rings</td>
+          <td><span class="track-status status-done">PASSED</span></td>
+        </tr>
         <tr>
           <td>Pass 14 (Final Production Lock)</td>
           <td>Phantom Skirt Purge, Dusk Clouds/Mountains, Organic Ivy Fronds, Rock Geometries & Crate AO</td>

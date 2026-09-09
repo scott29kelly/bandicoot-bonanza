@@ -64,6 +64,8 @@ h1.logo{font-size:min(11vw,90px);line-height:.95;margin:0 0 10px;color:#ffb020;-
       <tr><td class="k">WASD / Arrows</td><td>Move</td></tr>
       <tr><td class="k">Space</td><td>Jump &amp; double-jump</td></tr>
       <tr><td class="k">Click / Shift / K</td><td>Spin attack</td></tr>
+      <tr><td class="k">Down / S / Shift (Run)</td><td>Slide-kick</td></tr>
+      <tr><td class="k">Down / S (Air)</td><td>Body slam / Belly flop</td></tr>
       <tr><td class="k">M</td><td>Mute audio</td></tr>
     </tbody></table>
     <p class="blink">PRESS ENTER TO PLAY</p>
@@ -100,6 +102,8 @@ const CFG={
   jumpVel:10.8, doubleJumpVel:9.8, bounceVel:14.8, crateBounce:8.2,
   coyote:0.12, jumpBuffer:0.12,
   spinDur:0.42, spinCd:0.62, spinRadius:2.35,
+  slideDur:0.50, slideSpeed:13.2,
+  slamVel:-22, slamStall:0.15,
   killY:-3.2, lives:3, iframes:1.4,
   tntFuse:2.2, tntRadius:4.6,
   camOffX:0, camOffY:4.6, camOffZ:8.2,
@@ -267,6 +271,11 @@ const audio={
   jump(){if(this.sfxClip('jump',0.55))return;this.tone({f:320,f2:640,d:0.16,type:'sine',v:0.22});},
   doubleJump(){if(this.sfxClip('doublejump',0.55)||this.sfxClip('jump',0.6))return;this.tone({f:430,f2:900,d:0.18,type:'sine',v:0.22});this.tone({f:640,f2:1200,d:0.14,type:'triangle',v:0.1,at:0.03});},
   spin(){if(this.sfxClip('spin',0.6))return;this.noise({d:0.28,v:0.24,fq:1600,type:'bandpass',q:1.6});},
+  slide(){if(this.sfxClip('slide',0.5))return;this.noise({d:0.28,v:0.35,fq:1300,type:'bandpass',q:1.8});this.tone({f:340,f2:130,d:0.25,type:'sine',v:0.18});},
+  slamStall(){if(this.sfxClip('slam_stall',0.4))return;this.tone({f:580,f2:880,d:0.13,type:'triangle',v:0.24});},
+  slamDive(){if(this.sfxClip('slam_dive',0.4))return;this.tone({f:640,f2:160,d:0.26,type:'sawtooth',v:0.26});this.noise({d:0.22,v:0.24,fq:750});},
+  slamLand(){if(this.sfxClip('slam_land',0.6))return;this.noise({d:0.42,v:0.65,fq:420});this.tone({f:150,f2:34,d:0.38,type:'sine',v:0.62});this.noise({d:0.12,v:0.45,fq:2600,type:'highpass'});},
+  splash(){if(this.sfxClip('splash',0.5))return;this.noise({d:0.34,v:0.5,fq:1350,type:'bandpass',q:1.2});this.tone({f:420,f2:170,d:0.24,type:'sine',v:0.22});this.noise({d:0.14,v:0.36,fq:4000,type:'highpass'});},
   bounce(){if(this.sfxClip('bounce',0.65))return;this.tone({f:180,f2:880,d:0.22,type:'sine',v:0.26});},
   crate(){if(this.sfxClip('crate',0.7))return;this.noise({d:0.14,v:0.4,fq:2400});this.tone({f:140,f2:70,d:0.13,type:'square',v:0.18});},
   fruit(){
@@ -1497,6 +1506,243 @@ function updateCrateSmashVFX(dt){
   }
 }
 
+// 7b. TACTILE COMIC IMPACT VFX (Skid dust, Ground-pound shockwave, Water splash)
+const skidVFX={rings:[],cursor:0};
+(function(){
+  const ringGeo=new THREE.RingGeometry(0.08,0.42,16);
+  ringGeo.rotateX(-Math.PI/2);
+  for(let i=0;i<24;i++){
+    const mat=new THREE.MeshBasicMaterial({color:0xf5deb3,transparent:true,opacity:0.85,side:THREE.DoubleSide,depthWrite:false});
+    const m=new THREE.Mesh(ringGeo,mat);
+    m.visible=false;
+    scene.add(m);
+    skidVFX.rings.push({mesh:m,life:0,maxLife:0.32,vel:new THREE.Vector3()});
+  }
+})();
+function spawnSkidPuff(p,dir,count=1){
+  const d=dir||{x:0,z:0};
+  for(let i=0;i<count;i++){
+    const r=skidVFX.rings[skidVFX.cursor];
+    skidVFX.cursor=(skidVFX.cursor+1)%skidVFX.rings.length;
+    r.mesh.visible=true;
+    r.mesh.position.set(
+      p.x-(d.x*0.22)+rand(-0.16,0.16),
+      p.y+0.025+i*0.005,
+      p.z-(d.z*0.22)+rand(-0.16,0.16)
+    );
+    r.vel.set(rand(-0.4,0.4)-(d.x*0.4),rand(0.2,0.6),rand(-0.4,0.4)-(d.z*0.4));
+    r.life=r.maxLife=rand(0.24,0.34);
+    r.mesh.scale.setScalar(0.35);
+    r.mesh.material.opacity=0.82;
+  }
+  const colFn=p.z>-60?TAN:(p.z>-155?GREEN:TAN);
+  confetti.burst({x:p.x-(d.x*0.15),y:p.y+0.05,z:p.z-(d.z*0.15)},Math.min(3,count*2),0.7,0.35,colFn,0.6);
+}
+function updateSkidVFX(dt){
+  for(const r of skidVFX.rings){
+    if(r.life<=0)continue;
+    r.life-=dt;
+    if(r.life<=0){r.mesh.visible=false;continue;}
+    const p=1-(r.life/r.maxLife);
+    r.mesh.position.x+=r.vel.x*dt;
+    r.mesh.position.y+=r.vel.y*dt;
+    r.mesh.position.z+=r.vel.z*dt;
+    r.vel.y-=0.8*dt;
+    r.mesh.scale.setScalar(0.35+p*1.45);
+    r.mesh.material.opacity=(1-p)*(1-p)*0.82;
+  }
+}
+
+const slamVFX={shocks:[],outers:[],stars:[],sCur:0,oCur:0,stCur:0};
+(function(){
+  const ringGeo=new THREE.RingGeometry(0.3,1.8,36);
+  ringGeo.rotateX(-Math.PI/2);
+  for(let i=0;i<6;i++){
+    const mat=new THREE.MeshBasicMaterial({
+      color:0xfff6c0,transparent:true,opacity:0.95,side:THREE.DoubleSide,
+      blending:THREE.AdditiveBlending,depthWrite:false
+    });
+    const m=new THREE.Mesh(ringGeo,mat);
+    m.visible=false;
+    scene.add(m);
+    slamVFX.shocks.push({mesh:m,life:0,maxLife:0.42});
+  }
+  const outerGeo=new THREE.RingGeometry(1.1,2.3,36);
+  outerGeo.rotateX(-Math.PI/2);
+  for(let i=0;i<6;i++){
+    const mat=new THREE.MeshBasicMaterial({
+      color:0xf8dfb0,transparent:true,opacity:0.65,side:THREE.DoubleSide,depthWrite:false
+    });
+    const m=new THREE.Mesh(outerGeo,mat);
+    m.visible=false;
+    scene.add(m);
+    slamVFX.outers.push({mesh:m,life:0,maxLife:0.48});
+  }
+  const starGeo=new THREE.OctahedronGeometry(0.18,0);
+  for(let i=0;i<20;i++){
+    const mat=new THREE.MeshBasicMaterial({
+      color:0xfff270,transparent:true,opacity:0.95,depthWrite:false,blending:THREE.AdditiveBlending
+    });
+    const m=new THREE.Mesh(starGeo,mat);
+    m.visible=false;
+    scene.add(m);
+    slamVFX.stars.push({mesh:m,vel:new THREE.Vector3(),rvel:new THREE.Vector3(),life:0,maxLife:0.5});
+  }
+})();
+function spawnSlamShockwave(p){
+  const s=slamVFX.shocks[slamVFX.sCur];
+  slamVFX.sCur=(slamVFX.sCur+1)%slamVFX.shocks.length;
+  s.mesh.visible=true;
+  s.mesh.position.set(p.x,p.y+0.03,p.z);
+  s.mesh.scale.setScalar(0.2);
+  s.life=s.maxLife=0.42;
+  s.mesh.material.opacity=0.95;
+
+  const o=slamVFX.outers[slamVFX.oCur];
+  slamVFX.oCur=(slamVFX.oCur+1)%slamVFX.outers.length;
+  o.mesh.visible=true;
+  o.mesh.position.set(p.x,p.y+0.025,p.z);
+  o.mesh.scale.setScalar(0.3);
+  o.life=o.maxLife=0.48;
+  o.mesh.material.opacity=0.65;
+
+  const baseA=rand(0,Math.PI*2);
+  for(let i=0;i<10;i++){
+    const star=slamVFX.stars[slamVFX.stCur];
+    slamVFX.stCur=(slamVFX.stCur+1)%slamVFX.stars.length;
+    star.mesh.visible=true;
+    star.mesh.position.set(p.x,p.y+0.2,p.z);
+    star.mesh.rotation.set(rand(0,3),rand(0,3),rand(0,3));
+    const a=baseA+(i/10)*Math.PI*2+rand(-0.15,0.15);
+    const spd=rand(4.5,7.2);
+    star.vel.set(Math.cos(a)*spd,rand(3.5,6.5),Math.sin(a)*spd);
+    star.rvel.set(rand(-14,14),rand(-18,18),rand(-14,14));
+    star.life=star.maxLife=rand(0.38,0.52);
+    star.mesh.scale.setScalar(1.0);
+    star.mesh.material.opacity=0.95;
+  }
+  sparks.burst(p,18,5.0,0.5,()=>GOLD(),2.2);
+  confetti.burst(p,14,4.0,0.65,TAN,2.0);
+}
+function updateSlamVFX(dt){
+  for(const s of slamVFX.shocks){
+    if(s.life<=0)continue;
+    s.life-=dt;
+    if(s.life<=0){s.mesh.visible=false;continue;}
+    const p=1-(s.life/s.maxLife);
+    s.mesh.scale.setScalar(0.2+p*2.4);
+    s.mesh.material.opacity=(1-p*p)*0.95;
+  }
+  for(const o of slamVFX.outers){
+    if(o.life<=0)continue;
+    o.life-=dt;
+    if(o.life<=0){o.mesh.visible=false;continue;}
+    const p=1-(o.life/o.maxLife);
+    o.mesh.scale.setScalar(0.3+p*2.8);
+    o.mesh.material.opacity=(1-p)*0.65;
+  }
+  for(const star of slamVFX.stars){
+    if(star.life<=0)continue;
+    star.life-=dt;
+    if(star.life<=0){star.mesh.visible=false;continue;}
+    star.vel.y-=16*dt;
+    star.mesh.position.x+=star.vel.x*dt;
+    star.mesh.position.y+=star.vel.y*dt;
+    star.mesh.position.z+=star.vel.z*dt;
+    star.mesh.rotation.x+=star.rvel.x*dt;
+    star.mesh.rotation.y+=star.rvel.y*dt;
+    star.mesh.rotation.z+=star.rvel.z*dt;
+    const progress=star.life/star.maxLife;
+    star.mesh.scale.setScalar(progress*1.25);
+    star.mesh.material.opacity=Math.min(1.0,progress*1.5);
+  }
+}
+
+const waterVFX={ripples:[],droplets:[],rCur:0,dCur:0};
+(function(){
+  const ripGeo=new THREE.RingGeometry(0.25,0.65,32);
+  ripGeo.rotateX(-Math.PI/2);
+  for(let i=0;i<12;i++){
+    const mat=new THREE.MeshBasicMaterial({
+      color:0x7be8ff,transparent:true,opacity:0.85,side:THREE.DoubleSide,
+      blending:THREE.AdditiveBlending,depthWrite:false
+    });
+    const m=new THREE.Mesh(ripGeo,mat);
+    m.visible=false;
+    scene.add(m);
+    waterVFX.ripples.push({mesh:m,life:0,maxLife:0.75});
+  }
+  const dropGeo=new THREE.SphereGeometry(0.065,6,5);
+  for(let i=0;i<32;i++){
+    const mat=new THREE.MeshBasicMaterial({
+      color:0xaef4ff,transparent:true,opacity:0.92,depthWrite:false,blending:THREE.AdditiveBlending
+    });
+    const m=new THREE.Mesh(dropGeo,mat);
+    m.visible=false;
+    scene.add(m);
+    waterVFX.droplets.push({mesh:m,vel:new THREE.Vector3(),life:0,maxLife:0.7});
+  }
+})();
+function spawnWaterSplash(p,intensity=1.0){
+  audio.splash();
+  const ripY=WATER_Y+0.04;
+  for(let i=0;i<2;i++){
+    const r=waterVFX.ripples[waterVFX.rCur];
+    waterVFX.rCur=(waterVFX.rCur+1)%waterVFX.ripples.length;
+    r.mesh.visible=true;
+    r.mesh.position.set(p.x+rand(-0.15,0.15),ripY,p.z+rand(-0.15,0.15));
+    r.mesh.scale.setScalar(0.25+i*0.2);
+    r.life=r.maxLife=0.65+i*0.15;
+    r.mesh.material.opacity=0.85;
+  }
+  const dropCount=Math.min(32,Math.round(20*intensity));
+  for(let i=0;i<dropCount;i++){
+    const d=waterVFX.droplets[waterVFX.dCur];
+    waterVFX.dCur=(waterVFX.dCur+1)%waterVFX.droplets.length;
+    d.mesh.visible=true;
+    d.mesh.position.set(p.x+rand(-0.15,0.15),ripY+0.1,p.z+rand(-0.15,0.15));
+    const ang=rand(0,Math.PI*2);
+    const radSpd=rand(1.2,3.4)*intensity;
+    const upSpd=rand(4.2,7.6)*intensity;
+    d.vel.set(Math.cos(ang)*radSpd,upSpd,Math.sin(ang)*radSpd);
+    d.life=d.maxLife=rand(0.5,0.75);
+    d.mesh.scale.setScalar(rand(0.8,1.3));
+    d.mesh.material.opacity=0.92;
+  }
+  for(let i=0;i<12;i++){
+    const a=rand(0,Math.PI*2),s=rand(1.5,3.8)*intensity;
+    sparks.spawn(p.x,ripY+0.15,p.z,Math.cos(a)*s,rand(3.2,5.8)*intensity,Math.sin(a)*s,rand(0.4,0.65),0.75,0.95,1.0);
+  }
+}
+function updateWaterVFX(dt){
+  for(const r of waterVFX.ripples){
+    if(r.life<=0)continue;
+    r.life-=dt;
+    if(r.life<=0){r.mesh.visible=false;continue;}
+    const p=1-(r.life/r.maxLife);
+    r.mesh.scale.setScalar(0.25+p*2.6);
+    r.mesh.material.opacity=(1-p)*(1-p)*0.85;
+  }
+  for(const d of waterVFX.droplets){
+    if(d.life<=0)continue;
+    d.life-=dt;
+    if(d.life<=0){d.mesh.visible=false;continue;}
+    d.vel.y-=19*dt;
+    d.mesh.position.x+=d.vel.x*dt;
+    d.mesh.position.y+=d.vel.y*dt;
+    d.mesh.position.z+=d.vel.z*dt;
+    const progress=d.life/d.maxLife;
+    d.mesh.material.opacity=progress*0.92;
+    if(d.mesh.position.y<=WATER_Y+0.02)d.life=0;
+  }
+}
+function isNearWater(x,z){
+  if(z>-32&&z<6&&Math.abs(x)>4.2)return true;
+  if(z<=-27&&z>=-48)return true;
+  if(z<=-106&&z>=-136)return true;
+  return false;
+}
+
 /* =========================== 8. LEVEL STATE ============================ */
 const solids=[],crates=[],tnts=[],fruits=[],pads=[],logs=[],checkpoints=[],palms=[],torches=[],movingPlatforms=[],enemies=[],secretGems=[];
 let gateZ=-220,gateGemMat=null;
@@ -2266,7 +2512,7 @@ class CrabEnemy{
         return;
       }
       if(distH<0.85&&Math.abs(py-this.pos.y)<1.1&&player.iframes<=0){
-        if(player.spinT>0){
+        if(player.spinT>0||player.slideT>0||player.slamState===2){
           this.spinDefeat(player.pos);
         }else{
           player.die('crab',this.pos);
@@ -2392,7 +2638,7 @@ class SnappingPlant{
     if(game.state==='PLAYING'&&!player.dead){
       const distH=Math.hypot(player.pos.x-this.pos.x,player.pos.z-this.pos.z);
       if(distH<1.0&&Math.abs(player.pos.y-this.pos.y)<1.6){
-        if(player.spinT>0){
+        if(player.spinT>0||player.slideT>0||player.slamState===2){
           this.spinDefeat(player.pos);
         }else if(this.isOpen&&player.iframes<=0){
           player.die('plant',this.pos);
@@ -3424,6 +3670,9 @@ const player={
   pos:null,vel:new THREE.Vector3(),
   grounded:false,coyote:0,jumpBuf:0,canDouble:true,
   spinT:0,spinCdT:0,iframes:0,dead:false,
+  slideT:0,slideCdT:0,slideDir:new THREE.Vector3(0,0,-1),slideSkidT:0,
+  slamState:0,slamStallT:0,
+  prevVel:new THREE.Vector3(),prevY:0.1,
   squash:0,runT:0,faceA:Math.PI,
   deathT:0,deathVel:0,deathKick:new THREE.Vector3(),
   groundPlatform:null,footstepT:0,blinkT:3,dropShadow:null,spinMesh:null,spinRing1:null,spinRing2:null,spinStars:[],
@@ -3657,6 +3906,88 @@ const player={
     audio.spin();
     sparks.burst({x:this.pos.x,y:this.pos.y+0.8,z:this.pos.z},12,3.4,0.35,()=>[1,0.85,0.4],0);
   },
+  trySlide(){
+    if(game.state!=='PLAYING'||this.dead||!this.grounded||this.slideT>0||this.slamState!==0||this.slideCdT>0)return;
+    this.slideT=CFG.slideDur;
+    this.slideCdT=0.18;
+    this.slideSkidT=0;
+    const sp=Math.hypot(this.vel.x,this.vel.z);
+    if(sp>1.0){
+      this.slideDir.set(this.vel.x,0,this.vel.z).normalize();
+    }else{
+      this.slideDir.set(Math.sin(this.faceA),0,Math.cos(this.faceA));
+    }
+    const boost=CFG.slideSpeed;
+    this.vel.x=this.slideDir.x*boost;
+    this.vel.z=this.slideDir.z*boost;
+    audio.slide();
+    spawnSkidPuff(this.pos,this.slideDir,5);
+    this.slideHits();
+  },
+  slideHits(){
+    const px=this.pos.x,py=this.pos.y+0.4,pz=this.pos.z,R=1.35;
+    for(const c of crates){
+      if(c.broken)continue;
+      const m=c.mesh.position;
+      if(Math.abs(m.y-py)<1.35&&(m.x-px)*(m.x-px)+(m.z-pz)*(m.z-pz)<R*R)c.break_();
+    }
+    for(const t of tnts){
+      if(t.exploded||t.armed)continue;
+      const m=t.mesh.position;
+      if(Math.abs(m.y-py)<1.35&&(m.x-px)*(m.x-px)+(m.z-pz)*(m.z-pz)<R*R){t.arm();audio.fuseTick();}
+    }
+    for(const f of fruits){
+      if(f.state==='hidden'||f.state==='collected')continue;
+      const dx=f.pos.x-px,dy=f.pos.y-py,dz=f.pos.z-pz;
+      if(dx*dx+dy*dy+dz*dz<(R+0.3)*(R+0.3))f.collect();
+    }
+    for(const e of enemies){
+      if(e.dead)continue;
+      const dx=e.pos.x-px,dz=e.pos.z-pz;
+      if(Math.hypot(dx,dz)<R+0.35&&Math.abs(e.pos.y-py)<1.4)e.spinDefeat(this.pos);
+    }
+  },
+  tryBodySlam(){
+    if(game.state!=='PLAYING'||this.dead||this.grounded||this.slamState!==0)return;
+    this.slamState=1;
+    this.slamStallT=CFG.slamStall;
+    this.vel.set(0,0,0);
+    audio.slamStall();
+    sparks.burst({x:this.pos.x,y:this.pos.y+0.5,z:this.pos.z},6,1.8,0.25,()=>[1,1,0.6],1);
+  },
+  onSlamImpact(){
+    this.slamState=0;
+    this.vel.y=5.8;
+    this.grounded=false;
+    this.canDouble=true;
+    this.squash=-0.55;
+    camRig.trauma=Math.min(camRig.trauma+0.25,1);
+    audio.slamLand();
+    spawnSlamShockwave(this.pos);
+    this.slamHits();
+  },
+  slamHits(){
+    const px=this.pos.x,py=this.pos.y,pz=this.pos.z,R=2.2;
+    for(const c of crates){
+      if(c.broken)continue;
+      const m=c.mesh.position;
+      if(Math.hypot(m.x-px,m.z-pz)<R&&Math.abs(m.y-py)<2.2)c.break_();
+    }
+    for(const t of tnts){
+      if(t.exploded||t.armed)continue;
+      const m=t.mesh.position;
+      if(Math.hypot(m.x-px,m.z-pz)<R&&Math.abs(m.y-py)<2.2){t.arm(0.1);audio.fuseTick();}
+    }
+    for(const e of enemies){
+      if(e.dead)continue;
+      if(Math.hypot(e.pos.x-px,e.pos.z-pz)<R+0.4&&Math.abs(e.pos.y-py)<2.2)e.spinDefeat(this.pos);
+    }
+    for(const f of fruits){
+      if(f.state==='hidden'||f.state==='collected')continue;
+      const dx=f.pos.x-px,dy=f.pos.y-py,dz=f.pos.z-pz;
+      if(dx*dx+dy*dy+dz*dz<(R+0.5)*(R+0.5))f.collect();
+    }
+  },
   spinHits(){
     const px=this.pos.x,py=this.pos.y+0.8,pz=this.pos.z,R=CFG.spinRadius;
     for(const c of crates){
@@ -3685,12 +4016,13 @@ const player={
     this.pos[axis]+=delta;
     const hw=0.38;
     const px=this.pos.x,pz=this.pos.z,py=this.pos.y;
+    const playerH=this.slideT>0?0.5:1.45;
     for(const s of solids){
       if(s.dead)continue;
       if(s.z0>pz+26||s.z1<pz-26)continue;
       if(px+hw<=s.x0||px-hw>=s.x1)continue;
       if(pz+hw<=s.z0||pz-hw>=s.z1)continue;
-      if(py+0.08>=s.y1||py+1.45<=s.y0)continue;
+      if(py+0.08>=s.y1||py+playerH<=s.y0)continue;
       if(this.grounded&&this.groundPlatform&&s===this.groundPlatform.solid)continue;
       // step-up assist for shallow ledges (stairs)
       if(this.grounded&&this.vel.y<=0.1&&s.y1-py<=0.56&&s.y1>py){
@@ -3716,7 +4048,11 @@ const player={
       if(bestS){
         this.pos.y=bestY;this.vel.y=0;this.grounded=true;
         const ent=bestS.ent;
-        if(ent){
+        if(this.slamState===2){
+          if(ent&&ent.type==='crate'){ent.obj.break_();}
+          else if(ent&&ent.type==='tnt'){ent.obj.arm(0.01);}
+          this.onSlamImpact();
+        }else if(ent){
           if(ent.type==='crate'){
             ent.obj.break_();
             this.vel.y=CFG.crateBounce;this.grounded=false;this.canDouble=true;this.squash=0.25;
@@ -3739,13 +4075,14 @@ const player={
         }
       }
     }else{
+      const playerH=this.slideT>0?0.5:1.5;
       for(const s of solids){
         if(s.dead)continue;
         if(s.z0>pz+26||s.z1<pz-26)continue;
         if(px+hw<=s.x0||px-hw>=s.x1)continue;
         if(pz+hw<=s.z0||pz-hw>=s.z1)continue;
-        if(prevY+1.5<=s.y0+0.06&&this.pos.y+1.5>=s.y0){
-          this.pos.y=s.y0-1.5;this.vel.y=0;
+        if(prevY+playerH<=s.y0+0.06&&this.pos.y+playerH>=s.y0){
+          this.pos.y=s.y0-playerH;this.vel.y=0;
         }
       }
     }
@@ -3758,6 +4095,7 @@ const player={
   update(dt){
     this.iframes=Math.max(0,this.iframes-dt);
     this.spinCdT=Math.max(0,this.spinCdT-dt);
+    this.slideCdT=Math.max(0,this.slideCdT-dt);
     this.coyote=Math.max(0,this.coyote-dt);
     this.jumpBuf=Math.max(0,this.jumpBuf-dt);
     if(this.grounded&&this.groundPlatform&&!this.groundPlatform.solid.dead){
@@ -3770,25 +4108,61 @@ const player={
         this.groundPlatform=null;
       }
     }
-    let ix=(keys.d?1:0)-(keys.a?1:0),iz=(keys.s?1:0)-(keys.w?1:0);
-    const l=Math.hypot(ix,iz);
-    if(l>0){ix/=l;iz/=l;}
-    const acc=this.grounded?CFG.accel:CFG.airAccel;
-    this.vel.x=moveToward(this.vel.x,ix*CFG.runSpeed,acc*dt);
-    this.vel.z=moveToward(this.vel.z,iz*CFG.runSpeed,acc*dt);
-    if(this.jumpBuf>0){
-      if(this.grounded||this.coyote>0){
-        this.vel.y=CFG.jumpVel;this.grounded=false;this.coyote=0;this.jumpBuf=0;
+    if(this.slideT>0){
+      this.slideT-=dt;
+      this.vel.x=moveToward(this.vel.x,this.slideDir.x*CFG.runSpeed*0.75,13*dt);
+      this.vel.z=moveToward(this.vel.z,this.slideDir.z*CFG.runSpeed*0.75,13*dt);
+      this.slideSkidT+=dt;
+      if(this.slideSkidT>0.045){
+        this.slideSkidT=0;
+        spawnSkidPuff(this.pos,this.slideDir,2);
+      }
+      this.slideHits();
+      if(this.jumpBuf>0&&this.grounded){
+        this.slideT=0;
+        this.vel.y=CFG.jumpVel*1.08;
+        this.grounded=false;this.coyote=0;this.jumpBuf=0;
         this.groundPlatform=null;
-        audio.jump();this.squash=0.28;
-      }else if(this.canDouble){
-        this.canDouble=false;this.vel.y=CFG.doubleJumpVel;this.jumpBuf=0;
-        audio.doubleJump();this.squash=0.25;
-        sparks.burst({x:this.pos.x,y:this.pos.y+0.3,z:this.pos.z},8,2,0.4,()=>[0.7,0.92,1],1);
+        audio.jump();this.squash=0.32;
+        sparks.burst({x:this.pos.x,y:this.pos.y+0.2,z:this.pos.z},10,2.6,0.4,()=>[1,0.92,0.5],1);
+      }
+    }else{
+      let ix=(keys.d?1:0)-(keys.a?1:0),iz=(keys.s?1:0)-(keys.w?1:0);
+      const l=Math.hypot(ix,iz);
+      if(l>0){ix/=l;iz/=l;}
+      const acc=this.grounded?CFG.accel:CFG.airAccel;
+      this.vel.x=moveToward(this.vel.x,ix*CFG.runSpeed,acc*dt);
+      this.vel.z=moveToward(this.vel.z,iz*CFG.runSpeed,acc*dt);
+      if(this.jumpBuf>0){
+        if(this.grounded||this.coyote>0){
+          this.vel.y=CFG.jumpVel;this.grounded=false;this.coyote=0;this.jumpBuf=0;
+          this.groundPlatform=null;
+          audio.jump();this.squash=0.28;
+        }else if(this.canDouble){
+          this.canDouble=false;this.vel.y=CFG.doubleJumpVel;this.jumpBuf=0;
+          audio.doubleJump();this.squash=0.25;
+          sparks.burst({x:this.pos.x,y:this.pos.y+0.3,z:this.pos.z},8,2,0.4,()=>[0.7,0.92,1],1);
+        }
       }
     }
-    this.vel.y-=CFG.gravity*dt;
-    if(this.vel.y<-24)this.vel.y=-24;
+    if(this.slamState===1){
+      this.slamStallT-=dt;
+      this.vel.set(0,0,0);
+      if(this.slamStallT<=0){
+        this.slamState=2;
+        this.vel.set(0,CFG.slamVel,0);
+        audio.slamDive();
+      }
+    }else if(this.slamState===2){
+      this.vel.x=0;this.vel.z=0;
+      this.vel.y=CFG.slamVel;
+      if(Math.random()<0.45){
+        sparks.burst({x:this.pos.x+rand(-0.25,0.25),y:this.pos.y+rand(0.2,1.2),z:this.pos.z+rand(-0.25,0.25)},2,1.4,0.25,()=>[1,0.95,0.7],3);
+      }
+    }else{
+      this.vel.y-=CFG.gravity*dt;
+      if(this.vel.y<-24)this.vel.y=-24;
+    }
     const wasGrounded=this.grounded;
     this.grounded=false;
     this.moveAxis('x',this.vel.x*dt);
@@ -3798,7 +4172,11 @@ const player={
     this.collideY(prevY);
     if(this.grounded){this.coyote=CFG.coyote;this.canDouble=true;}
     else{this.groundPlatform=null;}
-    if(!wasGrounded&&this.grounded){this.squash=-0.32;this.landPoof();}
+    if(!wasGrounded&&this.grounded){
+      this.squash=-0.32;
+      this.landPoof();
+      if(isNearWater(this.pos.x,this.pos.z))spawnWaterSplash(new THREE.Vector3(this.pos.x,WATER_Y,this.pos.z),0.85);
+    }
     const sp=Math.hypot(this.vel.x,this.vel.z);
     if(this.grounded&&sp>1.8){
       this.footstepT+=dt;
@@ -3808,6 +4186,22 @@ const player={
         confetti.burst({x:this.pos.x+rand(-0.15,0.15),y:this.pos.y+0.05,z:this.pos.z+rand(-0.15,0.15)},3,0.8,0.3,colFn,0.5);
       }
     }
+    const prevSp=Math.hypot(this.prevVel.x,this.prevVel.z);
+    if(this.grounded&&!this.dead&&this.slideT<=0){
+      if(prevSp>3.2&&sp>1.4){
+        const dot=(this.prevVel.x*this.vel.x+this.prevVel.z*this.vel.z)/(prevSp*sp);
+        if(dot<0.25)spawnSkidPuff(this.pos,this.prevVel,3);
+      }
+      if(prevSp>4.2&&sp<1.4)spawnSkidPuff(this.pos,this.prevVel,4);
+    }
+    this.prevVel.copy(this.vel);
+
+    const currY=this.pos.y;
+    if(currY<=WATER_Y+0.45&&this.prevY>WATER_Y+0.45){
+      spawnWaterSplash(new THREE.Vector3(this.pos.x,WATER_Y,this.pos.z),1.3);
+    }
+    this.prevY=currY;
+
     if(this.spinT>0){
       this.spinT-=dt;
       this.rig.rotation.y+=26*dt;
@@ -3829,6 +4223,10 @@ const player={
         sparks.burst({x:this.pos.x+rand(-0.6,0.6),y:this.pos.y+rand(0.5,1.2),z:this.pos.z+rand(-0.6,0.6)},2,1.8,0.25,()=>[1,0.95,0.4],0);
       }
       this.spinHits();
+    }else if(this.slideT>0){
+      if(this.spinMesh)this.spinMesh.visible=false;
+      this.faceA=Math.atan2(this.slideDir.x,this.slideDir.z);
+      this.rig.rotation.y=this.faceA;
     }else{
       if(this.spinMesh)this.spinMesh.visible=false;
       if(sp>0.6)this.faceA=Math.atan2(this.vel.x,this.vel.z);
@@ -3876,23 +4274,67 @@ const player={
       }
     }
     if(this.spinT>0){
+      this.rig.rotation.x=0;
+      if(P.legR)P.legR.position.set(0.18,0.55,0);
+      if(P.legL)P.legL.position.set(-0.18,0.55,0);
       P.armL.rotation.x=0;P.armR.rotation.x=0;
       P.armL.rotation.z=1.5;P.armR.rotation.z=-1.5;
       P.legL.rotation.x=-0.5;P.legR.rotation.x=-0.5;
       if(this.glbModel){
         this.glbModel.scale.set(1,1,1);
+        this.glbModel.position.set(0,0,0);
         this.glbModel.rotation.set(0,0,0);
       }
+    }else if(this.slamState===1||this.slamState===2){
+      // Body slam / Belly flop starfish pose plunging downward
+      this.rig.rotation.x=Math.PI*0.48;
+      if(P.legR)P.legR.position.set(0.18,0.55,0);
+      if(P.legL)P.legL.position.set(-0.18,0.55,0);
+      P.armL.rotation.set(-1.4,0,1.3);
+      P.armR.rotation.set(-1.4,0,-1.3);
+      P.legL.rotation.set(0.65,0,0.5);
+      P.legR.rotation.set(0.65,0,-0.5);
+      if(this.glbModel){
+        this.glbModel.scale.set(1.25,0.72,1.25);
+        this.glbModel.position.set(0,0.45,0);
+        this.glbModel.rotation.set(Math.PI*0.48,0,0);
+      }
+    }else if(this.slideT>0){
+      // Athletic cartoon slide-kick pose: tilted back, extended front foot, low profile
+      this.rig.rotation.x=-0.45;
+      this.rig.scale.set(1.05,0.55,1.4);
+      if(P.legR){
+        P.legR.rotation.set(1.35,0,0);
+        P.legR.position.set(0.18,0.55,0.25);
+      }
+      if(P.legL){
+        P.legL.rotation.set(-0.75,0,0);
+        P.legL.position.set(-0.18,0.55,-0.2);
+      }
+      P.armL.rotation.set(-1.1,0,0.75);
+      P.armR.rotation.set(0.6,0,-0.65);
+      if(this.glbModel){
+        this.glbModel.scale.set(1.15,0.58,1.35);
+        this.glbModel.position.set(0,-0.32,0.18);
+        this.glbModel.rotation.set(-0.55,0,0.12);
+      }
     }else if(!this.grounded&&game.state==='PLAYING'){
+      this.rig.rotation.x=0;
+      if(P.legR)P.legR.position.set(0.18,0.55,0);
+      if(P.legL)P.legL.position.set(-0.18,0.55,0);
       P.armL.rotation.z=0.9;P.armR.rotation.z=-0.9;
       P.armL.rotation.x=-0.6;P.armR.rotation.x=-0.6;
       P.legL.rotation.x=this.vel.y>0?-0.8:-0.35;
       P.legR.rotation.x=this.vel.y>0?-0.5:-0.15;
       if(this.glbModel){
         this.glbModel.scale.set(1,1,1);
+        this.glbModel.position.set(0,0,0);
         this.glbModel.rotation.set(0.10,0,0);
       }
     }else if(sp>0.6){
+      this.rig.rotation.x=0;
+      if(P.legR)P.legR.position.set(0.18,0.55,0);
+      if(P.legL)P.legL.position.set(-0.18,0.55,0);
       this.runT+=dt*13*(0.4+0.6*sp/CFG.runSpeed);
       const sw=Math.sin(this.runT)*0.9*Math.min(1,sp/CFG.runSpeed);
       P.legL.rotation.x=sw;P.legR.rotation.x=-sw;
@@ -3900,9 +4342,13 @@ const player={
       P.armL.rotation.z=0.25;P.armR.rotation.z=-0.25;
       if(this.glbModel){
         this.glbModel.scale.set(1,1,1);
+        this.glbModel.position.set(0,0,0);
         this.glbModel.rotation.set(0.08,0,Math.sin(this.runT)*0.06);
       }
     }else{
+      this.rig.rotation.x=0;
+      if(P.legR)P.legR.position.set(0.18,0.55,0);
+      if(P.legL)P.legL.position.set(-0.18,0.55,0);
       P.legL.rotation.x*=0.8;P.legR.rotation.x*=0.8;
       P.armL.rotation.x=-0.28+Math.sin(t*2.4)*0.04;
       P.armR.rotation.x=-0.28-Math.sin(t*2.4)*0.04;
@@ -3916,6 +4362,7 @@ const player={
       const idleHeaveX=Math.sin(t*3.2)*0.02;
       if(this.glbModel){
         this.glbModel.scale.set(idleBreathXZ,idleBreathY,idleBreathXZ);
+        this.glbModel.position.set(0,0,0);
         this.glbModel.rotation.set(idleHeaveX,0,idleHeadTiltZ);
       }
     }
@@ -3955,13 +4402,25 @@ const player={
     this.vel.set(0,0,0);
     this.groundPlatform=null;
     this.dead=false;this.spinT=0;this.squash=0;
+    this.slideT=0;this.slideCdT=0;this.slideSkidT=0;
+    this.slamState=0;this.slamStallT=0;
+    this.prevVel.set(0,0,0);this.prevY=p.y;
     if(this.spinMesh)this.spinMesh.visible=false;
     this.root.scale.setScalar(1);
-    this.rig.position.y=0;
-    this.rig.rotation.y=Math.PI;this.faceA=Math.PI;
+    this.rig.position.set(0,0,0);
+    this.rig.rotation.set(0,Math.PI,0);this.faceA=Math.PI;
+    this.rig.scale.set(1,1,1);
     this.rig.visible=true;
     this.grounded=false;this.canDouble=true;
     this.iframes=CFG.iframes;
+    const P=this.parts;
+    if(P.legR)P.legR.position.set(0.18,0.55,0);
+    if(P.legL)P.legL.position.set(-0.18,0.55,0);
+    if(this.glbModel){
+      this.glbModel.scale.set(1,1,1);
+      this.glbModel.position.set(0,0,0);
+      this.glbModel.rotation.set(0,0,0);
+    }
   },
   teleport(x,y,z){this.pos.set(x,y,z);this.vel.set(0,0,0);this.groundPlatform=null;},
   victoryAnim(dt,t){
@@ -4115,13 +4574,41 @@ window.addEventListener('keydown',e=>{
   audio.init();audio.resume();
   switch(e.code){
     case 'KeyW':case 'ArrowUp':keys.w=true;break;
-    case 'KeyS':case 'ArrowDown':keys.s=true;break;
+    case 'KeyS':case 'ArrowDown':
+      keys.s=true;
+      if(game.state==='PLAYING'&&!player.dead){
+        if(player.grounded){
+          const sp=Math.hypot(player.vel.x,player.vel.z);
+          if(sp>1.5||keys.w)player.trySlide();
+        }else if(player.slamState===0){
+          player.tryBodySlam();
+        }
+      }
+      break;
     case 'KeyA':case 'ArrowLeft':keys.a=true;break;
     case 'KeyD':case 'ArrowRight':keys.d=true;break;
     case 'Space':
       if(game.state==='PLAYING')player.jumpBuf=CFG.jumpBuffer;
       break;
-    case 'ShiftLeft':case 'ShiftRight':case 'KeyK':
+    case 'ShiftLeft':case 'ShiftRight':
+      if(game.state==='PLAYING'&&!player.dead){
+        const sp=Math.hypot(player.vel.x,player.vel.z);
+        if(player.grounded&&(sp>1.5||keys.w||keys.s||keys.a||keys.d)){
+          player.trySlide();
+        }else{
+          player.trySpin();
+        }
+      }else{
+        player.trySpin();
+      }
+      break;
+    case 'KeyC':case 'ControlLeft':case 'ControlRight':
+      if(game.state==='PLAYING'&&!player.dead){
+        if(player.grounded)player.trySlide();
+        else if(player.slamState===0)player.tryBodySlam();
+      }
+      break;
+    case 'KeyK':
       player.trySpin();break;
     case 'Enter':case 'NumpadEnter':
       if(game.state==='TITLE')game.setState('PLAYING');
@@ -4401,6 +4888,9 @@ function frameBody(){
   confetti.update(dt);
   updateDebris(dt);
   updateCrateSmashVFX(dt);
+  updateSkidVFX(dt);
+  updateSlamVFX(dt);
+  updateWaterVFX(dt);
   if(camRig.pose)camRig.applyPose();
   if(aoApply)renderAO();
   if(composer)composer.render();else renderer.render(scene,camera);
