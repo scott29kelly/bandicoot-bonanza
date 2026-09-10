@@ -94,16 +94,16 @@ carries every tell; `shots/roundN` includes `play-camera`.
 
 | Gate | Behaviour / quality | Method | Runtime & settings | Evidence to pass | Status |
 |---|---|---|---|---|---|
-| G1 build | Bundle builds | `npm run build` | node 24 | green log | PASS r35 |
-| G2 determinism | Seed governs world | `npm run det` | headless Chromium/SwiftShader, `?seed=` `?fixeddt=` | A/A bit-identical pair, A/B differs | PASS r35 |
-| G3 stills | 5 framings render, no FAIL | `node tools/shots.mjs --dir shots/roundN` | 1280×800, settle 40 | sheet + sheet.json | PASS r35 |
+| G1 build | Bundle builds | `npm run build` | node 24 | green log | PASS r36 |
+| G2 determinism | Seed governs world | `npm run det` | headless Chromium/SwiftShader, `?seed=` `?fixeddt=` | A/A bit-identical pair, A/B differs | PASS r36 |
+| G3 stills | 6 framings render, no FAIL | `node tools/shots.mjs --dir shots/roundN` | 1280×800, settle 30 | sheet + sheet.json | PASS r36 |
 | G4 ordinary play capture | Follow-camera frame mid-corridor | framing `play-camera` | as G3 | present in sheet | PASS (M1, `shots/round35/play-camera.png`) |
-| G5 blind A/B | Candidate ≥ baseline, no regression | `tools/packet.mjs` + critic v1 | 5 pairs, neutral names | verdict A/B/tie per pair, mapping revealed after | RUN (M1, p01): candidate 3 / baseline 2, regressions WO-R01–R03 → not promoted; baseline label stays r28 |
+| G5 blind A/B | Candidate ≥ baseline, no regression | `tools/packet.mjs` + critic v1 | 5 pairs, neutral names | verdict A/B/tie per pair, mapping revealed after | RUN (M1, p01): candidate 3 / baseline 2, regressions WO-R01–R03 → not promoted. RUN (M2, p02): candidate r36 4 / baseline 1; WO-R01 persists, WO-R04–R06 new → "no regression" not met, baseline label stays r28; two straight candidate wins make r36 the baseline once WO-R01 closes |
 | G6 target gap | Critic vs refs names no supported gap | critic v1 §B | as G3 | ranked list empty or unsupported | OPEN (long term) |
-| G7 gameplay rules | fruit, crates, TNT, checkpoints, HUD | `node tools/playtest.mjs` (fixed-step scripted run, `?fixeddt=` + `?seed=`) + Scott's real-input playtest | headless Chromium; then a real browser | scripted run all PASS; checklist observed | IN PROGRESS (M2) |
-| G7a fruit | count increments on contact; fruit hides; HUD count/total | as G7 | as G7 | playtest.mjs `fruit` PASS | M2 |
-| G7b crates/TNT | stomp/spin breaks; solid removed; TNT fuse 2.2 s; radius 4.6 clears crates; hero hit costs a life | as G7 | as G7 | playtest.mjs `stomp`, `spin`, `tnt` PASS | M2 |
-| G7c checkpoints | totem activates; water fall respawns there; fruit kept; life lost | as G7 | as G7 | playtest.mjs `checkpoint`, `fall` PASS | M2 |
+| G7 gameplay rules | fruit, crates, TNT, checkpoints, HUD | `node tools/playtest.mjs` (fixed-step scripted run, `?fixeddt=` + `?seed=`) + Scott's real-input playtest | headless Chromium; then a real browser | scripted run all PASS; checklist observed | SCRIPTED PASS (M2, 19/19 at 1a8e534); real-input playtest OWED (Scott) |
+| G7a fruit | count increments on contact; fruit hides; HUD count/total | as G7 | as G7 | playtest.mjs `fruit` PASS | PASS scripted (M2) |
+| G7b crates/TNT | stomp/spin breaks; solid removed; TNT fuse 2.2 s; radius 4.6 clears crates; hero hit costs a life | as G7 | as G7 | playtest.mjs `stomp`, `spin`, `tnt` PASS | PASS scripted (M2) |
+| G7c checkpoints | totem activates; water fall respawns there; fruit kept; life lost | as G7 | as G7 | playtest.mjs `checkpoint`, `fall` PASS | PASS scripted (M2) |
 | G8 real input | keyboard/gamepad paths drive the hero | manual playtest | real browser | observed | NOT STARTED |
 | G9 performance | frame time p95 within budget | `?perf` on a real GPU | Scott's machine | p95 figure | NOT STARTED (headless cannot measure) |
 | G10 audio | audible quality | listening checklist | real browser | recording | NOT STARTED (no audio yet) |
