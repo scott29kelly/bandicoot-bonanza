@@ -11,6 +11,7 @@ canvas{display:block}
 .hidden{display:none!important}
 #hud{position:absolute;top:14px;left:14px;right:14px;display:flex;gap:10px;align-items:flex-start;font-weight:700}
 .hud-box{background:rgba(16,38,12,.55);border:3px solid #f7c948;border-radius:14px;padding:6px 14px;font-size:21px;display:flex;align-items:center;gap:8px;text-shadow:2px 2px 0 rgba(0,0,0,.55);box-shadow:0 3px 0 rgba(0,0,0,.35)}
+#hud-hp.danger{border-color:#ff4d4d;box-shadow:0 0 12px rgba(255,60,60,0.7)}
 .ico{width:19px;height:19px;border-radius:50%;display:inline-block;flex:none}
 .ico.fruit{background:radial-gradient(circle at 35% 30%,#ffd76e,#ff9a1f 60%,#d96b00)}
 .ico.crate{border-radius:4px;background:linear-gradient(135deg,#c98b4a,#8a5a28);border:2px solid #5d3a15}
@@ -52,6 +53,7 @@ h1.logo{font-size:min(11vw,90px);line-height:.95;margin:0 0 10px;color:#ffb020;-
 <body>
 <div id="ui">
   <div id="hud" class="hidden">
+    <div class="hud-box" id="hud-hp" title="Health: 3 Hits"><span id="hp-icons" style="font-size:18px;letter-spacing:2px;">🧡🧡🧡</span></div>
     <div class="hud-box"><span class="ico fruit"></span><span id="fruit-count">0</span>&nbsp;/&nbsp;<span id="fruit-total">0</span></div>
     <div class="hud-box"><span class="ico crate"></span><span id="crate-count">0</span>&nbsp;/&nbsp;<span id="crate-total">0</span></div>
     <div class="hud-box"><span class="ico life"></span>&times;&nbsp;<span id="lives-count">3</span></div>
@@ -1682,10 +1684,11 @@ function updateSlamVFX(dt){
 }
 
 const waterVFX={ripples:[],droplets:[],rCur:0,dCur:0};
+const raftWakeVFX={ripples:[],foam:[],rCur:0,fCur:0};
 (function(){
   const ripGeo=new THREE.RingGeometry(0.25,0.65,32);
   ripGeo.rotateX(-Math.PI/2);
-  for(let i=0;i<12;i++){
+  for(let i=0;i<24;i++){
     const mat=new THREE.MeshBasicMaterial({
       color:0x7be8ff,transparent:true,opacity:0.85,side:THREE.DoubleSide,
       blending:THREE.AdditiveBlending,depthWrite:false
@@ -1696,7 +1699,7 @@ const waterVFX={ripples:[],droplets:[],rCur:0,dCur:0};
     waterVFX.ripples.push({mesh:m,life:0,maxLife:0.75});
   }
   const dropGeo=new THREE.SphereGeometry(0.065,6,5);
-  for(let i=0;i<32;i++){
+  for(let i=0;i<48;i++){
     const mat=new THREE.MeshBasicMaterial({
       color:0xaef4ff,transparent:true,opacity:0.92,depthWrite:false,blending:THREE.AdditiveBlending
     });
@@ -1704,6 +1707,33 @@ const waterVFX={ripples:[],droplets:[],rCur:0,dCur:0};
     m.visible=false;
     scene.add(m);
     waterVFX.droplets.push({mesh:m,vel:new THREE.Vector3(),life:0,maxLife:0.7});
+  }
+
+  // Pre-allocated wake ripple rings for moving water rafts
+  const wRipGeo=new THREE.RingGeometry(0.35,0.92,28);
+  wRipGeo.rotateX(-Math.PI/2);
+  for(let i=0;i<22;i++){
+    const mat=new THREE.MeshBasicMaterial({
+      color:0x8ef0ff,transparent:true,opacity:0.80,side:THREE.DoubleSide,
+      blending:THREE.AdditiveBlending,depthWrite:false
+    });
+    const m=new THREE.Mesh(wRipGeo,mat);
+    m.visible=false;
+    scene.add(m);
+    raftWakeVFX.ripples.push({mesh:m,life:0,maxLife:1.1,startScale:0.4,maxScale:2.8});
+  }
+
+  // Pre-allocated wake foam quads
+  const foamGeo=new THREE.PlaneGeometry(1.25,1.25);
+  foamGeo.rotateX(-Math.PI/2);
+  for(let i=0;i<30;i++){
+    const mat=new THREE.MeshBasicMaterial({
+      map:TEX.foam,transparent:true,opacity:0.75,depthWrite:false,blending:THREE.AdditiveBlending
+    });
+    const m=new THREE.Mesh(foamGeo,mat);
+    m.visible=false;
+    scene.add(m);
+    raftWakeVFX.foam.push({mesh:m,vel:new THREE.Vector3(),life:0,maxLife:0.95,rVel:0});
   }
 })();
 function spawnWaterSplash(p,intensity=1.0){
@@ -1718,7 +1748,7 @@ function spawnWaterSplash(p,intensity=1.0){
     r.life=r.maxLife=0.65+i*0.15;
     r.mesh.material.opacity=0.85;
   }
-  const dropCount=Math.min(32,Math.round(20*intensity));
+  const dropCount=Math.min(48,Math.round(20*intensity));
   for(let i=0;i<dropCount;i++){
     const d=waterVFX.droplets[waterVFX.dCur];
     waterVFX.dCur=(waterVFX.dCur+1)%waterVFX.droplets.length;
@@ -1735,6 +1765,70 @@ function spawnWaterSplash(p,intensity=1.0){
   for(let i=0;i<12;i++){
     const a=rand(0,Math.PI*2),s=rand(1.5,3.8)*intensity;
     sparks.spawn(p.x,ripY+0.15,p.z,Math.cos(a)*s,rand(3.2,5.8)*intensity,Math.sin(a)*s,rand(0.4,0.65),0.75,0.95,1.0);
+  }
+}
+function spawnWaterMarginSpray(p,vel,isSlide){
+  const ripY=WATER_Y+0.04;
+  const r=waterVFX.ripples[waterVFX.rCur];
+  waterVFX.rCur=(waterVFX.rCur+1)%waterVFX.ripples.length;
+  r.mesh.visible=true;
+  r.mesh.position.set(p.x,ripY,p.z);
+  r.mesh.scale.setScalar(0.22);
+  r.life=r.maxLife=0.55;
+  r.mesh.material.opacity=0.75;
+
+  const count=isSlide?8:4;
+  const speed=isSlide?3.2:1.8;
+  for(let i=0;i<count;i++){
+    const d=waterVFX.droplets[waterVFX.dCur];
+    waterVFX.dCur=(waterVFX.dCur+1)%waterVFX.droplets.length;
+    d.mesh.visible=true;
+    d.mesh.position.set(p.x+rand(-0.12,0.12),ripY+0.08,p.z+rand(-0.12,0.12));
+    const a=rand(0,Math.PI*2);
+    d.vel.set(Math.cos(a)*rand(0.8,speed)+(vel?vel.x*0.2:0),rand(2.2,4.4),Math.sin(a)*rand(0.8,speed)+(vel?vel.z*0.2:0));
+    d.life=d.maxLife=rand(0.35,0.52);
+    d.mesh.scale.setScalar(rand(0.65,1.05));
+    d.mesh.material.opacity=0.88;
+  }
+}
+function spawnRaftWake(cx,cz,dx,w,d){
+  const ripY=WATER_Y+0.038;
+  const dirSign=dx>0?1:-1;
+  // Stern wake ripples at trailing pontoon ends
+  for(const sz of[-d*0.35,d*0.35]){
+    const r=raftWakeVFX.ripples[raftWakeVFX.rCur];
+    raftWakeVFX.rCur=(raftWakeVFX.rCur+1)%raftWakeVFX.ripples.length;
+    r.mesh.visible=true;
+    r.mesh.position.set(cx-dirSign*w*0.36+rand(-0.12,0.12),ripY,cz+sz+rand(-0.12,0.12));
+    r.startScale=rand(0.38,0.55);
+    r.maxScale=rand(2.2,2.9);
+    r.mesh.scale.setScalar(r.startScale);
+    r.life=r.maxLife=rand(0.85,1.2);
+    r.mesh.material.opacity=0.78;
+  }
+  // Bow displacement ripple
+  const rBow=raftWakeVFX.ripples[raftWakeVFX.rCur];
+  raftWakeVFX.rCur=(raftWakeVFX.rCur+1)%raftWakeVFX.ripples.length;
+  rBow.mesh.visible=true;
+  rBow.mesh.position.set(cx+dirSign*w*0.42,ripY,cz+rand(-0.25,0.25));
+  rBow.startScale=0.45;rBow.maxScale=2.1;
+  rBow.mesh.scale.setScalar(rBow.startScale);
+  rBow.life=rBow.maxLife=0.75;
+  rBow.mesh.material.opacity=0.72;
+
+  // Trailing wake foam quads
+  for(let i=0;i<2;i++){
+    const f=raftWakeVFX.foam[raftWakeVFX.fCur];
+    raftWakeVFX.fCur=(raftWakeVFX.fCur+1)%raftWakeVFX.foam.length;
+    f.mesh.visible=true;
+    const fz=cz+rand(-d*0.38,d*0.38);
+    f.mesh.position.set(cx-dirSign*(w*0.30+rand(0.1,0.45)),ripY+0.005,fz);
+    f.mesh.rotation.y=rand(0,Math.PI*2);
+    f.vel.set(-dirSign*rand(0.3,0.85),0,rand(-0.2,0.2));
+    f.rVel=rand(-0.7,0.7);
+    f.life=f.maxLife=rand(0.75,1.05);
+    f.mesh.scale.setScalar(rand(0.75,1.25));
+    f.mesh.material.opacity=0.78;
   }
 }
 function updateWaterVFX(dt){
@@ -1757,6 +1851,25 @@ function updateWaterVFX(dt){
     const progress=d.life/d.maxLife;
     d.mesh.material.opacity=progress*0.92;
     if(d.mesh.position.y<=WATER_Y+0.02)d.life=0;
+  }
+  for(const r of raftWakeVFX.ripples){
+    if(r.life<=0)continue;
+    r.life-=dt;
+    if(r.life<=0){r.mesh.visible=false;continue;}
+    const p=1-(r.life/r.maxLife);
+    r.mesh.scale.setScalar(r.startScale+p*(r.maxScale-r.startScale));
+    r.mesh.material.opacity=(1-p)*(1-p)*0.78;
+  }
+  for(const f of raftWakeVFX.foam){
+    if(f.life<=0)continue;
+    f.life-=dt;
+    if(f.life<=0){f.mesh.visible=false;continue;}
+    f.mesh.position.x+=f.vel.x*dt;
+    f.mesh.position.z+=f.vel.z*dt;
+    f.mesh.rotation.y+=f.rVel*dt;
+    const p=1-(f.life/f.maxLife);
+    f.mesh.scale.multiplyScalar(1+0.35*dt);
+    f.mesh.material.opacity=(1-p)*(1-p)*0.78;
   }
 }
 function isNearWater(x,z){
@@ -2026,7 +2139,7 @@ class TNT{
     camRig.trauma=Math.min(camRig.trauma+0.6,1);
     for(const c of crates)if(!c.broken&&c.mesh.position.distanceTo(p)<CFG.tntRadius)c.break_();
     for(const t2 of tnts)if(t2!==this&&!t2.exploded&&t2.mesh.position.distanceTo(p)<CFG.tntRadius)t2.arm(rand(0.15,0.35));
-    if(game.state==='PLAYING'&&player.pos.distanceTo(p)<CFG.tntRadius+0.5)player.die('tnt',p);
+    if(game.state==='PLAYING'&&player.pos.distanceTo(p)<CFG.tntRadius+0.5)player.takeDamage(1,p,'tnt');
   }
   reset(){
     this.exploded=false;this.armed=false;this.fuse=0;
@@ -2058,7 +2171,12 @@ class Fruit{
   collect(){
     if(this.state==='collected'||this.state==='hidden')return;
     this.state='collected';
-    game.stats.fruit++;updateHUD();
+    game.stats.fruit++;
+    if(game.stats.fruit%25===0&&typeof player!=='undefined'&&player&&player.hp<3){
+      player.hp=Math.min(3,player.hp+1);
+      audio.chime();
+    }
+    updateHUD();
     audio.fruit();
     sparks.burst(this.pos,9,2.4,0.5,GOLD,1.5);
   }
@@ -2105,7 +2223,7 @@ class BouncePad{
 }
 class Log{
   constructor(x,topY,z,len,range,speed,phase){
-    this.r=0.72;this.x=x;this.baseZ=z;this.range=range;this.speed=speed;this.phase=phase;this.len=len;
+    this.r=0.54;this.x=x;this.baseZ=z;this.range=range;this.speed=speed;this.phase=phase;this.len=len;
     this.y=topY+this.r;
     this.group=new THREE.Group();
     const cyl=new THREE.Mesh(new THREE.CylinderGeometry(this.r,this.r,len,12),toonMat({map:TEX.wood}));
@@ -2146,10 +2264,10 @@ class Log{
     this.group.rotation.x+=dz/this.r;
     if(game.state==='PLAYING'&&player.iframes<=0&&!player.dead){
       const p=player.pos;
-      if(Math.abs(p.x-this.x)<this.len/2+0.3&&
-         Math.abs(p.z-z)<this.r+0.42&&
-         p.y<this.y+this.r-0.28){
-        player.die('log',this.group.position);
+      if(Math.abs(p.x-this.x)<this.len/2+0.15&&
+         Math.abs(p.z-z)<this.r+0.22&&
+         p.y<this.y+this.r-0.20){
+        player.takeDamage(1,this.group.position,'log');
       }
     }
   }
@@ -2249,6 +2367,7 @@ class Checkpoint{
 class MovingPlatform{
   constructor(x,y,z,w,d,opts){
     opts=opts||{};
+    this.opts=opts;
     this.w=w;this.h=0.65;this.d=d;
     this.axis=opts.axis||'x';
     this.range=opts.range||3.5;
@@ -2257,6 +2376,7 @@ class MovingPlatform{
     this.basePos=new THREE.Vector3(x,y,z);
     this.curPos=new THREE.Vector3(x,y,z);
     this.delta=new THREE.Vector3();
+    this.wakeTimer=0;
 
     this.group=new THREE.Group();
     this.group.position.set(x,y,z);
@@ -2390,8 +2510,18 @@ class MovingPlatform{
     this.solid.z0=nz-this.d/2;this.solid.z1=nz+this.d/2;
 
     if(this.crystal)this.crystal.rotation.y+=dt*2.5;
+
+    // Dynamic water wake ripples and foam particles for moving raft
+    if(this.opts&&this.opts.mat==='wood'&&Math.abs(this.delta.x)>0.001){
+      this.wakeTimer=(this.wakeTimer||0)+dt;
+      if(this.wakeTimer>0.10){
+        this.wakeTimer=0;
+        spawnRaftWake(nx,nz,this.delta.x,this.w,this.d);
+      }
+    }
   }
   reset(){
+    this.wakeTimer=0;
     this.curPos.copy(this.basePos);
     this.delta.set(0,0,0);
     this.group.position.copy(this.basePos);
@@ -2550,7 +2680,7 @@ class CrabEnemy{
         if(player.spinT>0||player.slideT>0||player.slamState===2){
           this.spinDefeat(player.pos);
         }else{
-          player.die('crab',this.pos);
+          player.takeDamage(1,this.pos,'crab');
         }
       }
     }
@@ -2676,7 +2806,7 @@ class SnappingPlant{
         if(player.spinT>0||player.slideT>0||player.slamState===2){
           this.spinDefeat(player.pos);
         }else if(this.isOpen&&player.iframes<=0){
-          player.die('plant',this.pos);
+          player.takeDamage(1,this.pos,'plant');
         }
       }
     }
@@ -2942,6 +3072,95 @@ function torch(x,baseY,z,withLight){
     g.add(light);
   }
   torches.push({flame:flame,light:light,phase:rnd()*7,x:x,y:baseY+2.1,z:z});
+}
+function templeWallSconce(x,baseY,z,facingDir){
+  facingDir=facingDir||1; // +1 facing +X (mounted on left pier), -1 facing -X (mounted on right pier)
+  const g=new THREE.Group();
+  g.position.set(x,baseY,z);
+
+  // 1. Carved temple stone plinth & balustrade pier
+  const stoneParts=[];
+  const pierBase=new THREE.BoxGeometry(0.9,1.6,1.2);
+  pierBase.translate(0,0.8,0);
+  stoneParts.push(pierBase);
+
+  const plinthCap=new THREE.BoxGeometry(1.05,0.18,1.35);
+  plinthCap.translate(0,1.69,0);
+  stoneParts.push(plinthCap);
+
+  const trimFrieze=new THREE.BoxGeometry(1.10,0.12,1.40);
+  trimFrieze.translate(0,1.54,0);
+  stoneParts.push(trimFrieze);
+
+  const pierMesh=new THREE.Mesh(mergeGeos(stoneParts),MATS.stone());
+  pierMesh.castShadow=pierMesh.receiveShadow=true;
+  g.add(pierMesh);
+
+  // 2. Cast bronze wall armature & fluted brazier bowl
+  const bronzeParts=[];
+  const mountX=facingDir*0.46; // flush with the inward-facing pier wall
+  const armLen=0.62;
+  const bowlX=mountX+facingDir*armLen;
+
+  // Escutcheon wall backplate (octagonal bronze rosette)
+  const plate=new THREE.CylinderGeometry(0.25,0.28,0.08,8);
+  plate.rotateZ(Math.PI/2);
+  plate.translate(mountX,1.35,0);
+  bronzeParts.push(plate);
+
+  // Wall boss & rivets
+  const boss=new THREE.CylinderGeometry(0.12,0.14,0.06,8);
+  boss.rotateZ(Math.PI/2);
+  boss.translate(mountX+facingDir*0.04,1.35,0);
+  bronzeParts.push(boss);
+
+  // Horizontal cantilever bronze arm
+  const arm=new THREE.CylinderGeometry(0.045,0.045,armLen,8);
+  arm.rotateZ(Math.PI/2);
+  arm.translate(mountX+facingDir*armLen*0.5,1.35,0);
+  bronzeParts.push(arm);
+
+  // Diagonal scrolled brace supporting arm from underneath
+  const brace=new THREE.CylinderGeometry(0.038,0.038,armLen*0.85,6);
+  brace.rotateZ(facingDir*0.75);
+  brace.translate(mountX+facingDir*armLen*0.38,1.08,0);
+  bronzeParts.push(brace);
+
+  // Brazier chalice bowl & fluted lip
+  const bowlStem=new THREE.CylinderGeometry(0.08,0.08,0.22,8);
+  bowlStem.translate(bowlX,1.42,0);
+  bronzeParts.push(bowlStem);
+
+  const bowlCup=new THREE.CylinderGeometry(0.26,0.12,0.28,8);
+  bowlCup.translate(bowlX,1.60,0);
+  bronzeParts.push(bowlCup);
+
+  const bowlLip=new THREE.CylinderGeometry(0.29,0.27,0.06,8);
+  bowlLip.translate(bowlX,1.75,0);
+  bronzeParts.push(bowlLip);
+
+  const finial=new THREE.ConeGeometry(0.09,0.20,6);
+  finial.rotateX(Math.PI);
+  finial.translate(bowlX,1.30,0);
+  bronzeParts.push(finial);
+
+  const bronzeMesh=new THREE.Mesh(mergeGeos(bronzeParts),toonMat({color:0xa66d32,roughness:0.35,metalness:0.65}));
+  bronzeMesh.castShadow=true;
+  g.add(bronzeMesh);
+
+  // 3. Dancing stylized torch flame
+  const flame=new THREE.Mesh(new THREE.ConeGeometry(0.19,0.56,7),
+    toonMat({color:0xffcb42,emissive:0xff8810,emissiveIntensity:2.7,noCache:true}));
+  flame.position.set(bowlX,2.02,0);
+  g.add(flame);
+
+  // 4. Dynamic warm amber PointLight casting flickering pools on stone risers
+  const light=new THREE.PointLight(0xff9428,0.74,12,2);
+  light.position.set(bowlX,2.15,0);
+  g.add(light);
+
+  scene.add(g);
+  torches.push({flame:flame,light:light,phase:rnd()*7,x:x+bowlX,y:baseY+2.02,z:z});
 }
 function bridge(x,topY,z,w,d){
   const m=new THREE.Mesh(new THREE.BoxGeometry(w,0.5,d),MATS.wood());
@@ -3362,12 +3581,12 @@ function buildLevel(){
   checkpoint(-4.2,3,-75,1);
   crate(-3.5,3,-72);crate(3.5,3,-73);
   // -- beat 6: log alley
-  log_(0,3,-82,9.5,3,2.1,0);
-  log_(0,3,-90,9.5,3,2.7,2.1);
-  crab(0,3,-88,3.2,0,2.2);
-  log_(0,3,-98,9.5,3,2.3,4.2);
+  crab(0,3,-78.5,2.6,0,2.0);
+  log_(-0.6,3,-83,7.6,2.2,1.5,0);
   fruitRow(-2.5,3,-84,-88,3);
+  log_(0.6,3,-91,7.6,2.2,1.6,2.1);
   fruitRow(2.5,3,-92,-96,3);
+  log_(0,3,-99,7.8,2.0,1.5,4.2);
   palm(-5.6,3,-80,5);palm(5.6,3,-88,4.6);palm(-5.6,3,-96,5.2);palm(5.6,3,-104,4.4);
   // -- beat 7: pillar hops over the pit
   pillar(-2,3,-111);pillar(2,3,-115.5);pillar(-1,3,-120);pillar(1.4,3,-124);
@@ -3415,11 +3634,15 @@ function buildLevel(){
   // -- beat 10: temple stairs + downhill logs
   for(let i=0;i<6;i++)plat(0,3.5+i*0.5,-169.5-3*i,10,3.2,'stone',2.5);
   for(let i=0;i<6;i++)fruitAt(i%2?2.4:-2.4,4.35+i*0.5,-169.5-3*i);
+  templeWallSconce(-5.15,4.0,-172.5,1);
+  templeWallSconce(5.15,4.0,-172.5,-1);
+  templeWallSconce(-5.15,5.25,-180.5,1);
+  templeWallSconce(5.15,5.25,-180.5,-1);
   LM.finalYard=plat(0,6,-206,12,40,'stone');
   plant(0,6,-182);
   slideArch(0,6,-185.5,4.8,0.88,1.4,'temple',true);
-  log_(0,6,-190,9.5,2.6,3.2,1);
-  log_(0,6,-194.5,9.5,2.6,3.6,3.5);
+  log_(0,6,-190,8.0,2.2,2.0,1);
+  log_(0,6,-194.5,8.0,2.2,2.2,3.5);
   torch(-4.5,6,-187,false);torch(4.5,6,-187,false);
   // -- beat 11: final bonanza
   for(const sx of[-2.4,-1.2,0,1.2,2.4])crate(sx,6,-204);
@@ -3782,6 +4005,7 @@ function moveToward(v,target,maxD){
 const player={
   root:new THREE.Group(),rig:new THREE.Group(),
   pos:null,vel:new THREE.Vector3(),
+  hp:3,maxHp:3,
   grounded:false,coyote:0,jumpBuf:0,canDouble:true,
   spinT:0,spinCdT:0,iframes:0,dead:false,
   slideT:0,slideCdT:0,slideDir:new THREE.Vector3(0,0,-1),slideSkidT:0,
@@ -3916,6 +4140,10 @@ const player={
     // Load sculpted Blender 5.2 master mascot mesh
     this.uFace={value:new THREE.Vector4(0,0,0,0)};
     this.faceTarget=new THREE.Vector4(0,0,0,0);
+    this.uEyes={value:new THREE.Vector4(0,0,0,0)};
+    this.blinkTimer=3.2;
+    this.blinkDuration=0.13;
+    this.gazeCurrent=new THREE.Vector2(0,0);
     this.slamRecoverT=0;
     if(window.THREE&&THREE.GLTFLoader&&window.HERO_GLB_BASE64){
       try{
@@ -3927,6 +4155,7 @@ const player={
           const model=gltf.scene;
           model.name="Hero_Blender_Sculpted";
           const uF=this.uFace;
+          const uE=this.uEyes;
           model.traverse(o=>{
             if(o.isMesh){
               o.castShadow=true;
@@ -3935,7 +4164,8 @@ const player={
                 o.material.gradientMap=toonRamp;
                 o.material.onBeforeCompile=shader=>{
                   shader.uniforms.uFace=uF;
-                  shader.vertexShader='uniform vec4 uFace;\n'+shader.vertexShader;
+                  shader.uniforms.uEyes=uE;
+                  shader.vertexShader='uniform vec4 uFace;\nuniform vec4 uEyes;\n'+shader.vertexShader;
                   shader.vertexShader=shader.vertexShader.replace(
                     '#include <begin_vertex>',
                     [
@@ -3950,6 +4180,26 @@ const player={
                       '    transformed.y+=uFace.z*0.12;',
                       '    transformed.z+=uFace.y*0.08;',
                       '    transformed.x*=(1.0+uFace.y*0.10);',
+                      '  }',
+                      '  if(uEyes.x>0.001){',
+                      '    if(transformed.y>=3.60&&transformed.y<=4.02&&transformed.z>=0.45&&abs(transformed.x)<=0.28){',
+                      '      float lidWeight=smoothstep(4.02,3.64,transformed.y);',
+                      '      transformed.y-=uEyes.x*0.17*lidWeight;',
+                      '      transformed.z+=uEyes.x*0.038*lidWeight;',
+                      '    }',
+                      '  }',
+                      '  if(transformed.y>=3.55&&transformed.y<=3.82&&transformed.z>=0.72&&abs(transformed.x)>=0.04&&abs(transformed.x)<=0.25){',
+                      '    transformed.x+=uEyes.y*0.038;',
+                      '    transformed.y+=uEyes.z*0.028;',
+                      '    transformed.z+=(1.0-(uEyes.y*uEyes.y+uEyes.z*uEyes.z)*0.22)*0.012*abs(uEyes.y);',
+                      '    if(uEyes.x>0.12){',
+                      '      transformed.y-=uEyes.x*0.07;',
+                      '      transformed.z-=uEyes.x*0.025;',
+                      '    }',
+                      '  }',
+                      '  if(transformed.y>=3.68&&transformed.y<=3.98&&transformed.z>=0.52&&transformed.z<=0.82&&abs(transformed.x)<=0.26){',
+                      '    transformed.y+=uEyes.z*0.022-uEyes.w*0.032;',
+                      '    transformed.x*=(1.0-uEyes.w*0.05);',
                       '  }',
                       '  if(uFace.w>0.001){',
                       '    transformed.y=2.8+(transformed.y-2.8)*(1.0-uFace.w*0.35);',
@@ -4204,6 +4454,85 @@ const player={
     this.uFace.value.y=moveToward(this.uFace.value.y,this.faceTarget.y,spd*dt);
     this.uFace.value.z=moveToward(this.uFace.value.z,this.faceTarget.z,spd*dt);
     this.uFace.value.w=moveToward(this.uFace.value.w,this.faceTarget.w,spd*dt);
+
+    // Procedural eye blinking and subtle gaze tracking
+    if(!this.uEyes)return;
+    if(game.state==='REVIEW'||this.dead){
+      this.uEyes.value.set(0,0,0,0);
+      if(this.gazeCurrent)this.gazeCurrent.set(0,0);
+      this.blinkTimer=3.5;
+    }else{
+      let blink=0;
+      if(this.slamState===0&&this.slideT<=0&&this.spinT<=0){
+        this.blinkTimer-=dt;
+        if(this.blinkTimer<=0){
+          const tB=-this.blinkTimer/this.blinkDuration;
+          if(tB<1.0){
+            blink=Math.sin(tB*Math.PI);
+          }else{
+            this.blinkTimer=rand(2.8,5.2);
+            blink=0;
+          }
+        }
+      }else{
+        this.blinkTimer=Math.max(this.blinkTimer,0.8);
+      }
+
+      let targetGazeX=0,targetGazeY=0,targetBrow=0;
+      const px=this.pos.x,py=this.pos.y+1.8,pz=this.pos.z;
+      const yaw=this.rig.rotation.y;
+      let bestDistSq=56,bestTarget=null;
+
+      for(const e of enemies){
+        if(e.dead)continue;
+        const dx=e.pos.x-px,dy=(e.pos.y+0.6)-py,dz=e.pos.z-pz;
+        const dSq=dx*dx+dy*dy+dz*dz;
+        if(dSq<bestDistSq){
+          const lZ=Math.sin(-yaw)*dx+Math.cos(-yaw)*dz;
+          if(lZ>-0.4){bestDistSq=dSq;bestTarget={dx:dx,dy:dy,dz:dz,isEnemy:true};}
+        }
+      }
+      if(!bestTarget){
+        let bestFruitDist=20;
+        for(const f of fruits){
+          if(f.state==='hidden'||f.state==='collected')continue;
+          const dx=f.pos.x-px,dy=f.pos.y-py,dz=f.pos.z-pz;
+          const dSq=dx*dx+dy*dy+dz*dz;
+          if(dSq<bestFruitDist){
+            const lZ=Math.sin(-yaw)*dx+Math.cos(-yaw)*dz;
+            if(lZ>0.3){bestFruitDist=dSq;bestTarget={dx:dx,dy:dy,dz:dz,isEnemy:false};}
+          }
+        }
+      }
+
+      if(bestTarget){
+        const lX=Math.cos(-yaw)*bestTarget.dx-Math.sin(-yaw)*bestTarget.dz;
+        const lY=bestTarget.dy;
+        const lZ=Math.sin(-yaw)*bestTarget.dx+Math.cos(-yaw)*bestTarget.dz;
+        const dist=Math.max(1.2,Math.hypot(lX,lY,lZ));
+        targetGazeX=clamp(-lX/dist*1.4,-0.85,0.85);
+        targetGazeY=clamp(lY/dist*1.3,-0.65,0.65);
+        if(bestTarget.isEnemy)targetBrow=0.55;
+      }else{
+        targetGazeX=Math.sin(game.t*1.2)*0.18+Math.sin(game.t*2.7)*0.08;
+        targetGazeY=Math.cos(game.t*0.9)*0.12;
+      }
+
+      if(this.slamState===2){
+        targetBrow=1.0;targetGazeY=-0.75;
+      }else if(this.slideT>0){
+        targetBrow=0.35;targetGazeY=0.25;
+      }else if(this.spinT>0){
+        targetBrow=0.4;targetGazeX=Math.sin(game.t*30)*0.5;
+      }
+
+      this.gazeCurrent.x=moveToward(this.gazeCurrent.x,targetGazeX,6.0*dt);
+      this.gazeCurrent.y=moveToward(this.gazeCurrent.y,targetGazeY,5.0*dt);
+      this.uEyes.value.x=blink;
+      this.uEyes.value.y=this.gazeCurrent.x;
+      this.uEyes.value.z=this.gazeCurrent.y;
+      this.uEyes.value.w=moveToward(this.uEyes.value.w,targetBrow,8.0*dt);
+    }
   },
   spinHits(){
     const px=this.pos.x,py=this.pos.y+0.8,pz=this.pos.z,R=CFG.spinRadius;
@@ -4337,6 +4666,7 @@ const player={
       if(this.slideSkidT>0.045){
         this.slideSkidT=0;
         spawnSkidPuff(this.pos,this.slideDir,2,this.getSurface());
+        if(isNearWater(this.pos.x,this.pos.z))spawnWaterMarginSpray(this.pos,this.slideDir,true);
       }
       this.slideHits();
       if(this.jumpBuf>0&&this.grounded){
@@ -4409,6 +4739,7 @@ const player={
         this.footstepT=0;
         const colFn=this.pos.z>-60?TAN:(this.pos.z>-155?GREEN:TAN);
         confetti.burst({x:this.pos.x+rand(-0.15,0.15),y:this.pos.y+0.05,z:this.pos.z+rand(-0.15,0.15)},3,0.8,0.3,colFn,0.5);
+        if(isNearWater(this.pos.x,this.pos.z))spawnWaterMarginSpray(this.pos,this.vel,false);
       }
     }
     const prevSp=Math.hypot(this.prevVel.x,this.prevVel.z);
@@ -4596,10 +4927,41 @@ const player={
     P.tail.rotation.y=Math.sin(t*4)*0.35;
     this.updateFace(dt);
   },
+  takeDamage(amount,srcPos,cause){
+    if(this.dead||this.iframes>0||game.state!=='PLAYING')return;
+    amount=amount||1;
+    this.hp=Math.max(0,(this.hp||3)-amount);
+    updateHUD();
+    if(this.hp<=0){
+      this.die(cause||'hazard',srcPos);
+    }else{
+      audio.hurt();
+      audio.voice('ouch',0.5);
+      camRig.trauma=Math.min(camRig.trauma+0.38,0.75);
+      this.iframes=2.4;
+      this.squash=-0.32;
+      if(this.faceTarget)this.faceTarget.set(0.6,-0.4,0.8,0.4);
+      let kx=0,kz=0;
+      if(srcPos){
+        const dx=this.pos.x-srcPos.x,dz=this.pos.z-srcPos.z;
+        const len=Math.hypot(dx,dz);
+        if(len>0.001){kx=(dx/len)*4.5;kz=(dz/len)*4.5;}
+      }
+      if(kx===0&&kz===0){
+        kx=-Math.sin(this.faceA)*4.2;
+        kz=-Math.cos(this.faceA)*4.2;
+      }
+      this.vel.set(kx,4.8,kz);
+      this.grounded=false;
+      sparks.burst(this.pos,12,2.4,0.4,()=>[1,0.25,0.25],1.5);
+    }
+  },
   die(cause,srcPos){
     if(this.dead||game.state!=='PLAYING')return;
     if(cause!=='pit'&&this.iframes>0)return;
     this.dead=true;
+    this.hp=0;
+    updateHUD();
     audio.hurt();
     this.deathT=0;
     this.deathVel=cause==='pit'?3:8.5;
@@ -4628,10 +4990,14 @@ const player={
     this.vel.set(0,0,0);
     this.groundPlatform=null;
     this.dead=false;this.spinT=0;this.squash=0;
+    this.hp=3;
     this.slideT=0;this.slideCdT=0;this.slideSkidT=0;
     this.slamState=0;this.slamStallT=0;this.slamRecoverT=0;
     if(this.faceTarget)this.faceTarget.set(0,0,0,0);
     if(this.uFace)this.uFace.value.set(0,0,0,0);
+    if(this.uEyes)this.uEyes.value.set(0,0,0,0);
+    if(this.gazeCurrent)this.gazeCurrent.set(0,0);
+    this.blinkTimer=3.5;
     this.prevVel.set(0,0,0);this.prevY=p.y;
     if(this.spinMesh)this.spinMesh.visible=false;
     this.root.scale.setScalar(1);
@@ -4649,6 +5015,7 @@ const player={
       this.glbModel.position.set(0,0,0);
       this.glbModel.rotation.set(0,0,0);
     }
+    if(typeof updateHUD==='function')updateHUD();
   },
   teleport(x,y,z){this.pos.set(x,y,z);this.vel.set(0,0,0);this.groundPlatform=null;},
   victoryAnim(dt,t){
@@ -4720,12 +5087,20 @@ const $=id=>document.getElementById(id);
 const hudEl=$('hud'),titleEl=$('title'),goEl=$('gameover'),vicEl=$('victory'),perfectEl=$('perfect');
 function show(el,on){el.classList.toggle('hidden',!on);}
 function updateHUD(){
-  $('fruit-count').textContent=game.stats.fruit;
-  $('fruit-total').textContent=FRUIT_TOTAL;
-  $('crate-count').textContent=game.stats.crates;
-  $('crate-total').textContent=CRATE_TOTAL;
-  $('lives-count').textContent=game.lives;
-  $('cp-label').textContent=game.checkpointIndex<1?'START':('TOTEM '+game.checkpointIndex);
+  const fc=$('fruit-count'),ft=$('fruit-total'),cc=$('crate-count'),ct=$('crate-total'),lc=$('lives-count'),cp=$('cp-label');
+  if(fc)fc.textContent=game.stats.fruit;
+  if(ft)ft.textContent=FRUIT_TOTAL;
+  if(cc)cc.textContent=game.stats.crates;
+  if(ct)ct.textContent=CRATE_TOTAL;
+  if(lc)lc.textContent=game.lives;
+  if(cp)cp.textContent=game.checkpointIndex<1?'START':('TOTEM '+game.checkpointIndex);
+  const hpEl=$('hp-icons');
+  const hpBox=$('hud-hp');
+  if(hpEl){
+    const hp=(typeof player!=='undefined'&&player&&player.hp!==undefined)?player.hp:3;
+    hpEl.textContent=hp>=3?'🧡🧡🧡':(hp===2?'🧡🧡🤍':(hp===1?'🧡🤍🤍':'🤍🤍🤍'));
+    if(hpBox)hpBox.classList.toggle('danger',hp===1);
+  }
 }
 function statsHTML(){
   const pct=FRUIT_TOTAL?Math.round(game.stats.fruit/FRUIT_TOTAL*100):0;
@@ -4777,6 +5152,7 @@ const game={
   },
   fullReset(){
     this.lives=CFG.lives;
+    if(typeof player!=='undefined'&&player)player.hp=3;
     this.stats.fruit=0;this.stats.crates=0;
     this.time=0;this.perfect=false;
     this.checkpointIndex=0;this.respawn.set(0,0.1,0);
@@ -5158,7 +5534,7 @@ window.BB={
     player.respawn(_reviewV.set(p[0],p[1],p[2]));
     // respawn() drops the hero mid-air by design (it is a death recovery);
     // a review still wants him planted and idling, not in a fall pose.
-    player.grounded=true;player.canDouble=true;player.iframes=0;
+    player.grounded=true;player.canDouble=true;player.iframes=0;player.hp=3;
   },
   setUI(on){uiEl.classList.toggle('hidden',!on);},
   perf(on){perfOn=!!on;show(perfEl,perfOn);if(perfOn)paintPerf();},
