@@ -31,7 +31,35 @@ references. Provenance is recorded per set; none are matched-composition
 references, so they inform direction and cannot establish a controlled
 A/B win on their own (method §6).
 
-## NEXT MILESTONE (M1, opened 2026-09-05)
+## NEXT MILESTONE (M2, opened 2026-09-10)
+
+Make it a game: the three functional orders WO-F01..F03, ported from the
+old game's rules (`origin/claude/aaa-visual-quality:index.html`) with the
+physics `CFG` verbatim. Decision 2026-09-08 (Scott): gameplay rules
+before the critic's top visual pick (WO-V06 + WO-R01, now M3's candidate).
+
+Acceptance (all observable in a fixed-step scripted run,
+`node tools/playtest.mjs`, AND in a real-input playtest by Scott):
+
+1. Fruit (WO-F01): the count increments on contact with a fruit, the
+   fruit disappears, and the HUD shows count / total.
+2. Crates and TNT (WO-F02): a crate breaks when the hero lands on it
+   (stomp, with `crateBounce`) or spins into it (`spinRadius`); its
+   solid is removed so the hero falls through where it stood. TNT arms on
+   stomp or spin, counts down `tntFuse` 2.2 s, then clears every crate
+   within `tntRadius` 4.6 and costs a life if the hero is within
+   `tntRadius` + 0.5.
+3. Checkpoints (WO-F03): crossing a totem activates it (HUD label changes
+   from START to TOTEM n). Falling into the water (below `killY`)
+   respawns the hero at the last activated checkpoint with the fruit
+   count kept and one life fewer; at zero lives the run resets.
+4. Gates stay green: build, determinism (A/A bit-identical), shots.
+
+Visual effects for these events (debris, sparks, flash, camera trauma)
+are NOT in M2; they belong to the render/art owner and get their own
+order (WO-F08).
+
+## PREVIOUS MILESTONE (M1, opened 2026-09-05, closed 2026-09-08)
 
 Establish the method's evidence loop on the accepted line:
 
@@ -72,7 +100,10 @@ carries every tell; `shots/roundN` includes `play-camera`.
 | G4 ordinary play capture | Follow-camera frame mid-corridor | framing `play-camera` | as G3 | present in sheet | PASS (M1, `shots/round35/play-camera.png`) |
 | G5 blind A/B | Candidate ≥ baseline, no regression | `tools/packet.mjs` + critic v1 | 5 pairs, neutral names | verdict A/B/tie per pair, mapping revealed after | RUN (M1, p01): candidate 3 / baseline 2, regressions WO-R01–R03 → not promoted; baseline label stays r28 |
 | G6 target gap | Critic vs refs names no supported gap | critic v1 §B | as G3 | ranked list empty or unsupported | OPEN (long term) |
-| G7 gameplay rules | fruit, crates, TNT, checkpoints, HUD | manual + fixed-step | real browser, keyboard | behaviour checklist | NOT STARTED |
+| G7 gameplay rules | fruit, crates, TNT, checkpoints, HUD | `node tools/playtest.mjs` (fixed-step scripted run, `?fixeddt=` + `?seed=`) + Scott's real-input playtest | headless Chromium; then a real browser | scripted run all PASS; checklist observed | IN PROGRESS (M2) |
+| G7a fruit | count increments on contact; fruit hides; HUD count/total | as G7 | as G7 | playtest.mjs `fruit` PASS | M2 |
+| G7b crates/TNT | stomp/spin breaks; solid removed; TNT fuse 2.2 s; radius 4.6 clears crates; hero hit costs a life | as G7 | as G7 | playtest.mjs `stomp`, `spin`, `tnt` PASS | M2 |
+| G7c checkpoints | totem activates; water fall respawns there; fruit kept; life lost | as G7 | as G7 | playtest.mjs `checkpoint`, `fall` PASS | M2 |
 | G8 real input | keyboard/gamepad paths drive the hero | manual playtest | real browser | observed | NOT STARTED |
 | G9 performance | frame time p95 within budget | `?perf` on a real GPU | Scott's machine | p95 figure | NOT STARTED (headless cannot measure) |
 | G10 audio | audible quality | listening checklist | real browser | recording | NOT STARTED (no audio yet) |
