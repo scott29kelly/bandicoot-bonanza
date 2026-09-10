@@ -35,6 +35,11 @@ export function installHarness(ctx){
     setUI(on){hideUI(!on);},
     perf(on){showPerf(!!on);},
 
+    /* PLAY-mode teleport for the scripted run (tools/playtest.mjs). */
+    place(p){if(setPlayerPos)setPlayerPos(p);},
+    /* Gameplay counters as a read-only snapshot (fruit, crates, lives, ...). */
+    game(){return ctx.gameState?ctx.gameState():null;},
+
     review(id){
       const f=framings.find(x=>x.id===id);
       if(!f)throw new Error('no such framing: '+id);

@@ -121,6 +121,34 @@ export function makeCrate(x,y,z){
   return {mesh,solid:{minX:x-hw,maxX:x+hw,minZ:z-hw,maxZ:z+hw,topY:y+S-0.02}};
 }
 
+/**
+ * Checkpoint totem (M2). Two stacked carved blocks, a brass band and a gem
+ * that turns green when activated. NO random draws: built after the
+ * scatter so the seeded layout ahead of it never moves.
+ */
+export function makeCheckpoint(x,y,z,idx){
+  const g=new THREE.Group();
+  const woodMat=toonMat({color:0x7a5230});
+  const bandMat=toonMat({color:0xc9a15a});
+  const s1=new THREE.Mesh(new RoundedBoxGeometry(1.1,1.3,1.1,3,0.08),woodMat);
+  s1.position.y=0.65;
+  const s2=new THREE.Mesh(new RoundedBoxGeometry(0.9,1.0,0.9,3,0.08),woodMat);
+  s2.position.y=1.8;s2.rotation.y=0.35;
+  const band=new THREE.Mesh(new THREE.BoxGeometry(1.16,0.18,1.16),bandMat);
+  band.position.y=1.28;
+  const gemMat=toonMat({color:0x40e0d0,emissive:0x0a5048,emissiveIntensity:0.6});
+  const gem=new THREE.Mesh(new THREE.OctahedronGeometry(0.34,0),gemMat);
+  const gemBaseY=2.75;
+  gem.position.y=gemBaseY;
+  for(const o of [s1,s2,band,gem]){o.castShadow=true;o.receiveShadow=true;g.add(o);}
+  g.position.set(x,y,z);
+  const cp={mesh:g,gem,x,z,topY:y,idx,activated:false,
+    setLit(on){gemMat.emissive.setHex(on?0x2fff9f:0x0a5048);gemMat.emissiveIntensity=on?2.2:0.6;},
+    // Keyed to t, never accumulated: review captures must replay exactly.
+    update(dt,t){gem.position.y=gemBaseY+Math.sin(t*2+idx*2)*0.12;gem.rotation.y=t*(cp.activated?3:1);}};
+  return cp;
+}
+
 export function makeTNT(x,y,z){
   mats();
   const parts=[];

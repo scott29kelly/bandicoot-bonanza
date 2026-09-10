@@ -12,7 +12,12 @@ import {windAt} from '../world/wind.js';
 import {contactBlob} from '../world/contact.js';
 import {createHeroModel} from './model.js';
 
-export function createHero(scene,solids,spawn){
+/**
+ * hooks (rules module): onLand(solid) may return 'bounce' (crate/TNT stomp);
+ * onSpin(x,y,z) runs every frame the spin is live; onFall() replaces the
+ * built-in respawn when the hero drops below CFG.killY.
+ */
+export function createHero(scene,solids,spawn,hooks={}){
   const model=createHeroModel();
   const group=model.root;
   scene.add(group);
@@ -26,10 +31,12 @@ export function createHero(scene,solids,spawn){
 
   /* ---------- input ----------------------------------------------------- */
   const keys={};
-  let jumpQueued=false;
+  let jumpQueued=false,spinQueued=false;
   window.addEventListener('keydown',e=>{
     keys[e.code]=true;
     if(e.code==='Space'){jumpQueued=true;e.preventDefault();}
+    // Spin: the old game's binding (Shift or K).
+    if(e.code==='ShiftLeft'||e.code==='ShiftRight'||e.code==='KeyK'){spinQueued=true;e.preventDefault();}
   });
   window.addEventListener('keyup',e=>{keys[e.code]=false;});
   window.addEventListener('blur',()=>{for(const k in keys)keys[k]=false;});
@@ -38,20 +45,26 @@ export function createHero(scene,solids,spawn){
   const pos=new THREE.Vector3(...spawn);
   const vel=new THREE.Vector3();
   let onGround=false,coyote=0,jumpBuf=0,canDouble=false,facing=0,runPhase=0;
+  let spinT=0,spinCdT=0; // CFG.spinDur / CFG.spinCd, as the old game
   // Review-only pose pin: a framing can ask for a mid-stride capture
   // (player[4] = 0..1 run weight). Frozen while pinned, cleared by input.
   let posePin=0;
 
+  // Broken crates keep their solid record with dead=true so nothing
+  // re-indexes mid-frame; every query skips them.
+  let landed=null; // the solid groundAt() last found under the feet
   function groundAt(x,z){
-    let top=-Infinity;
+    let top=-Infinity;landed=null;
     for(const s of solids){
-      if(x>=s.minX&&x<=s.maxX&&z>=s.minZ&&z<=s.maxZ&&s.topY>top)top=s.topY;
+      if(s.dead)continue;
+      if(x>=s.minX&&x<=s.maxX&&z>=s.minZ&&z<=s.maxZ&&s.topY>top){top=s.topY;landed=s;}
     }
     return top;
   }
 
-  function respawn(){
-    pos.set(...spawn);vel.set(0,0,0);onGround=false;canDouble=false;
+  function respawnAt(p){
+    pos.set(p[0],p[1],p[2]);vel.set(0,0,0);
+    onGround=false;canDouble=false;spinT=0;jumpBuf=0;coyote=0;
   }
 
   function update(dt,t){
@@ -71,6 +84,13 @@ export function createHero(scene,solids,spawn){
     const sp=Math.hypot(vel.x,vel.z);
     if(sp>CFG.runSpeed){vel.x*=CFG.runSpeed/sp;vel.z*=CFG.runSpeed/sp;}
 
+    spinCdT=Math.max(0,spinCdT-dt);
+    if(spinQueued){spinQueued=false;if(spinCdT<=0){spinT=CFG.spinDur;spinCdT=CFG.spinCd;}}
+    if(spinT>0){
+      spinT=Math.max(0,spinT-dt);
+      if(hooks.onSpin)hooks.onSpin(pos.x,pos.y+0.8,pos.z);
+    }
+
     if(jumpQueued){jumpBuf=CFG.jumpBuffer;jumpQueued=false;}
     else jumpBuf=Math.max(0,jumpBuf-dt);
     coyote=onGround?CFG.coyote:Math.max(0,coyote-dt);
@@ -87,11 +107,16 @@ export function createHero(scene,solids,spawn){
     const top=groundAt(pos.x,pos.z);
     if(vel.y<=0&&prevY>=top-0.001&&pos.y<=top){
       pos.y=top;vel.y=0;onGround=true;canDouble=false;
+      // A crate or TNT under the feet: the rules break/arm it and the hero
+      // takes the old game's crate bounce instead of standing on it.
+      const r=landed&&hooks.onLand?hooks.onLand(landed):undefined;
+      if(r==='bounce'){vel.y=CFG.crateBounce;onGround=false;canDouble=true;}
     }else if(pos.y>top+0.001){
       onGround=false;
     }
     // Cheap side resolution: shoved out of any solid the body overlaps.
     for(const s of solids){
+      if(s.dead)continue;
       if(pos.y<s.topY-0.25&&pos.y>s.topY-2.2&&
          pos.x>s.minX-0.3&&pos.x<s.maxX+0.3&&pos.z>s.minZ-0.3&&pos.z<s.maxZ+0.3){
         const dxl=pos.x-(s.minX-0.3),dxr=(s.maxX+0.3)-pos.x;
@@ -103,7 +128,7 @@ export function createHero(scene,solids,spawn){
       }
     }
 
-    if(pos.y<CFG.killY)respawn();
+    if(pos.y<CFG.killY){if(hooks.onFall)hooks.onFall();else respawnAt(spawn);}
     if(!posePin)runPhase+=dt*(4+sp*1.5); // pinned pose keeps its phase
     place(t,sp);
   }
@@ -111,7 +136,8 @@ export function createHero(scene,solids,spawn){
   /* ---------- procedural animation --------------------------------------- */
   function place(t,sp=0){
     group.position.copy(pos);
-    group.rotation.y=facing;
+    // Spin: two full turns over spinDur, keyed to the spin timer.
+    group.rotation.y=facing+(spinT>0?(1-spinT/CFG.spinDur)*Math.PI*4:0);
 
     const {hips,head,ears,arms,legs,tailPivot}=model;
     const run=Math.max(posePin,THREE.MathUtils.clamp(sp/CFG.runSpeed,0,1));
@@ -145,6 +171,10 @@ export function createHero(scene,solids,spawn){
       hips.rotation.x=run*0.22;
       hips.position.y=0.42+Math.abs(Math.sin(runPhase))*0.05*run
         +idle*Math.sin(t*3.1)*0.008;
+    }
+    if(spinT>0){ // arms out flat while spinning
+      arms.L.rotation.z=1.45;arms.R.rotation.z=-1.45;
+      arms.L.rotation.x=arms.R.rotation.x=0;
     }
     head.rotation.x=-hips.rotation.x*0.7; // eyes stay level while leaning
     head.rotation.y=onGround?(1-run)*0.24:0; // idle: looking slightly aside
@@ -182,5 +212,6 @@ export function createHero(scene,solids,spawn){
     place(0);
   }
 
-  return {group,pos,update,setPos,place};
+  return {group,pos,vel,update,setPos,place,respawnAt,
+    get onGround(){return onGround;},get spinning(){return spinT>0;}};
 }

@@ -10,6 +10,12 @@ canvas{display:block}
 #ui{position:fixed;inset:0;pointer-events:none;color:#fff;z-index:10}
 .hidden{display:none!important}
 #perf{position:absolute;top:14px;right:14px;background:rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:8px 12px;font:12px/1.55 Consolas,'Courier New',monospace;color:#b8f0c0;white-space:pre;text-align:right}
+#hud{position:absolute;top:14px;left:14px;display:flex;gap:10px;flex-wrap:wrap}
+.hud-box{background:rgba(16,38,12,.55);border:3px solid #f7c948;border-radius:14px;padding:5px 14px;font-size:20px;font-weight:700;letter-spacing:.02em;display:flex;align-items:center;gap:8px;text-shadow:2px 2px 0 rgba(0,0,0,.55);box-shadow:0 3px 0 rgba(0,0,0,.35)}
+.ico{display:inline-block;width:18px;height:18px;border-radius:50%;box-shadow:inset -3px -3px 0 rgba(0,0,0,.25)}
+.ico.fruit{background:#f2761b}
+.ico.crate{background:#b6813a;border-radius:3px}
+.ico.life{background:#ff6b5a;border-radius:50% 50% 45% 45%}
 #error{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#210f0f;color:#ffb0b0;font-size:20px;padding:40px;text-align:center;pointer-events:auto}
 </style>
 <script type="importmap">
@@ -18,6 +24,12 @@ canvas{display:block}
 </head>
 <body>
 <div id="ui">
+  <div id="hud">
+    <div class="hud-box"><span class="ico fruit"></span><span id="fruit-count">0</span>&nbsp;/&nbsp;<span id="fruit-total">0</span></div>
+    <div class="hud-box"><span class="ico crate"></span><span id="crate-count">0</span>&nbsp;/&nbsp;<span id="crate-total">0</span></div>
+    <div class="hud-box"><span class="ico life"></span>&times;&nbsp;<span id="lives-count">3</span></div>
+    <div class="hud-box" id="hud-cp">CHECKPOINT: <span id="cp-label">START</span></div>
+  </div>
   <div id="perf" class="hidden"></div>
   <div id="error" class="hidden"></div>
 </div>

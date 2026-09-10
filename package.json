@@ -12,7 +12,8 @@
     "audio": "node tools/generate_audio_pack.mjs",
     "build": "node tools/build.mjs",
     "watch": "node tools/build.mjs --watch",
-    "det": "node tools/determinism.mjs"
+    "det": "node tools/determinism.mjs",
+    "play": "node tools/playtest.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",

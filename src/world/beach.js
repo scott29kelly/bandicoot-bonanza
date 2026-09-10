@@ -15,7 +15,7 @@ import {mergeGeoms} from './geo.js';
 import {islandMass,shoreRocks} from './masses.js';
 import {createWater} from './water.js';
 import {createBackdrop} from './backdrop.js';
-import {makeCrate,makeTNT} from './props.js';
+import {makeCrate,makeTNT,makeCheckpoint} from './props.js';
 import {makePalm,makeFern,makeGrassField,makeBroadleafField,
         makeFlowerField,makePebbles,makeShells,makeTwigs} from './flora.js';
 import {contactBlob,contactField} from './contact.js';
@@ -38,6 +38,7 @@ function scatter(n,s,inset=0.8,avoid=[]){
 
 export function buildBeach(scene){
   const solids=[],updates=[];
+  const crates=[],tnts=[],checkpoints=[]; // gameplay records for src/game/rules.js
 
   /* ---------- the islands (beats 1–3) ---------------------------------- */
   const beach=islandMass({x:0,z:-12.5,w:14,d:35});
@@ -83,6 +84,7 @@ export function buildBeach(scene){
     const c=makeCrate(x,y,z);
     scene.add(c.mesh);
     solids.push(c.solid);
+    c.broken=false;c.solid.ent={type:'crate',obj:c};crates.push(c);
     avoid.push({x,z,r:1.15});
     // Upper crates: r 0.7 keeps the disc INSIDE the lower crate's top —
     // at 1.35 it lay past the edge and read as a black wedge on the stack
@@ -98,6 +100,8 @@ export function buildBeach(scene){
   const tnt=makeTNT(0,0,-52);
   scene.add(tnt.mesh);
   solids.push(tnt.solid);
+  tnt.armed=false;tnt.fuse=0;tnt.exploded=false;
+  tnt.solid.ent={type:'tnt',obj:tnt};tnts.push(tnt);
   avoid.push({x:0,z:-52,r:1.15});
   ground(0,-52,0.95);
   mark('tnt1',tnt.mesh);
@@ -217,14 +221,16 @@ export function buildBeach(scene){
   const _m=new THREE.Matrix4(),_e=new THREE.Euler(),_q=new THREE.Quaternion(),
         // 0.8: at 1.0 a wumpa at the hero's depth was 0.31 of his height
         // against form-1's ~0.15 (round 32).
-        _v=new THREE.Vector3(),_s=new THREE.Vector3(0.8,0.8,0.8);
+        _v=new THREE.Vector3(),_s=new THREE.Vector3(0.8,0.8,0.8),_zero=new THREE.Vector3();
   const phases=fruitPos.map(()=>rand(0,Math.PI*2));
+  // Collected fruit: the instance stays, scaled to zero (no re-indexing).
+  const fruitAlive=new Uint8Array(fruitPos.length).fill(1);
   function fruitUpdate(t){
     for(let i=0;i<fruitPos.length;i++){
       const [x,y,z]=fruitPos[i];
       _v.set(x,y+Math.sin(t*2.2+phases[i])*0.11,z);
       _q.setFromEuler(_e.set(0,t*1.6+phases[i],0));
-      _m.compose(_v,_q,_s);
+      _m.compose(_v,_q,fruitAlive[i]?_s:_zero);
       fruitMesh.setMatrixAt(i,_m);
     }
     fruitMesh.instanceMatrix.needsUpdate=true;
@@ -276,9 +282,24 @@ export function buildBeach(scene){
     ground(x,z,0.85);
   }
 
+  /* ---------- checkpoint totem (M2) ------------------------------------- */
+  // On the crate yard's near edge, off the path. Built LAST with no random
+  // draws, so the seeded stream and every scatter ahead of it stay put.
+  {
+    const cp=makeCheckpoint(-4.2,0,-48.5,1);
+    cp.respawn=[0,0.1,-47.3]; // the old rule: back on the path centre, just short of the totem
+    scene.add(cp.mesh);
+    checkpoints.push(cp);
+    updates.push((t)=>cp.update(0,t));
+    ground(-4.2,-48.5,0.8);
+    mark('totem1',cp.mesh);
+  }
+
   return {
     solids,
     spawn:[0,0,-5],
+    fruit:{pos:fruitPos,alive:fruitAlive,hide(i){fruitAlive[i]=0;},reset(){fruitAlive.fill(1);}},
+    crates,tnts,checkpoints,
     update(t,heroPos){for(const u of updates)u(t,heroPos);}
   };
 }

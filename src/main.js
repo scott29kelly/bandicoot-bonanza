@@ -13,6 +13,8 @@ import {CFG} from './game/cfg.js';
 import {createState} from './game/state.js';
 import {buildBeach} from './world/beach.js';
 import {createHero} from './player/hero.js';
+import {createRules} from './game/rules.js';
+import {createHud} from './game/hud.js';
 
 const errEl=document.getElementById('error');
 const uiEl=document.getElementById('ui');
@@ -28,8 +30,11 @@ scene.fog.far=CFG.fogFar;
 const camera=new THREE.PerspectiveCamera(55,window.innerWidth/window.innerHeight,0.1,700);
 
 const world=buildBeach(scene);
-const hero=createHero(scene,world.solids,world.spawn);
+const heroHooks={};
+const hero=createHero(scene,world.solids,world.spawn,heroHooks);
 const state=createState();
+const rules=createRules({world,hero,hud:createHud()});
+Object.assign(heroHooks,rules.hooks);
 
 /* ---------- camera pose override (review) ------------------------------- */
 let pose=null;
@@ -49,6 +54,7 @@ const {BB,tick,dtOverride}=installHarness({
   hideUI:(hide)=>uiEl.classList.toggle('hidden',hide),
   showPerf:(on)=>{perfEl.classList.toggle('hidden',!on);perfOn=on;},
   setPlayerPos:(p)=>hero.setPos(p),
+  gameState:()=>rules.snapshot(),
   resetClock:()=>{t=0;}
 });
 if(FIXED_DT>0)BB.setFixedDt(FIXED_DT);
@@ -80,6 +86,7 @@ function frame(){
 
     if(state.mode!=='REVIEW'){
       hero.update(dt,t);
+      rules.update(dt,t);
       camTarget.set(hero.pos.x+CFG.camOffX,hero.pos.y+CFG.camOffY,hero.pos.z+CFG.camOffZ);
       if(camSnap){camera.position.copy(camTarget);camSnap=false;}
       else camera.position.lerp(camTarget,1-Math.exp(-dt*6));

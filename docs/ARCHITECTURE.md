@@ -72,6 +72,8 @@ whose output is known.
     window.BB.setPose(pose)  raw camera override
     window.BB.setUI(on)      hide DOM chrome for captures
     window.BB.perf(on)       the F3 stats overlay
+    window.BB.place(p)       PLAY-mode teleport [x,y,z,facing?] (tools/playtest.mjs)
+    window.BB.game()         gameplay snapshot: fruit, crates, lives, checkpoint, tnt[]
 
 Two properties of this interface are load-bearing and were learned the hard
 way:
