@@ -4326,7 +4326,8 @@ const player={
     const hw=0.35,px=this.pos.x,pz=this.pos.z,py=this.pos.y;
     for(const s of solids){
       if(s.dead)continue;
-      if(s.z0>pz+1.0||s.z1<pz-1.0)continue;
+      if(!s.ent||s.ent.type!=='arch_lintel')continue;
+      if(s.z0>pz+0.8||s.z1<pz-0.8)continue;
       if(px+hw<=s.x0||px-hw>=s.x1)continue;
       if(pz+hw<=s.z0||pz-hw>=s.z1)continue;
       if(py+0.45<s.y1&&py+1.42>s.y0)return true;
@@ -4336,17 +4337,19 @@ const player={
   trySlide(){
     if(game.state!=='PLAYING'||this.dead||!this.grounded||this.slideT>0||this.slamState!==0||this.slideCdT>0)return;
     this.slideT=CFG.slideDur;
-    this.slideCdT=0.18;
+    this.slideCdT=0.22;
     this.slideSkidT=0;
     const sp=Math.hypot(this.vel.x,this.vel.z);
-    if(sp>1.0){
+    if(sp>1.0&&this.vel.z<-0.5){
       this.slideDir.set(this.vel.x,0,this.vel.z).normalize();
     }else{
-      this.slideDir.set(Math.sin(this.faceA),0,Math.cos(this.faceA));
+      this.slideDir.set(0,0,-1);
     }
     const boost=CFG.slideSpeed;
     this.vel.x=this.slideDir.x*boost;
     this.vel.z=this.slideDir.z*boost;
+    this.faceA=Math.atan2(this.slideDir.x,this.slideDir.z);
+    this.rig.rotation.y=this.faceA;
     const surf=this.getSurface();
     audio.slide(surf);
     spawnSkidPuff(this.pos,this.slideDir,5,surf);
@@ -4682,7 +4685,9 @@ const player={
         }
       }
     }else{
-      let ix=(keys.d?1:0)-(keys.a?1:0),iz=(keys.s?1:0)-(keys.w?1:0);
+      const allowBack=this.slideT<=0&&this.slideCdT<=0;
+      let ix=(keys.d?1:0)-(keys.a?1:0);
+      let iz=(keys.s&&allowBack?1:0)-(keys.w?1:0);
       const l=Math.hypot(ix,iz);
       if(l>0){ix/=l;iz/=l;}
       const acc=this.grounded?CFG.accel:CFG.airAccel;
@@ -4941,18 +4946,11 @@ const player={
       this.iframes=2.4;
       this.squash=-0.32;
       if(this.faceTarget)this.faceTarget.set(0.6,-0.4,0.8,0.4);
-      let kx=0,kz=0;
-      if(srcPos){
-        const dx=this.pos.x-srcPos.x,dz=this.pos.z-srcPos.z;
-        const len=Math.hypot(dx,dz);
-        if(len>0.001){kx=(dx/len)*4.5;kz=(dz/len)*4.5;}
-      }
-      if(kx===0&&kz===0){
-        kx=-Math.sin(this.faceA)*4.2;
-        kz=-Math.cos(this.faceA)*4.2;
-      }
-      this.vel.set(kx,4.8,kz);
+      this.vel.set(0,4.5,-1.2);
       this.grounded=false;
+      this.faceA=Math.PI;
+      this.rig.rotation.y=Math.PI;
+      this.slideDir.set(0,0,-1);
       sparks.burst(this.pos,12,2.4,0.4,()=>[1,0.25,0.25],1.5);
     }
   },
@@ -4986,12 +4984,14 @@ const player={
     this.root.scale.setScalar(s);
   },
   respawn(p){
+    if(typeof keys!=='undefined')keys.w=keys.a=keys.s=keys.d=false;
     this.pos.copy(p);
     this.vel.set(0,0,0);
     this.groundPlatform=null;
     this.dead=false;this.spinT=0;this.squash=0;
     this.hp=3;
     this.slideT=0;this.slideCdT=0;this.slideSkidT=0;
+    this.slideDir.set(0,0,-1);
     this.slamState=0;this.slamStallT=0;this.slamRecoverT=0;
     if(this.faceTarget)this.faceTarget.set(0,0,0,0);
     if(this.uFace)this.uFace.value.set(0,0,0,0);
@@ -5119,6 +5119,7 @@ const game={
     const prev=this.state;
     if(prev===s)return;
     this.state=s;
+    if(typeof keys!=='undefined')keys.w=keys.a=keys.s=keys.d=false;
     show(hudEl,s==='PLAYING'||s==='DYING');
     show(titleEl,s==='TITLE');
     show(goEl,s==='GAMEOVER');
@@ -5152,6 +5153,7 @@ const game={
   },
   fullReset(){
     this.lives=CFG.lives;
+    if(typeof keys!=='undefined')keys.w=keys.a=keys.s=keys.d=false;
     if(typeof player!=='undefined'&&player)player.hp=3;
     this.stats.fruit=0;this.stats.crates=0;
     this.time=0;this.perfect=false;
@@ -5183,9 +5185,10 @@ window.addEventListener('keydown',e=>{
       if(game.state==='PLAYING'&&!player.dead){
         if(player.grounded){
           const sp=Math.hypot(player.vel.x,player.vel.z);
-          if(sp>1.5||keys.w)player.trySlide();
+          if(sp>1.2||keys.w){player.trySlide();keys.s=false;}
         }else if(player.slamState===0){
           player.tryBodySlam();
+          keys.s=false;
         }
       }
       break;
@@ -5239,7 +5242,7 @@ window.addEventListener('mousedown',e=>{
   if(e.button===0)player.trySpin();
 });
 window.addEventListener('keydown',()=>{focusTip.classList.add('hidden');});
-window.addEventListener('focus',()=>{focusTip.classList.add('hidden');});
+window.addEventListener('focus',()=>{focusTip.classList.add('hidden');if(typeof keys!=='undefined')keys.w=keys.a=keys.s=keys.d=false;});
 window.addEventListener('blur',()=>{
   keys.w=keys.a=keys.s=keys.d=false;
   // make silent keyboard-focus theft (devtools, OS popups like Sticky Keys)
