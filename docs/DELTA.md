@@ -166,6 +166,44 @@ Measured: 298.5k–357.8k triangles, **9 of 9 framings PASS the frame gate** wit
 
 ---
 
+## Pass 18 — 2026-09-12 (draw-call batching; closes pass-2 #9)
+
+Sheet: [`shots/pass18/CONTACT-SHEET.png`](shots/pass18/CONTACT-SHEET.png).
+Measured: 583k–919k triangles, **206–818 draw calls, 9 of 9 framings PASS the
+frame gate** — every framing under the ≤900 floor for the first time (worst
+offender `beach-corridor` was 3,904).
+
+### What this pass did
+
+A draw-call census (`tools/profile_draws.mjs`, new) found the budget was going
+to geometry *groups*, not object count: `mergeGeos` emitted one geometry group
+per part carrying a `matId`, and a group is a draw call in the main pass, the
+AO depth prepass, and the shadow map alike — one crate was 29 draws, one TNT
+26, and every platform drew six times through its material array. Fixes:
+
+- `mergeGeos` sorts parts by `matId` and coalesces equal neighbours → crates
+  29→3 groups, TNT 26→5.
+- Crate/TNT bodies render as two `InstancedMesh` groups (3 + 5 draws for all
+  39 in the level); per-crate contact-shadow planes (one unique material each)
+  collapse into two instanced shadow meshes.
+- Platforms, pillars, stairs and foundations are split into top/cliff faces at
+  build time and merged into one mesh per material per 48 m z-chunk — ~40
+  platforms stop being ~240 draws, and chunking keeps a bounding sphere the
+  camera and shadow frusta can still cull against.
+- Foam rings: 29 meshes with 29 materials → one instanced mesh; the per-ring
+  opacity pulse is traded for a fixed 0.72 (scale pulse survives per
+  instance).
+- Shadow maps render once per frame (`shadowMap.autoUpdate=false`, needsUpdate
+  raised before the one lit pass) instead of re-rendering inside the AO depth
+  prepass as well.
+
+Verification: controls regression suite passes; pass17→pass18 pixel diff sits
+inside the same-build noise band on 8 of 9 framings (water-gap slightly above
+— the intentional foam change); frozen-dt toggle test confirms instanced
+contact shadows still contribute ~20% of frame pixels in `crate-cluster`.
+
+---
+
 ## Closed
 
 - **#1 Everything floats** — closed pass 2 (`dc8fa57`). Platforms are craggy
@@ -184,3 +222,7 @@ Measured: 298.5k–357.8k triangles, **9 of 9 framings PASS the frame gate** wit
 - **#7 No backdrop** — closed pass 4. Sea stacks, mountain ridges, volcano, 3D clouds.
 - **#8 Water is one translucent plane** — closed pass 4. Depth-graded turquoise ocean + shoreline foam skirts.
 - **#10 The hero has no surface** — closed pass 4. Saturated fur, denim shorts, sneakers, gloves, brows, glints, mohawk.
+- **#9 (pass 2) Draw calls are high for what is on screen** — closed pass 18.
+  Group consolidation in `mergeGeos`, instanced crate/TNT bodies and contact
+  shadows, chunk-merged static platform geometry, single shadow-map update per
+  frame. 206–818 draws across all framings (was up to 3,904).

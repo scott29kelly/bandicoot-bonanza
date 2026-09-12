@@ -139,6 +139,22 @@ const rand=(a,b)=>a+rnd()*(b-a);
 const damp=(rate,dt)=>1-Math.exp(-rate*dt);
 function fmtTime(s){const m=Math.floor(s/60),r=Math.floor(s%60);return m+':'+(r<10?'0':'')+r;}
 function mergeGeos(geos){
+  // Draw-call consolidation. Every part carrying a userData.matId used to
+  // become its own geometry group — and a group is a draw call, in the main
+  // pass AND the AO depth prepass. One crate was 29 draws, one TNT 26. Parts
+  // are sorted by matId (stable) and equal neighbours coalesced into one
+  // group, so the same triangles and materials render in 3 and 5 draws.
+  let anyKeyed=false;
+  for(const g of geos){if(g.userData&&g.userData.matId!==undefined){anyKeyed=true;break;}}
+  if(anyKeyed&&geos.length>1){
+    const order=geos.map((g,i)=>i);
+    order.sort((a,b)=>{
+      const ma=geos[a].userData&&geos[a].userData.matId!==undefined?geos[a].userData.matId:1e9;
+      const mb=geos[b].userData&&geos[b].userData.matId!==undefined?geos[b].userData.matId:1e9;
+      return (ma-mb)||(a-b);
+    });
+    geos=order.map(i=>geos[i]);
+  }
   let vc=0,ic=0;
   for(const g of geos){vc+=g.attributes.position.count;ic+=g.index?g.index.count:0;}
   const pos=new Float32Array(vc*3),nrm=new Float32Array(vc*3),uv=new Float32Array(vc*2);
@@ -160,7 +176,9 @@ function mergeGeos(geos){
     if(gi){
       for(let i=0;i<gi.count;i++)idx[io+i]=gi.array[i]+vo;
       if(g.userData&&g.userData.matId!==undefined){
-        out.addGroup(io,gi.count,g.userData.matId);
+        const gs=out.groups,last=gs.length?gs[gs.length-1]:null;
+        if(last&&last.materialIndex===g.userData.matId)last.count+=gi.count;
+        else out.addGroup(io,gi.count,g.userData.matId);
       }
       io+=gi.count;
     }
@@ -725,6 +743,12 @@ renderer.setPixelRatio(MINFX?1:Math.min(window.devicePixelRatio||1,2));
 renderer.setSize(window.innerWidth,window.innerHeight);
 renderer.shadowMap.enabled=!MINFX;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+// Shadow maps used to re-render inside EVERY renderer.render() call — the AO
+// depth prepass and the main pass each paid for a full shadow update. With
+// autoUpdate off, frameBody raises needsUpdate exactly once, right before the
+// frame's one lit render. (The depth prepass runs under an override material
+// and never samples the shadow map.)
+renderer.shadowMap.autoUpdate=false;
 // outputEncoding only applies when three renders straight to the canvas; the
 // composer path renders into a linear target, and the grade pass does the
 // sRGB encode itself at the end of the chain. Tone mapping is assigned below,
@@ -2023,29 +2047,13 @@ const tnt3DGeo=buildTnt3DGeo(CRATE_S);
 
 class Crate{
   constructor(x,baseY,z){
+    this.idx=crates.length;
     this.baseY=baseY;
-    this.mesh=new THREE.Mesh(crate3DGeo,crateMats);
-    this.mesh.position.set(x,baseY+CRATE_S/2,z);
-    this.mesh.castShadow=this.mesh.receiveShadow=true;
-    scene.add(this.mesh);
-
-    if(baseY<=0.15){
-      const shadow=new THREE.Mesh(new THREE.PlaneGeometry(CRATE_S*1.65,CRATE_S*1.65),
-        new THREE.MeshBasicMaterial({map:TEX.crateShadow,transparent:true,opacity:0.85,depthWrite:false}));
-      shadow.rotation.x=-Math.PI/2;
-      shadow.position.set(x,baseY+0.02,z);
-      scene.add(shadow);
-      this.shadow=shadow;
-    }else{
-      // Stacked crate contact shadow: subtle ambient occlusion seam between top crate and supporting bottom crates
-      const shadow=new THREE.Mesh(new THREE.PlaneGeometry(CRATE_S*1.28,CRATE_S*1.28),
-        new THREE.MeshBasicMaterial({map:TEX.crateShadow,transparent:true,opacity:0.60,depthWrite:false}));
-      shadow.rotation.x=-Math.PI/2;
-      shadow.position.set(x,baseY+0.015,z);
-      scene.add(shadow);
-      this.shadow=shadow;
-    }
-
+    // The body renders as an instance of crateIM (see the instancing block
+    // after buildLevel) — 33 crates sharing 3 draw calls instead of 33 meshes
+    // each costing a dozen.
+    this.pos=new THREE.Vector3(x,baseY+CRATE_S/2,z);
+    this.groundContact=baseY<=0.15;
     this.solid=addSolid(x,baseY+CRATE_S/2,z,CRATE_S,CRATE_S,CRATE_S,{type:'crate',obj:this,mat:'wood'});
     this.broken=false;
     this.breakTimer=-1;
@@ -2058,11 +2066,10 @@ class Crate{
       return;
     }
     this.breakTimer=-1;
-    this.broken=true;this.solid.dead=true;this.mesh.visible=false;
-    if(this.shadow)this.shadow.visible=false;
+    this.broken=true;this.solid.dead=true;
     game.stats.crates++;updateHUD();
     audio.crate();
-    const p=this.mesh.position;
+    const p=this.pos;
     spawnDebris(p,5,this.baseY);
     spawnCrateSmashVFX(p);
     confetti.burst(p,10,3.4,0.85,WOODC,2);
@@ -2076,35 +2083,23 @@ class Crate{
     }
   }
   reset(){
-    this.broken=false;this.breakTimer=-1;this.solid.dead=false;this.mesh.visible=true;
-    if(this.shadow)this.shadow.visible=true;
+    this.broken=false;this.breakTimer=-1;this.solid.dead=false;
   }
 }
 class TNT{
   constructor(x,baseY,z){
+    this.idx=tnts.length;
     this.baseY=baseY;
-    this.mesh=new THREE.Mesh(tnt3DGeo,tntMats);
-    this.mesh.position.set(x,baseY+CRATE_S/2,z);
-    this.mesh.castShadow=this.mesh.receiveShadow=true;
-    scene.add(this.mesh);
+    this.pos=new THREE.Vector3(x,baseY+CRATE_S/2,z);
+    this.pulse=1;
+    this.groundContact=baseY<=0.15;
 
-    // Glowing spark tip on top of fuse
-    const spark=new THREE.Mesh(new THREE.SphereGeometry(0.065,8,6),
+    // Glowing spark tip on top of fuse (kept as a real mesh: there are only a
+    // handful of TNTs and the fuse spark animates its own emissive material)
+    this.spark=new THREE.Mesh(new THREE.SphereGeometry(0.065,8,6),
       toonMat({color:0xffbb00,emissive:0xff5500,emissiveIntensity:2.6,noCache:true}));
-    spark.position.set(0.04,CRATE_S/2+0.22,0);
-    this.mesh.add(spark);
-    this.spark=spark;
-
-    if(baseY<=0.15){
-      const shadow=new THREE.Mesh(new THREE.PlaneGeometry(CRATE_S*1.65,CRATE_S*1.65),
-        new THREE.MeshBasicMaterial({map:TEX.crateShadow,transparent:true,opacity:0.85,depthWrite:false}));
-      shadow.rotation.x=-Math.PI/2;
-      shadow.position.set(x,baseY+0.02,z);
-      scene.add(shadow);
-      this.shadow=shadow;
-    }else{
-      this.shadow=null;
-    }
+    this.spark.position.set(x+0.04,baseY+CRATE_S/2+0.22,z);
+    scene.add(this.spark);
 
     this.solid=addSolid(x,baseY+CRATE_S/2,z,CRATE_S,CRATE_S,CRATE_S,{type:'tnt',obj:this,mat:'wood'});
     this.armed=false;this.fuse=0;this.exploded=false;this.tickT=0;
@@ -2116,7 +2111,7 @@ class TNT{
   update(dt){
     if(!this.armed||this.exploded)return;
     this.fuse-=dt;
-    this.mesh.scale.setScalar(1+0.08*Math.abs(Math.sin(this.fuse*16)));
+    this.pulse=1+0.08*Math.abs(Math.sin(this.fuse*16));
     if(this.spark){
       this.spark.scale.setScalar(1+Math.sin(this.fuse*35)*0.35);
       this.spark.material.emissiveIntensity=2.0+Math.sin(this.fuse*35)*1.2;
@@ -2128,25 +2123,24 @@ class TNT{
   explode(){
     if(this.exploded)return;
     this.exploded=true;this.armed=false;
-    this.solid.dead=true;this.mesh.visible=false;
-    if(this.shadow)this.shadow.visible=false;
-    const p=this.mesh.position;
+    this.solid.dead=true;
+    this.spark.visible=false;
+    const p=this.pos;
     audio.explosion();
     flashAt(p,7);
     spawnCrateSmashVFX(p);
     sparks.burst(p,38,8.5,0.75,FIRE,2.5);
     confetti.burst(p,18,6,1,WOODC,3);
     camRig.trauma=Math.min(camRig.trauma+0.6,1);
-    for(const c of crates)if(!c.broken&&c.mesh.position.distanceTo(p)<CFG.tntRadius)c.break_();
-    for(const t2 of tnts)if(t2!==this&&!t2.exploded&&t2.mesh.position.distanceTo(p)<CFG.tntRadius)t2.arm(rand(0.15,0.35));
+    for(const c of crates)if(!c.broken&&c.pos.distanceTo(p)<CFG.tntRadius)c.break_();
+    for(const t2 of tnts)if(t2!==this&&!t2.exploded&&t2.pos.distanceTo(p)<CFG.tntRadius)t2.arm(rand(0.15,0.35));
     if(game.state==='PLAYING'&&player.pos.distanceTo(p)<CFG.tntRadius+0.5)player.takeDamage(1,p,'tnt');
   }
   reset(){
     this.exploded=false;this.armed=false;this.fuse=0;
-    this.mesh.scale.setScalar(1);
-    if(this.spark){this.spark.scale.setScalar(1);this.spark.material.emissiveIntensity=2.6;}
-    this.solid.dead=false;this.mesh.visible=true;
-    if(this.shadow)this.shadow.visible=true;
+    this.pulse=1;
+    if(this.spark){this.spark.visible=true;this.spark.scale.setScalar(1);this.spark.material.emissiveIntensity=2.6;}
+    this.solid.dead=false;
   }
 }
 class Fruit{
@@ -2933,6 +2927,62 @@ function craggyMass(w,d,h,taper,jag,seg){
   g.computeVertexNormals();
   return g;
 }
+/*
+ * Static-geometry batching (Pass 18).
+ *
+ * Platforms, pillars, stairs and foundations never move, but each was its own
+ * mesh with a six-entry material array — six draw calls each, in the main pass
+ * AND the AO depth prepass AND the shadow map. They are now split into top
+ * faces and cliff faces at build time, bucketed by material and 48 m z-chunk,
+ * and merged into one mesh per bucket after buildLevel(). Chunking keeps a
+ * bounding sphere the camera and shadow frusta can actually cull against — a
+ * single level-length mesh would defeat the whole point by drawing everything
+ * from every shadow pass.
+ */
+function extractGroupGeo(g,groupIndex){
+  const grp=g.groups[groupIndex];
+  const src=g.index.array,pa=g.attributes.position,na=g.attributes.normal,ua=g.attributes.uv;
+  const vmap=new Map();
+  const pos=[],nrm=[],uv=[],idx=[];
+  for(let i=0;i<grp.count;i++){
+    const vi=src[grp.start+i];
+    let ni=vmap.get(vi);
+    if(ni===undefined){
+      ni=pos.length/3;vmap.set(vi,ni);
+      pos.push(pa.getX(vi),pa.getY(vi),pa.getZ(vi));
+      if(na)nrm.push(na.getX(vi),na.getY(vi),na.getZ(vi));
+      if(ua)uv.push(ua.getX(vi),ua.getY(vi));
+    }
+    idx.push(ni);
+  }
+  const out=new THREE.BufferGeometry();
+  out.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  if(nrm.length)out.setAttribute('normal',new THREE.Float32BufferAttribute(nrm,3));
+  if(uv.length)out.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+  out.setIndex(idx);
+  return out;
+}
+const STATIC_CHUNK=48;
+const staticCliffBuckets=new Map(),staticTopBuckets=new Map();
+function bucketStaticGeo(geo,matName,z){
+  const ci=Math.floor((z+300)/STATIC_CHUNK);
+  const key=matName==='cliff'?ci:(ci+'|'+matName);
+  const map=matName==='cliff'?staticCliffBuckets:staticTopBuckets;
+  let a=map.get(key);
+  if(!a){a=[];map.set(key,a);}
+  a.push(geo);
+}
+function finalizeStaticPlatforms(){
+  const emit=(geos,mat)=>{
+    if(!geos||!geos.length)return;
+    const m=new THREE.Mesh(mergeGeos(geos),mat);
+    m.castShadow=m.receiveShadow=true;
+    scene.add(m);
+  };
+  const cliffMat=MATS.cliff();
+  for(const geos of staticCliffBuckets.values())emit(geos,cliffMat);
+  for(const [key,geos] of staticTopBuckets)emit(geos,MATS[key.split('|')[1]]());
+}
 function foundation(x,topY,z,w,d,th){
   const bottom=topY-th;
   const base=SEA_FLOOR-hash3(x*0.7,z*0.9,3.3)*1.4;
@@ -2940,11 +2990,9 @@ function foundation(x,topY,z,w,d,th){
   if(h<=0.5)return null;
   const seg=clamp(Math.round(Math.max(w,d)/2.6),2,6);
   const g=craggyMass(w*0.99,d*0.99,h,0.6,Math.min(w,d)*0.13,seg);
-  const m=new THREE.Mesh(g,MATS.cliff());
-  m.position.set(x,base+h/2,z);
-  m.castShadow=m.receiveShadow=true;
-  scene.add(m);
-  return m;
+  g.translate(x,base+h/2,z);
+  bucketStaticGeo(g,'cliff',z);
+  return null;
 }
 /*
  * A platform is an ISLAND, not a slab: a flat play surface on top of a craggy
@@ -2968,16 +3016,23 @@ function plat(x,topY,z,w,d,matName,th,noSolid,noFoundation){
   const deep=clamp(th/7,0,1);
   const g=craggyMass(w,d,/*height*/th,1-0.34*deep,Math.min(w,d,th*2.2)*0.085,clamp(Math.round(Math.max(w,d)/3),2,5));
   // BoxGeometry group order is +X,-X,+Y,-Y,+Z,-Z — index 2 is the top face.
-  const cliff=MATS.cliff();
-  const m=new THREE.Mesh(g,[cliff,cliff,MATS[matName](),cliff,cliff,cliff]);
-  m.position.set(x,topY-th/2,z);
-  m.castShadow=m.receiveShadow=true;
-  scene.add(m);
-  if(!noSolid)addSolid(x,topY-th/2,z,w,th,d,{type:'platform',mat:matName});
+  // The play surface goes into its material's top bucket; the other five
+  // faces go into the cliff bucket. See the static-geometry batching block.
+  const cy=topY-th/2;
+  for(let fi=0;fi<6;fi++){
+    const fg=extractGroupGeo(g,fi);
+    fg.translate(x,cy,z);
+    bucketStaticGeo(fg,fi===2?matName:'cliff',z);
+  }
+  if(!noSolid)addSolid(x,cy,z,w,th,d,{type:'platform',mat:matName});
   // Only grow a foundation where one would actually be seen. Below the
   // waterline it is triangles nobody will ever look at.
   if(!noFoundation&&topY-th>WATER_Y+0.5)foundation(x,topY,z,w,d,th);
-  return m;
+  // Anchors keep the review framings tied to level data; the renderable
+  // itself is merged per-chunk by finalizeStaticPlatforms().
+  const anchor=new THREE.Object3D();
+  anchor.position.set(x,cy,z);
+  return anchor;
 }
 function pillar(x,topY,z){return plat(x,topY,z,2.4,2.4,'stone',7);}
 function crate(x,baseY,z){crates.push(new Crate(x,baseY,z));}
@@ -3459,21 +3514,40 @@ function updateClouds(dt){
 }
 
 const foamRings=[];
+let foamIM=null;
 function addFoamRing(x,z,rw,rd){
-  const g=new THREE.PlaneGeometry(rw*1.35,rd*1.35);
-  const m=new THREE.MeshBasicMaterial({map:TEX.foam,transparent:true,opacity:0.75,depthWrite:false});
-  const mesh=new THREE.Mesh(g,m);
-  mesh.rotation.x=-Math.PI/2;
-  mesh.position.set(x,WATER_Y+0.03,z);
-  scene.add(mesh);
-  foamRings.push({mesh:mesh,phase:rnd()*7});
+  // Recorded, not built: finalizeFoam() turns every ring in the level into ONE
+  // instanced mesh (they were one mesh + one material each — 29 draws per pass
+  // for what is now one). The per-ring scale pulse survives as a per-instance
+  // matrix update; the old per-ring opacity pulse is traded for a fixed 0.72.
+  foamRings.push({x:x,z:z,rw:rw,rd:rd,phase:rnd()*7});
+}
+function finalizeFoam(){
+  if(!foamRings.length)return;
+  const g=new THREE.PlaneGeometry(1,1);
+  g.rotateX(-Math.PI/2);
+  foamIM=new THREE.InstancedMesh(g,
+    new THREE.MeshBasicMaterial({map:TEX.foam,transparent:true,opacity:0.72,depthWrite:false}),
+    foamRings.length);
+  foamIM.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  foamIM.frustumCulled=false;
+  // Instanced transparent sorting uses the mesh origin; rings must always
+  // composite over the water plane they sit on.
+  foamIM.renderOrder=1;
+  scene.add(foamIM);
 }
 function updateFoam(t){
-  for(const f of foamRings){
+  if(!foamIM)return;
+  for(let i=0;i<foamRings.length;i++){
+    const f=foamRings[i];
     const s=1+Math.sin(t*2.4+f.phase)*0.07;
-    f.mesh.scale.set(s,s,1);
-    f.mesh.material.opacity=0.62+Math.sin(t*2.4+f.phase)*0.18;
+    _dummy.position.set(f.x,WATER_Y+0.03,f.z);
+    _dummy.rotation.set(0,0,0);
+    _dummy.scale.set(f.rw*1.35*s,1,f.rd*1.35*s);
+    _dummy.updateMatrix();
+    foamIM.setMatrixAt(i,_dummy.matrix);
   }
+  foamIM.instanceMatrix.needsUpdate=true;
 }
 
 const waterlineGeos=[];
@@ -3656,14 +3730,53 @@ function buildLevel(){
   fruitRow(0,6,-214,-216.5,3);
 }
 buildLevel();
+finalizeStaticPlatforms();
+finalizeFoam();
 // crates each hold 2 fruit (created hidden, launched on break)
 for(const c of crates){
   for(let i=0;i<2;i++){
-    const f=new Fruit(c.mesh.position.x,c.baseY,c.mesh.position.z,true);
+    const f=new Fruit(c.pos.x,c.baseY,c.pos.z,true);
     c.fruits.push(f);
   }
 }
 const FRUIT_TOTAL=fruits.length,CRATE_TOTAL=crates.length;
+
+/* crate/TNT instancing (Pass 18) ------------------------------------------
+ * 33 crates × 29 draw calls each and 6 TNTs × 26 was the single largest draw
+ * block in the census. The bodies share one geometry and three/five
+ * consolidated materials, so they render as instanced groups: 3 + 5 draw
+ * calls for every crate and TNT in the level, in both scene passes. Contact
+ * shadow planes collapse the same way (they were one unique material each).
+ */
+let crateGroundN=0,crateStackN=0,tntGroundN=0;
+for(const c of crates)c.groundContact?crateGroundN++:crateStackN++;
+for(const t of tnts)if(t.groundContact)tntGroundN++;
+const crateIM=new THREE.InstancedMesh(crate3DGeo,crateMats,CRATE_TOTAL);
+crateIM.frustumCulled=false;
+crateIM.castShadow=crateIM.receiveShadow=true;
+scene.add(crateIM);
+const tntIM=new THREE.InstancedMesh(tnt3DGeo,tntMats,tnts.length);
+tntIM.frustumCulled=false;
+tntIM.castShadow=tntIM.receiveShadow=true;
+scene.add(tntIM);
+const crateGroundShadowGeo=new THREE.PlaneGeometry(CRATE_S*1.65,CRATE_S*1.65);
+crateGroundShadowGeo.rotateX(-Math.PI/2);
+const crateStackShadowGeo=new THREE.PlaneGeometry(CRATE_S*1.28,CRATE_S*1.28);
+crateStackShadowGeo.rotateX(-Math.PI/2);
+const groundShadowIM=new THREE.InstancedMesh(crateGroundShadowGeo,
+  new THREE.MeshBasicMaterial({map:TEX.crateShadow,transparent:true,opacity:0.85,depthWrite:false}),
+  crateGroundN+tntGroundN);
+groundShadowIM.name='crateGroundShadows';
+groundShadowIM.frustumCulled=false;
+groundShadowIM.renderOrder=1;
+scene.add(groundShadowIM);
+const stackShadowIM=new THREE.InstancedMesh(crateStackShadowGeo,
+  new THREE.MeshBasicMaterial({map:TEX.crateShadow,transparent:true,opacity:0.60,depthWrite:false}),
+  crateStackN);
+stackShadowIM.name='crateStackShadows';
+stackShadowIM.frustumCulled=false;
+stackShadowIM.renderOrder=1;
+scene.add(stackShadowIM);
 
 /* fruit instancing ------------------------------------------------------ */
 function buildWumpaGeo(){
@@ -3746,6 +3859,50 @@ for(const f of fruits){
 
 const _dummy=new THREE.Object3D();
 const _sDummy=new THREE.Object3D();
+/* Per-frame crate/TNT instance matrices. Hidden = degenerate scale, exactly
+ * like the fruit pool; the TNT fuse pulse is a per-instance uniform scale. */
+function updateCrateTNT(){
+  for(const c of crates){
+    _dummy.position.copy(c.pos);
+    _dummy.rotation.set(0,0,0);
+    _dummy.scale.setScalar(c.broken?0.0001:1);
+    _dummy.updateMatrix();
+    crateIM.setMatrixAt(c.idx,_dummy.matrix);
+  }
+  for(const t of tnts){
+    _dummy.position.copy(t.pos);
+    _dummy.rotation.set(0,0,0);
+    _dummy.scale.setScalar(t.exploded?0.0001:t.pulse);
+    _dummy.updateMatrix();
+    tntIM.setMatrixAt(t.idx,_dummy.matrix);
+  }
+  let gi=0,si=0;
+  _dummy.rotation.set(0,0,0);
+  for(const c of crates){
+    const on=c.broken?0.0001:1;
+    _dummy.scale.setScalar(on);
+    if(c.groundContact){
+      _dummy.position.set(c.pos.x,c.baseY+0.02,c.pos.z);
+      _dummy.updateMatrix();
+      groundShadowIM.setMatrixAt(gi++,_dummy.matrix);
+    }else{
+      _dummy.position.set(c.pos.x,c.baseY+0.015,c.pos.z);
+      _dummy.updateMatrix();
+      stackShadowIM.setMatrixAt(si++,_dummy.matrix);
+    }
+  }
+  for(const t of tnts){
+    if(!t.groundContact)continue;
+    _dummy.position.set(t.pos.x,t.baseY+0.02,t.pos.z);
+    _dummy.scale.setScalar(t.exploded?0.0001:1);
+    _dummy.updateMatrix();
+    groundShadowIM.setMatrixAt(gi++,_dummy.matrix);
+  }
+  crateIM.instanceMatrix.needsUpdate=true;
+  tntIM.instanceMatrix.needsUpdate=true;
+  groundShadowIM.instanceMatrix.needsUpdate=true;
+  stackShadowIM.instanceMatrix.needsUpdate=true;
+}
 function updateFruitMatrices(dt,t,integrate){
   for(const f of fruits){
     if(integrate)f.update(dt);
@@ -4359,12 +4516,12 @@ const player={
     const px=this.pos.x,py=this.pos.y+0.4,pz=this.pos.z,R=1.35;
     for(const c of crates){
       if(c.broken)continue;
-      const m=c.mesh.position;
+      const m=c.pos;
       if(Math.abs(m.y-py)<1.35&&(m.x-px)*(m.x-px)+(m.z-pz)*(m.z-pz)<R*R)c.break_();
     }
     for(const t of tnts){
       if(t.exploded||t.armed)continue;
-      const m=t.mesh.position;
+      const m=t.pos;
       if(Math.abs(m.y-py)<1.35&&(m.x-px)*(m.x-px)+(m.z-pz)*(m.z-pz)<R*R){t.arm();audio.fuseTick();}
     }
     for(const f of fruits){
@@ -4403,7 +4560,7 @@ const player={
     const hitCrates=[];
     for(const c of crates){
       if(c.broken||c.breakTimer>0)continue;
-      const m=c.mesh.position;
+      const m=c.pos;
       const dist=Math.hypot(m.x-px,m.z-pz);
       if(dist<R&&Math.abs(m.y-py)<2.4){
         hitCrates.push({crate:c,dist:dist,y:m.y});
@@ -4420,7 +4577,7 @@ const player={
     }
     for(const t of tnts){
       if(t.exploded||t.armed)continue;
-      const m=t.mesh.position;
+      const m=t.pos;
       if(Math.hypot(m.x-px,m.z-pz)<R&&Math.abs(m.y-py)<2.4){
         const tier=Math.max(0,Math.round((py-m.y)/CRATE_S));
         t.arm(Math.max(0.01,tier*0.03));
@@ -4541,12 +4698,12 @@ const player={
     const px=this.pos.x,py=this.pos.y+0.8,pz=this.pos.z,R=CFG.spinRadius;
     for(const c of crates){
       if(c.broken)continue;
-      const m=c.mesh.position;
+      const m=c.pos;
       if(Math.abs(m.y-py)<1.8&&(m.x-px)*(m.x-px)+(m.z-pz)*(m.z-pz)<R*R)c.break_();
     }
     for(const t of tnts){
       if(t.exploded||t.armed)continue;
-      const m=t.mesh.position;
+      const m=t.pos;
       if(Math.abs(m.y-py)<1.8&&(m.x-px)*(m.x-px)+(m.z-pz)*(m.z-pz)<R*R){t.arm();audio.fuseTick();}
     }
     for(const f of fruits){
@@ -5273,7 +5430,7 @@ function buildFramings(){
   const gapZ=(gapA.z+gapB.z)/2;
   const jungle=LM.jungle.position,pit=LM.pitLanding.position;
   const temple=LM.templeLanding.position,fin=LM.finalYard.position;
-  const t0=tnts[0].mesh.position;
+  const t0=tnts[0].pos;
   const c1=checkpoints[0].group.position;
   const F=[];
   // face: hero yaw in radians. Omitted means "turn to camera" — respawn()
@@ -5492,6 +5649,7 @@ function frameBody(){
       break;
   }
   updateFruitMatrices(dt,t,integrate);
+  updateCrateTNT();
   sparks.update(dt);
   confetti.update(dt);
   updateDebris(dt);
@@ -5501,6 +5659,10 @@ function frameBody(){
   updateWaterVFX(dt);
   if(camRig.pose)camRig.applyPose();
   if(aoApply)renderAO();
+  // Shadows render exactly once per frame, in the one lit pass. With
+  // shadowMap.autoUpdate off (section 6) the AO depth prepass no longer pays
+  // for a shadow map it never reads.
+  renderer.shadowMap.needsUpdate=true;
   if(composer)composer.render();else renderer.render(scene,camera);
   sampleStats(dt);
   resolveSettles();
@@ -5523,6 +5685,8 @@ window.BB={
   ready:false,
   error:null,
   stats:STATS,
+  /* Scene graph access for draw-call census tooling (no gameplay effect). */
+  scene:scene,camera:camera,renderer:renderer,
   /** The composed framing set, as plain data (see section 14b). */
   framings:REVIEW.framings.map(f=>({id:f.id,name:f.name,tests:f.tests,fov:f.fov})),
   /** Render exactly n more frames, then resolve. */
@@ -5579,7 +5743,7 @@ if(_shot){window.BB.setUI(false);window.BB.review(_shot[1]);}
  * yet.
  */
 renderer.compile(scene,camera);
-if(composer){try{composer.render();}catch(err){}}
+if(composer){try{renderer.shadowMap.needsUpdate=true;composer.render();}catch(err){}}
 window.BB.ready=true;
 frame();
 

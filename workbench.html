@@ -169,7 +169,7 @@
   <div class="stats-bar">
     <div class="stat-card">
       <div class="stat-label">Active Loop</div>
-      <div class="stat-val active" style="color:var(--green)">Pass 17: Dynamics, Gaze &amp; Temple Sconces</div>
+      <div class="stat-val active" style="color:var(--green)">Pass 18: Draw-Call Batching</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Model Engine</div>
@@ -181,7 +181,7 @@
     </div>
     <div class="stat-card">
       <div class="stat-label">Production Status</div>
-      <div class="stat-val" style="color:var(--green)">Sprint 3 Complete (8.93 / 10)</div>
+      <div class="stat-val" style="color:var(--green)">Pass 18: 8.30 / 10 (Grade A-)</div>
     </div>
   </div>
 
@@ -189,10 +189,10 @@
     <div class="card">
       <div class="card-header">
         <span>Current Visual Contact Sheet</span>
-        <span style="font-size:12px; color:var(--text-muted);">Auto-captured via tools/shots.mjs (Pass 17)</span>
+        <span style="font-size:12px; color:var(--text-muted);">Auto-captured via tools/shots.mjs (Pass 18)</span>
       </div>
       <div class="sheet-container">
-        <img src="docs/shots/pass17/CONTACT-SHEET.png" alt="Pass 17 Contact Sheet" onerror="this.src='docs/shots/pass16/CONTACT-SHEET.png'">
+        <img src="docs/shots/pass18/CONTACT-SHEET.png" alt="Pass 18 Contact Sheet" onerror="this.src='docs/shots/pass17/CONTACT-SHEET.png'">
       </div>
     </div>
 
@@ -264,6 +264,13 @@
           </div>
           <span class="track-status status-done">PASSED</span>
         </div>
+        <div class="track-item">
+          <div>
+            <div class="track-title">10. Draw-Call Batching (Performance Floor)</div>
+            <div style="font-size:12px; color:var(--text-muted);">Group-consolidated merges, instanced crate/TNT bodies & contact shadows, chunked static platform geometry, single per-frame shadow update — 3,904→818 worst-framing draws; critique 8.30/10 (A-), water surface named next gap</div>
+          </div>
+          <span class="track-status status-done">PASSED</span>
+        </div>
       </div>
     </div>
   </div>
@@ -283,6 +290,13 @@
         </tr>
       </thead>
       <tbody>
+        <tr>
+          <td>Pass 18</td>
+          <td>Draw-Call Batching: Group Consolidation, Instanced Props, Chunked Static Geometry, Single Shadow Update</td>
+          <td>Draw census found geometry groups — not object count — eating the budget: mergeGeos emitted one draw-call group per part (a crate was 29 draws, a TNT 26, every platform six via its material array), crates/TNTs carried per-instance unique-material contact shadows, foam rings were 29 meshes with 29 materials, and shadow maps re-rendered inside the AO depth prepass every frame; worst framing (beach-corridor) hit 3,904 draws against the ≤900 floor</td>
+          <td>Built tools/profile_draws.mjs draw-census (per-family, group-aware, instanced over-cull audit); mergeGeos now sorts parts by matId and coalesces equal neighbours (crate 29→3 draws, TNT 26→5); crate and TNT bodies render as two InstancedMesh groups (8 draws for all 39) with per-frame matrix sync for break/explode/fuse-pulse states, and their contact shadows collapse into two instanced shadow meshes; platforms, pillars, stairs and foundations split into top/cliff faces at build time and merge into one mesh per material per 48m z-chunk (frustum- and shadow-cullable); foam rings became one instanced mesh with per-instance scale pulse (fixed 0.72 opacity); shadowMap.autoUpdate=false with one needsUpdate per frame before the lit pass — result: 206–818 draws across all 9 framings (83–87% reduction in the worst framings), 583k–919k triangles, 9/9 PASS gate, controls regression suite clean, pass17→pass18 pixel diff within same-build noise; independent Gauntlet critique scored 8.30/10 (Grade A-): no confirmed visual regression, draw floor genuinely closed — critic follow-ups verified (green-vegetation share equal/higher vs pass17, scatter dressing intact; water-gap "bare trunk" is a canopy cropped by framing edge), remaining gap named: water surface depth grading &amp; shoreline band (next pass)</td>
+          <td><span class="track-status status-done">PASSED</span></td>
+        </tr>
         <tr>
           <td>Pass 17 (Sprint 3)</td>
           <td>Procedural Eye Blinking &amp; Gaze Tracking, Dynamic Raft Wakes, Temple Sconces &amp; 3-Hit Health System</td>
