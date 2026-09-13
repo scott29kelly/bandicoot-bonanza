@@ -584,6 +584,32 @@ const TEX={};
   x.fillStyle=fg;x.fillRect(0,0,128,128);
   speckle(x,90,['#ffffff','#e0ffff'],1,3,0.6);
   TEX.foam=toTex(c);
+  // shoreline surf ring (Pass 19). TEX.foam is a soft radial GLOW — the right
+  // shape for wake puffs, but as a shoreline collar it reads as haze, and on
+  // the new pale shallows it vanishes. The surf texture is an annulus of
+  // broken lumps hugging the band radius, so the instanced shoreline mesh
+  // reads as foam AT the contact line. Deterministic math only — no rnd()
+  // calls, so the seed stream that scatter/foam phases consume is untouched.
+  c=mkCanvas(256);x=c.getContext('2d');
+  {
+    const img=x.createImageData(256,256),d=img.data;
+    const sstep=(a,b,v)=>{v=Math.min(1,Math.max(0,(v-a)/(b-a)));return v*v*(3-2*v);};
+    for(let py=0;py<256;py++)for(let px=0;px<256;px++){
+      const dx=px-127.5,dy=py-127.5;
+      const r=Math.sqrt(dx*dx+dy*dy)/128,th=Math.atan2(dy,dx);
+      // Meandering band radius with two lump harmonics -> broken surf line.
+      const bandR=0.74+0.035*Math.sin(th*9+0.8);
+      const l1=0.5+0.5*Math.sin(th*7+Math.sin(th*3.1+1.7)*1.8);
+      const l2=0.5+0.5*Math.sin(th*15+1.1);
+      const inn=sstep(bandR-0.15,bandR-0.01,r);
+      const out=1-sstep(bandR+0.04,bandR+0.18,r);
+      const a=inn*out*(0.22+0.78*(0.68*l1*l1+0.32*l2));
+      const i=(py*256+px)*4;
+      d[i]=250;d[i+1]=253;d[i+2]=252;d[i+3]=Math.round(a*255);
+    }
+    x.putImageData(img,0,0);
+  }
+  TEX.surf=toTex(c);
   // spin speed swirl texture (comic whirlwind speed ribbons)
   c=mkCanvas(256);x=c.getContext('2d');
   const cx=128,cy=128;
@@ -3008,6 +3034,12 @@ function foundation(x,topY,z,w,d,th){
  * collision box the player is standing on — the cragginess is free, because
  * collision never reads this geometry.
  */
+// Island footprints for the water shader (Pass 19): every plat is a rock
+// mass that meets the water — its own slab descends past the waterline, or
+// it grows a foundation down to the sea floor. Recording the footprint here
+// keeps the water's depth grading and shore band tied to the level data
+// instead of a hand-maintained coordinate list that can silently drift.
+const shoreRects=[];
 function plat(x,topY,z,w,d,matName,th,noSolid,noFoundation){
   th=th||2;
   // Thin platforms barely taper: a strong undercut on a 2 m slab reads as a
@@ -3028,6 +3060,7 @@ function plat(x,topY,z,w,d,matName,th,noSolid,noFoundation){
   // Only grow a foundation where one would actually be seen. Below the
   // waterline it is triangles nobody will ever look at.
   if(!noFoundation&&topY-th>WATER_Y+0.5)foundation(x,topY,z,w,d,th);
+  shoreRects.push({x:x,z:z,hw:w/2,hd:d/2});
   // Anchors keep the review framings tied to level data; the renderable
   // itself is merged per-chunk by finalizeStaticPlatforms().
   const anchor=new THREE.Object3D();
@@ -3518,17 +3551,31 @@ let foamIM=null;
 function addFoamRing(x,z,rw,rd){
   // Recorded, not built: finalizeFoam() turns every ring in the level into ONE
   // instanced mesh (they were one mesh + one material each — 29 draws per pass
-  // for what is now one). The per-ring scale pulse survives as a per-instance
-  // matrix update; the old per-ring opacity pulse is traded for a fixed 0.72.
+  // for what is now one). The per-ring phase drives both a per-instance scale
+  // pulse (matrix) and, since Pass 19, a per-instance opacity pulse
+  // (instanced aOp attribute, applied via onBeforeCompile alpha modulation) —
+  // the pre-instancing per-ring opacity variation, restored at one draw call.
   foamRings.push({x:x,z:z,rw:rw,rd:rd,phase:rnd()*7});
 }
 function finalizeFoam(){
   if(!foamRings.length)return;
   const g=new THREE.PlaneGeometry(1,1);
   g.rotateX(-Math.PI/2);
-  foamIM=new THREE.InstancedMesh(g,
-    new THREE.MeshBasicMaterial({map:TEX.foam,transparent:true,opacity:0.72,depthWrite:false}),
-    foamRings.length);
+  const ops=new Float32Array(foamRings.length);
+  for(let i=0;i<ops.length;i++)ops[i]=0.78;
+  g.setAttribute('aOp',
+    new THREE.InstancedBufferAttribute(ops,1).setUsage(THREE.DynamicDrawUsage));
+  const fm=new THREE.MeshBasicMaterial({map:TEX.surf,transparent:true,opacity:1,depthWrite:false});
+  fm.onBeforeCompile=function(shader){
+    shader.vertexShader='attribute float aOp;\nvarying float vOp;\n'+
+      shader.vertexShader.replace('#include <begin_vertex>',
+        '#include <begin_vertex>\n  vOp=aOp;');
+    shader.fragmentShader='varying float vOp;\n'+
+      shader.fragmentShader.replace('vec4 diffuseColor = vec4( diffuse, opacity );',
+        'vec4 diffuseColor = vec4( diffuse, opacity * vOp );');
+  };
+  fm.customProgramCacheKey=function(){return 'foamOp';};
+  foamIM=new THREE.InstancedMesh(g,fm,foamRings.length);
   foamIM.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   foamIM.frustumCulled=false;
   // Instanced transparent sorting uses the mesh origin; rings must always
@@ -3538,16 +3585,26 @@ function finalizeFoam(){
 }
 function updateFoam(t){
   if(!foamIM)return;
+  const ops=foamIM.geometry.attributes.aOp.array;
   for(let i=0;i<foamRings.length;i++){
     const f=foamRings[i];
     const s=1+Math.sin(t*2.4+f.phase)*0.07;
     _dummy.position.set(f.x,WATER_Y+0.03,f.z);
-    _dummy.rotation.set(0,0,0);
-    _dummy.scale.set(f.rw*1.35*s,1,f.rd*1.35*s);
+    // Per-instance yaw from the ring's own phase: every annulus is rotated
+    // differently, so the shared lump texture never reads as repeated.
+    _dummy.rotation.set(0,f.phase,0);
+    // PlaneGeometry(1,1) spans +/-0.5, so the extent must be 2x the ring
+    // radius: the annulus band then lands at 0.74*rw, tight on the shoreline.
+    _dummy.scale.set(f.rw*2*s,1,f.rd*2*s);
     _dummy.updateMatrix();
     foamIM.setMatrixAt(i,_dummy.matrix);
+    // Small mid-channel rock rings run calmer than shoreline surf — a full
+    // -strength annulus on a 3m rock reads as a decal, not as foam.
+    const small=f.rw<5;
+    ops[i]=(small?0.72:0.88)+Math.sin(t*1.9+f.phase)*(small?0.16:0.18);
   }
   foamIM.instanceMatrix.needsUpdate=true;
+  foamIM.geometry.attributes.aOp.needsUpdate=true;
 }
 
 const waterlineGeos=[];
@@ -3576,14 +3633,18 @@ function finalizeWaterlines(){
 const LM={};
 function buildLevel(){
   buildBackdrop();
-  // shoreline foam hugging island coastlines
-  addFoamRing(0,-12.5,17,38);
-  addFoamRing(0,-35,9,6);
-  addFoamRing(0,-54.5,15,20);
-  addFoamRing(0,-84.5,15,50);
-  addFoamRing(0,-131,12,13);
-  addFoamRing(0,-163,15,13);
-  addFoamRing(0,-206,15,44);
+  // shoreline foam hugging island coastlines. Radii are annulus-scaled
+  // (Pass 19): the surf texture's band sits at ~0.74 of the ring extent, so
+  // rw = w*0.62+1.15 drops the foam band ~0.7m outside the island footprint,
+  // tight against the contact edge. The 7 calls (and their rnd phases) are
+  // unchanged in count and order.
+  addFoamRing(0,-12.5,9.83,22.85);
+  addFoamRing(0,-35,5.49,3.63);
+  addFoamRing(0,-54.5,8.59,11.69);
+  addFoamRing(0,-84.5,8.59,30.29);
+  addFoamRing(0,-131,6.73,7.35);
+  addFoamRing(0,-163,8.59,7.35);
+  addFoamRing(0,-206,8.59,25.95);
 
   // Waterline wet rock margins & localized wake foam for water gap & ocean stepping pillars
   for(const [wx,wz,ww,wd] of [
@@ -3601,7 +3662,7 @@ function buildLevel(){
     [-20.5,-134,3.8,3.8]
   ]){
     addWaterlineSkirt(wx,wz,ww,wd);
-    addFoamRing(wx,wz,ww*1.28,wd*1.28);
+    addFoamRing(wx,wz,ww*0.62+1.15,wd*0.62+1.15);
   }
   finalizeWaterlines();
 
@@ -4148,8 +4209,86 @@ driftwoodGeo.scale(1,0.65,1);
 scatterInstanced(driftwoodGeo,toonMat({color:0x8a5c32,noCache:true}),300,0.55,1.4,false,false);
 
 /* water ----------------------------------------------------------------- */
-const water=new THREE.Mesh(new THREE.PlaneGeometry(420,300),
-  new THREE.MeshBasicMaterial({map:TEX.water,transparent:true,opacity:0.92}));
+/*
+ * Pass 19 — depth-graded surface (the critic-named gap). Still ONE draw
+ * call: onBeforeCompile upgrades the basic material in the fragment shader.
+ * Distance to the nearest island footprint (shoreRects, recorded by plat()
+ * during layout) drives a three-stop grade — mint shallows at the margin,
+ * vibrant turquoise mid, sapphire at range — plus an animated lapping band
+ * hugging the shoreline, and two counter-drifting texture layers so the
+ * flow reads as shear over depth, not a single scrolling stripe.
+ */
+const WATER_SHORE_MAX=32;
+const shoreU=[];
+for(let i=0;i<WATER_SHORE_MAX;i++){
+  const r=shoreRects[i];
+  shoreU.push(new THREE.Vector4(r?r.x:0,r?r.z:0,r?r.hw:0,r?r.hd:0));
+}
+const waterMat=new THREE.MeshBasicMaterial({map:TEX.water,transparent:true,opacity:1});
+waterMat.onBeforeCompile=function(shader){
+  shader.uniforms.uTime=WIND.time;
+  shader.uniforms.uShore={value:shoreU};
+  shader.uniforms.uShoreN={value:Math.min(shoreRects.length,WATER_SHORE_MAX)};
+  shader.vertexShader='varying vec3 vWPos;\n'+shader.vertexShader.replace(
+    '#include <begin_vertex>',
+    '#include <begin_vertex>\n  vWPos=(modelMatrix*vec4(transformed,1.0)).xyz;');
+  shader.fragmentShader=[
+    'uniform float uTime;',
+    'uniform vec4 uShore['+WATER_SHORE_MAX+'];',
+    'uniform int uShoreN;',
+    'varying vec3 vWPos;',
+    shader.fragmentShader.replace('#include <map_fragment>',[
+      // Two flow layers at deliberately different scales drifting in opposite
+      // directions, so the shear between them reads as moving water.
+      '  vec2 fuv1=vWPos.xz*vec2(0.03810,0.05333)+vec2(uTime*0.014,sin(uTime*0.3)*0.02);',
+      '  vec2 fuv2=vWPos.xz*vec2(0.06250,0.08333)+vec2(-uTime*0.019,cos(uTime*0.23)*0.022);',
+      '  vec4 t1=mapTexelToLinear(texture2D(map,fuv1));',
+      '  vec4 t2=mapTexelToLinear(texture2D(map,fuv2));',
+      '  vec3 tex=t1.rgb*0.62+t2.rgb*0.38;',
+      // Third tight-scale tap: near-field caustic cells that survive the
+      // grazing-angle compression where the two big layers smear out.
+      '  vec3 t3=mapTexelToLinear(texture2D(map,vWPos.xz*0.167+vec2(uTime*0.006,-uTime*0.004))).rgb;',
+      '  float fine=dot(t3,vec3(0.299,0.587,0.114));',
+      // Rounded-rect SDF to the nearest island footprint.
+      '  float sd=1e9;',
+      '  for(int i=0;i<'+WATER_SHORE_MAX+';i++){',
+      '    if(i>=uShoreN)break;',
+      '    vec4 s=uShore[i];',
+      '    vec2 q=abs(vWPos.xz-s.xy)-max(s.zw-0.7,vec2(0.0));',
+      '    sd=min(sd,length(max(q,vec2(0.0)))+min(max(q.x,q.y),0.0)-0.7);',
+      '  }',
+      // Depth grade: mint collar at the contact line -> vibrant turquoise
+      // mid -> sapphire offshore. Collar stays tight — a 3m mint band reads
+      // as a swimming pool; the turquoise is the water's resting colour.
+      '  vec3 grade=mix(vec3(0.220,0.620,0.550),vec3(0.078,0.550,0.780),smoothstep(0.45,2.6,sd));',
+      '  grade=mix(grade,vec3(0.028,0.235,0.395),smoothstep(4.0,14.0,sd));',
+      // Caustics/glint detail rides ON the grade with real contrast — the
+      // pass-19 critique flagged the first version as invisible at gameplay
+      // distance. Streaks swing the surface ±30-40%, glints clip to white.
+      '  float lum=dot(tex,vec3(0.299,0.587,0.114));',
+      '  vec3 wcol=grade*(0.42+1.05*lum)*(0.84+0.34*fine);',
+      '  wcol+=vec3(1.0,0.98,0.90)*smoothstep(0.70,0.92,lum)*0.34;',
+      // Contact margin as a VALUE STEP, not a fade: a dark wet lip just
+      // inside the lapping line, so the white line reads as a line.
+      '  float lap=(sin(vWPos.x*0.50+uTime*1.30)+sin(vWPos.z*0.43-uTime*0.90)',
+      '            +sin((vWPos.x+vWPos.z)*0.27+uTime*0.60))/3.0;',
+      '  float bandC=0.58+lap*0.42;',
+      '  float wet=smoothstep(0.0,0.15,sd)*(1.0-smoothstep(bandC-0.15,bandC+0.05,sd));',
+      '  wcol*=1.0-wet*0.38;',
+      '  float band=1.0-smoothstep(0.0,0.30,abs(sd-bandC));',
+      '  wcol=mix(wcol,vec3(0.970,1.0,0.992),band*0.62);',
+      // Shallows let a little of what is under them read through.
+      '  float walpha=mix(0.87,0.94,smoothstep(1.5,8.0,sd));',
+      '  diffuseColor*=vec4(wcol,walpha);'
+    ].join('\n'))
+  ].join('\n');
+};
+waterMat.customProgramCacheKey=function(){return 'waterPass19';};
+// Grazing cameras stretch the water texture hard at the near margin; higher
+// anisotropy keeps the caustic detail instead of a pale smear there.
+TEX.water.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
+TEX.water.needsUpdate=true;
+const water=new THREE.Mesh(new THREE.PlaneGeometry(420,300),waterMat);
 water.rotation.x=-Math.PI/2;
 water.position.set(0,WATER_Y,-90);
 scene.add(water);
@@ -5563,8 +5702,8 @@ function frameBody(){
   updateFireflies(t);
   updateClouds(dt);
   updateFoam(t);
-  TEX.water.offset.x=t*0.014;
-  TEX.water.offset.y=Math.sin(t*0.3)*0.02;
+  // Water flow now lives in the water material's shader (two counter-drifting
+  // layers, Pass 19) — no CPU texture offset to animate.
   for(const p of palms)p.head.rotation.z=Math.sin(t*1.1+p.phase)*0.07;
   updateTorchEmbers(t);
   for(const tc of torches){

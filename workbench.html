@@ -169,7 +169,7 @@
   <div class="stats-bar">
     <div class="stat-card">
       <div class="stat-label">Active Loop</div>
-      <div class="stat-val active" style="color:var(--green)">Pass 18: Draw-Call Batching</div>
+      <div class="stat-val active" style="color:var(--green)">Pass 19: Water Surface</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Model Engine</div>
@@ -181,7 +181,7 @@
     </div>
     <div class="stat-card">
       <div class="stat-label">Production Status</div>
-      <div class="stat-val" style="color:var(--green)">Pass 18: 8.30 / 10 (Grade A-)</div>
+      <div class="stat-val" style="color:var(--green)">Pass 19: 8.4 / 10 (Grade A-)</div>
     </div>
   </div>
 
@@ -189,10 +189,10 @@
     <div class="card">
       <div class="card-header">
         <span>Current Visual Contact Sheet</span>
-        <span style="font-size:12px; color:var(--text-muted);">Auto-captured via tools/shots.mjs (Pass 18)</span>
+        <span style="font-size:12px; color:var(--text-muted);">Auto-captured via tools/shots.mjs (Pass 19)</span>
       </div>
       <div class="sheet-container">
-        <img src="docs/shots/pass18/CONTACT-SHEET.png" alt="Pass 18 Contact Sheet" onerror="this.src='docs/shots/pass17/CONTACT-SHEET.png'">
+        <img src="docs/shots/pass19/CONTACT-SHEET.png" alt="Pass 19 Contact Sheet" onerror="this.src='docs/shots/pass18/CONTACT-SHEET.png'">
       </div>
     </div>
 
@@ -271,6 +271,13 @@
           </div>
           <span class="track-status status-done">PASSED</span>
         </div>
+        <div class="track-item">
+          <div>
+            <div class="track-title">11. Water Surface (Depth Grade, Shore Band, Foam, Flow)</div>
+            <div style="font-size:12px; color:var(--text-muted);">SDF depth-graded shader (aqua collar → turquoise → sapphire), wet-lip + meandering lapping line, annular surf foam with restored per-instance opacity, three-scale counter-drifting flow — zero extra draws; final critique 8.4/10 (A-), SHIP</div>
+          </div>
+          <span class="track-status status-done">PASSED</span>
+        </div>
       </div>
     </div>
   </div>
@@ -290,6 +297,13 @@
         </tr>
       </thead>
       <tbody>
+        <tr>
+          <td>Pass 19</td>
+          <td>Water Surface: SDF Depth Grade, Contact Value-Step, Annular Surf Foam, Three-Scale Flow</td>
+          <td>Pass 18's critique named the water the biggest remaining gap against the QUALITY-BAR floor ("depth-graded colour, a shoreline band, foam at contact, visible flow — not a single translucent plane"); two Gauntlet rounds inside this pass scored 6.8 (B) and 7.9 (B+) FIX-FIRST on flow invisibility, decal-like foam, and a margin that read as a gradient, and a contour-band probe demand exposed a factor-2 mesh-scale bug hiding the entire surf annulus inside island footprints (only faint texture tails leaked out as "detached mid-water decals")</td>
+          <td>plat() now records every island footprint; the water's single MeshBasicMaterial is upgraded in-shader (onBeforeCompile) with a rounded-rect SDF to the nearest footprint driving a three-stop grade (saturated aqua collar 0–2.6m → turquoise mid → sapphire by 14m, all monotone-verified by camera-projection pixel probes: r-channel 130→99→78→43), a contact value-step (dark wet lip ×0.62 under a crisp 0.30m meandering white lapping line), and three counter-drifting texture taps at 26m/16m/6m scales with raised gain (±30–40% streak swing) — flow moved fully into the shader; shoreline foam became an annular broken-lump surf texture (deterministic, seed-stream-safe) on the existing instanced mesh with the pre-instancing per-ring opacity pulse restored via an instanced aOp attribute (0.88±0.18 shoreline / 0.72±0.16 small rocks) plus per-instance yaw so no two rings repeat, and the mesh-scale bug fixed so the band lands 0.7m outside each shoreline (controlled hide-the-mesh A/B: 163,197 px change at water-gap; contour probes 176–190 mean with >200 white peaks vs 154 open water); foam-bright population at water-gap rose from 3,648 px (p18) to 14,291 — result: 9/9 PASS gate, draws 206–826, tris 583k–975k, controls clean, zero confirmed regressions; three-round Gauntlet trajectory 6.8 (B) → 7.9 (B+) → 8.4 (A-) SHIP — all five water floor sub-criteria pass; watch items recorded: motion-read of flow shear needs a live 60fps look, far-field sapphire verified by builder probes only, palm-trunk texture flagged pre-existing</td>
+          <td><span class="track-status status-done">PASSED</span></td>
+        </tr>
         <tr>
           <td>Pass 18</td>
           <td>Draw-Call Batching: Group Consolidation, Instanced Props, Chunked Static Geometry, Single Shadow Update</td>

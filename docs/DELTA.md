@@ -204,6 +204,58 @@ contact shadows still contribute ~20% of frame pixels in `crate-cluster`.
 
 ---
 
+## Pass 19 — water surface (the pass-18 critique's named gap)
+
+Pass 18's critic named the water the biggest remaining gap against the
+QUALITY-BAR floor: *"depth-graded colour, a shoreline band, foam at contact,
+and visible flow. Not a single translucent plane."* Three Gauntlet rounds
+inside this pass scored 6.8 (B) → 7.9 (B+) FIX-FIRST → 8.4 (A-) SHIP.
+
+What changed (all inside the water's one material / the one foam
+`InstancedMesh` — zero extra draw calls):
+
+- `plat()` records every island footprint (`shoreRects`, 26 rects) — the
+  depth grade follows the level data, not a hand list.
+- The water `MeshBasicMaterial` is upgraded via `onBeforeCompile`: a
+  rounded-rect SDF to the nearest footprint drives a three-stop grade —
+  saturated aqua collar (0–2.6 m), turquoise mid, sapphire by 14 m —
+  verified monotone by camera-projection pixel probes (title-hero red
+  channel 130 → 99 → 78 → 43 across collar → mid → ramp → 34 m).
+- The contact margin is a value step, not a fade: a dark wet lip (×0.62)
+  under a crisp, meandering white lapping line (0.30 m, three summed
+  sines). Critic probe counted 26 dip→line signatures at water-gap (18 in
+  pass 18).
+- Flow lives in the shader now: three counter-drifting texture taps at
+  26 m / 16 m / 6 m world scales with raised gain (streaks swing the
+  surface ±30–40 %); near-field detail variance at water-gap roughly
+  doubled vs pass 18 (14.8 vs 8.4 luminance SD in the 14–40 px band).
+- Shoreline foam is an annular broken-lump **surf** texture (deterministic
+  sin math — the `rnd()` seed stream is untouched) on the existing
+  instanced mesh; the pre-instancing per-ring opacity pulse is restored via
+  an instanced `aOp` attribute (0.88±0.18 shoreline, 0.72±0.16 small
+  mid-channel rocks) and per-instance yaw so no two rings repeat.
+- **Bug found by the critic's contour-probe demand:** a factor-2
+  mesh-scale error (`PlaneGeometry(1,1)` spans ±0.5, not ±1) had placed the
+  entire surf annulus *inside* the island footprints, hidden under the
+  islands — only faint texture tails leaked out around the small rocks,
+  which is exactly what read as "detached mid-water decals." Fixed: the
+  band now lands 0.7 m outside every shoreline. Controlled hide-the-mesh
+  A/B: 163,197 pixels change at water-gap (mean Δ 38/255); contour-band
+  probes read 176–190 mean brightness with >200 white peaks vs 154 open
+  water; foam-bright population at water-gap rose 3,648 → 14,291 px.
+
+Verification: 9/9 framings PASS the gate; draws 206–826 (floor ≤900);
+tris 583k–975k (floors 220k/150k); controls regression suite clean; no
+confirmed regressions vs pass 18 (draw deltas ±36 are the known harness
+phase noise — same-build reruns vary by ±28).
+
+Watch items (recorded, not blocking): the motion read of the flow shear
+and lapping meander needs a live 60 fps look (stills cannot show
+counter-drift); far-field sapphire verified by builder probes only; palm
+trunk texture flagged by one critic as pre-existing.
+
+---
+
 ## Closed
 
 - **#1 Everything floats** — closed pass 2 (`dc8fa57`). Platforms are craggy
@@ -220,7 +272,11 @@ contact shadows still contribute ~20% of frame pixels in `crate-cluster`.
   grass, flowers on shared wind field.
 - **#6 Nothing is grounded** — closed pass 2 & 4. AO on crevices + hero contact drop shadow.
 - **#7 No backdrop** — closed pass 4. Sea stacks, mountain ridges, volcano, 3D clouds.
-- **#8 Water is one translucent plane** — closed pass 4. Depth-graded turquoise ocean + shoreline foam skirts.
+- **#8 Water is one translucent plane** — closed pass 4, re-closed pass 19
+  at the QUALITY-BAR's full floor. Pass 4 gave it depth-graded turquoise and
+  foam skirts; pass 19 delivered the whole clause: analytic SDF depth grade,
+  wet-lip + lapping-line shore band, annular surf foam at contact with
+  per-instance opacity restored, three-scale counter-drifting flow.
 - **#10 The hero has no surface** — closed pass 4. Saturated fur, denim shorts, sneakers, gloves, brows, glints, mohawk.
 - **#9 (pass 2) Draw calls are high for what is on screen** — closed pass 18.
   Group consolidation in `mergeGeos`, instanced crate/TNT bodies and contact
