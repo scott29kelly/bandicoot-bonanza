@@ -256,6 +256,62 @@ trunk texture flagged by one critic as pre-existing.
 
 ---
 
+## Pass 20 — atmosphere (the pass-19 critique's #1 overall gap)
+
+Pass 19's critic named midtone/distance washout the biggest remaining gap:
+the old linear `THREE.Fog` replaced distant surfaces 100% with mid-value
+pastel stops, so distance read as a pale luminance lift. The builder's
+washout probe (`tools/washout.mjs`, new) flagged 5/9 framings: far-field
+saturation collapsed to 0.29–0.34 (near 0.38–0.49), value *rose* with
+distance, pillar-pit's far band was nearly flat (spread 0.059). Two Gauntlet
+rounds: 8.0 (A-) FIX-FIRST → **8.5 (A-) SHIP**.
+
+What changed (all in the grade pass + the depth prepass it already had —
+zero extra draws, tris unchanged):
+
+- **Atmosphere moved into the grade pass.** `scene.fog` is nulled on the
+  composer path; distance grade is driven by the AO prepass's packed depth
+  buffer (decoupled from `?ablate=ao`; `?ablate=atmos` zeroes the term).
+  One colour owner per the pipeline law: fog → exposure → AgX → split →
+  dither, all in one shader.
+- **Curve:** `1-exp(-pow(max(d-15,0)/115, 2.6))` — a 15 m dead zone keeps
+  gameplay range under ~2%; a sea-level air collar (×1.35 at y=0, thinning
+  by ~10 m) gives far silhouettes a base-to-top gradient; factor capped at
+  0.68 (0.55 at dusk) — **distance grades but never replaces**.
+- **Stops re-authored DEEP** (beach `#17667a`, jungle `#155840`,
+  canyon/temple plum-indigos): at or below the value of the surfaces they
+  fog, so far silhouettes stay darker than the sky. (Mid-value stops lift
+  and desaturate the dark sapphire sea — cut two proved it on the probes.)
+- **Warm horizon is a multiplicative gild**, not a convergence: authored
+  vec3 per time of day (day 1.30/1.04/0.80, dusk 1.32/1.03/0.92) rotates
+  the air's hue gold-ward at range without lifting value toward cream
+  (cut one converged fully on the sky's bottom-stop bytes — seamless but a
+  cream wash; the cap-0.68 + gild design superseded it). Subtle
+  sun-direction warmth on top.
+- ±1.5/255 interleaved-gradient **output dither** kills banding on the new
+  long fog ramps (the artifacts floor).
+- minfx keeps a re-authored material fog (60/240, deep stops).
+
+Verification: 9/9 gate PASS (luma 0.512–0.658, sd 0.107–0.158); draws
+206–826; tris 583k–975k; controls clean; horizon seam dead (critic probes:
+zero bright-band rows, max row step ≤4/255); far-band saturation gains at
+beach +0.036 / jungle +0.050 / title +0.031 with value held; temple gold
+share recovered 9.0% → 28.5% after the dusk fixes. The first-round
+gate-hero "near-yard regression" was proven a settle-phase artifact (the
+lapping-line shoreline swings sheet-to-sheet; pass19 rows reproduce at
+settle 30 with the atmosphere ablated).
+
+Residuals recorded by the re-critique (non-blocking, ranked for backlog):
+pillar-pit stack separation −15% vs pass19 (lever: shave the 60–100 m band
+or deepen the canyon stop); temple air still 16.1% desaturated with one
+neutral strip; FAR<NEAR sat gradient on 4 framings; gate-hero far gold
+65.8→59.5%; and a tooling ask — frozen-uTime capture mode to delete the
+shoreline phase-noise failure class. Prior backlog stands: hero
+rim/outline at portrait range, mouth cavity, rolling-log dust, shoreline
+debris clustering, Kelvin V-wake, palm trunk texture.
+
+---
+
 ## Closed
 
 - **#1 Everything floats** — closed pass 2 (`dc8fa57`). Platforms are craggy
@@ -277,6 +333,13 @@ trunk texture flagged by one critic as pre-existing.
   foam skirts; pass 19 delivered the whole clause: analytic SDF depth grade,
   wet-lip + lapping-line shore band, annular surf foam at contact with
   per-instance opacity restored, three-scale counter-drifting flow.
+- **#8b (pass 2) The image is low-contrast and hazy overall / fog
+  desaturates midtones toward white** — closed pass 20. The linear
+  luminance fog is gone from the composer path; a depth-driven atmosphere
+  in the grade pass grades distance with deep chromatic biome stops and a
+  multiplicative warm gild instead of replacing it with pastel. Far-field
+  saturation rose at every sunlit framing with value held or lowered, and
+  the horizon seam (the pass-1 "hard white band" descendant) measures dead.
 - **#10 The hero has no surface** — closed pass 4. Saturated fur, denim shorts, sneakers, gloves, brows, glints, mohawk.
 - **#9 (pass 2) Draw calls are high for what is on screen** — closed pass 18.
   Group consolidation in `mergeGeos`, instanced crate/TNT bodies and contact

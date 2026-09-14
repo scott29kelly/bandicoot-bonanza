@@ -168,8 +168,8 @@
 
   <div class="stats-bar">
     <div class="stat-card">
-      <div class="stat-label">Active Loop</div>
-      <div class="stat-val active" style="color:var(--green)">Pass 19: Water Surface</div>
+<div class="stat-label">Active Loop</div>
+<div class="stat-val active" style="color:var(--green)">Pass 20: Atmosphere</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Model Engine</div>
@@ -180,8 +180,8 @@
       <div class="stat-val">Crash 4 / Astro Bot</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Production Status</div>
-      <div class="stat-val" style="color:var(--green)">Pass 19: 8.4 / 10 (Grade A-)</div>
+<div class="stat-label">Production Status</div>
+<div class="stat-val" style="color:var(--green)">Pass 20: 8.5 / 10 (Grade A-)</div>
     </div>
   </div>
 
@@ -189,10 +189,10 @@
     <div class="card">
       <div class="card-header">
         <span>Current Visual Contact Sheet</span>
-        <span style="font-size:12px; color:var(--text-muted);">Auto-captured via tools/shots.mjs (Pass 19)</span>
+        <span style="font-size:12px; color:var(--text-muted);">Auto-captured via tools/shots.mjs (Pass 20)</span>
       </div>
       <div class="sheet-container">
-        <img src="docs/shots/pass19/CONTACT-SHEET.png" alt="Pass 19 Contact Sheet" onerror="this.src='docs/shots/pass18/CONTACT-SHEET.png'">
+        <img src="docs/shots/pass20/CONTACT-SHEET.png" alt="Pass 20 Contact Sheet" onerror="this.src='docs/shots/pass19/CONTACT-SHEET.png'">
       </div>
     </div>
 
@@ -278,6 +278,13 @@
           </div>
           <span class="track-status status-done">PASSED</span>
         </div>
+        <div class="track-item">
+          <div>
+            <div class="track-title">12. Atmosphere (Coloured Depth-Graded Fog in the Grade Pass)</div>
+            <div style="font-size:12px; color:var(--text-muted);">Depth-driven exp^2.6 fog with 15m dead zone, deep biome stops (aqua→green→plum), multiplicative warm horizon gild (day/dusk vec3), sea-level air collar, dusk fog cap, output dither — zero extra draws; two-round Gauntlet 8.0 FIX-FIRST → 8.5/10 (A-) SHIP</div>
+          </div>
+          <span class="track-status status-done">PASSED</span>
+        </div>
       </div>
     </div>
   </div>
@@ -297,6 +304,13 @@
         </tr>
       </thead>
       <tbody>
+        <tr>
+          <td>Pass 20</td>
+          <td>Atmosphere: Depth-Driven Coloured Fog in the Grade Pass (Deep Biome Stops, Warm Gild, Dusk Cap)</td>
+          <td>Pass 19's critique named midtone/distance washout the #1 overall gap: the old linear THREE.Fog replaced distant surfaces 100% with mid-value pastel stops, so distance read as a pale luminance lift — far-field saturation collapsed (0.29–0.34 vs near 0.38–0.49), value ROSE with distance, and pillar-pit's far band was nearly flat (spread 0.059); builder's washout probe flagged 5/9 framings; first Gauntlet round scored 8.0 (A-) FIX-FIRST with three defects: dusk gild scalar extrapolating to grey-violet (temple gold share 46.5%→9.0%), pillar-pit stack separation −25%, and a gate-hero near-yard delta later proven to be a settle-phase artifact (lapping-line shoreline + tick drift, reproduced pass19 rows at settle 30 with atmosphere ablated)</td>
+          <td>Atmosphere moved into the grade pass (scene.fog nulled on the composer path, ?ablate=atmos for A/B), driven by the AO prepass's packed depth buffer at zero extra draws: exp^2.6 distance falloff with a 15m dead zone (&lt;2% at gameplay range), sea-level air collar (×1.35 at y=0 thinning by ~10m), factor capped 0.68 (0.55 at dusk — distance grades but never replaces), FOG_STOPS re-authored DEEP (beach #17667a aqua, jungle #155840, canyon/temple plum-indigos — at or below the value of the surfaces they fog, so far silhouettes stay darker than the sky), warm horizon entered as a multiplicative gild (authored vec3: day 1.30/1.04/0.80, dusk 1.32/1.03/0.92 — hue rotates gold-ward without value lift), subtle sun-direction warmth, and ±1.5/255 interleaved-gradient output dither against ramp banding; minfx keeps a re-authored material fog; two failed first cuts (full warm convergence to sky-bottom bytes → cream wash; mid-value stops → teal re-tint of the same wash) were caught by row/hue-class probes and settled as the deep-stops+multiplicative-gild design — result: 9/9 gate PASS, draws 206–826, tris 583k–975k, controls clean, horizon seam dead (zero bright-band rows), FAR-band sat gains at beach +0.036 / jungle +0.050 / title +0.031, temple gold 28.5% recovered from 9.0% with torch content untouched; re-critique 8.5/10 (A-) SHIP: "atmosphere now does authored work at every distance instead of nothing below 70m"; residual costs recorded: pillar-pit stack separation −15%, temple air 16.1% desat share, FAR&lt;NEAR sat gradient on 4 framings</td>
+          <td><span class="track-status status-done">PASSED</span></td>
+        </tr>
         <tr>
           <td>Pass 19</td>
           <td>Water Surface: SDF Depth Grade, Contact Value-Step, Annular Surf Foam, Three-Scale Flow</td>

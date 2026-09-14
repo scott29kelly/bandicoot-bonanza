@@ -789,7 +789,10 @@ document.body.appendChild(renderer.domElement);
 
 const scene=new THREE.Scene();
 scene.background=TEX.sky;
-scene.fog=new THREE.Fog(0xbfe8f0,CFG.fogNear,CFG.fogFar);
+// The minfx fallback's distance grade. With the composer active this is
+// nulled (section 6's POST block) and atmosphere lives in the grade pass —
+// see the FOG_STOPS re-author note below for why the stops got deeper.
+scene.fog=new THREE.Fog(0x17667a,60,240);
 
 const camera=new THREE.PerspectiveCamera(58,window.innerWidth/window.innerHeight,0.1,300);
 camera.position.set(0,5,9);
@@ -852,20 +855,40 @@ function flashAt(p,power){flash.position.copy(p);flash.position.y+=1;flash.inten
 
 // fog / biome palette by z
 /*
- * The biome colour script. These were five pastels a few percent off the sky,
- * so the ramp existed but did nothing — distance graded from pale to slightly
- * paler. Each stop is now darker and considerably more saturated, which is
- * what lets distance read as a layer instead of a wash, and gives each
- * stretch of the level its own temperature.
+ * The biome colour script, re-authored pass 20. The pass-19 critique's #1
+ * overall gap was midtone/distance washout: the old stops were mid-value,
+ * mid-saturation teals, and a linear THREE.Fog replaced distant surfaces
+ * with them 100% — so distance read as a pale luminance lift instead of
+ * coloured air. The stops below are DEEP — at or below the value of the
+ * surfaces they fog (the offshore sea grades to sapphire (0.028,0.235,0.395)
+ * by 14 m, so a stop lighter than that lifts and desaturates it: a wash in
+ * a different coat, which cut one of this pass proved on the probes). Deep
+ * stops grade distance DOWN in value, the way stylized aerial perspective
+ * works — far silhouettes stay darker than the sky behind them — while the
+ * multiplicative warm gild (FOG_GILD, applied in the grade shader) rotates
+ * the air gold-ward at range without lifting it toward cream.
  */
 const FOG_STOPS=[
-  {z:0,   c:new THREE.Color(0x74b4c6)},  // beach: cool teal against warm sand
-  {z:-60, c:new THREE.Color(0x5f9e78)},  // beach-to-jungle transition
-  {z:-110,c:new THREE.Color(0x4a8a5e)},  // jungle: deep green
-  {z:-135,c:new THREE.Color(0x382c52)},  // canyon entrance: dusky purple
-  {z:-160,c:new THREE.Color(0x22163b)},  // temple landing: deep twilight indigo
-  {z:-230,c:new THREE.Color(0x1b122e)}   // temple gate climax: deep indigo/purple-grey (#1b122e)
+  {z:0,   c:new THREE.Color(0x17667a)},  // beach: deep aqua — darker than the sea it fogs
+  {z:-60, c:new THREE.Color(0x1a6a58)},  // beach-to-jungle transition: deep aqua-green
+  {z:-110,c:new THREE.Color(0x155840)},  // jungle: deep saturated green
+  {z:-135,c:new THREE.Color(0x3a2547)},  // canyon entrance: dusky PLUM — violet that leans warm, not grey
+  {z:-160,c:new THREE.Color(0x2c1c42)},  // temple landing: plum-indigo twilight
+  {z:-230,c:new THREE.Color(0x241636)}   // temple gate climax: deep plum-indigo
 ];
+// The horizon GILD is multiplicative, not a mix toward a bright warm target:
+// at range the air's hue rotates gold-ward while keeping the fog's own value,
+// so the far field stays chromatic instead of dissolving toward cream. The
+// gild is an authored VECTOR per time of day, never a strength that
+// extrapolates past it — scaling (1.35,1.05,0.72) by 1.3 at dusk, as pass
+// 20's first cut did, drives indigo stops to grey-violet (the Gauntlet
+// measured temple far gold share 46.5% -> 9.0%). The dusk vector warms r
+// mildly and PRESERVES b, so temple air reads warm-violet against the ember
+// sky instead of draining it.
+const FOG_GILD={
+  day:new THREE.Vector3(1.30,1.04,0.80),
+  dusk:new THREE.Vector3(1.32,1.03,0.92)
+};
 const _fogC=new THREE.Color();
 const _hemiSkyDay=new THREE.Color(0x9ad4ff);
 const _hemiSkyDusk=new THREE.Color(0x4a3268);
@@ -887,11 +910,22 @@ function updateFog(pz){
   }
   const t=a.z===b.z?0:clamp((pz-a.z)/(b.z-a.z),0,1);
   _fogC.copy(a.c).lerp(b.c,t);
-  scene.fog.color.copy(_fogC);
+  // minfx keeps the material fog path; the composer build nulls scene.fog
+  // and updateFog feeds these to the grade pass's atmosphere instead.
+  if(scene.fog)scene.fog.color.copy(_fogC);
 
   // Temple Biome Twilight / Dusk transition at z < -115 (Pass 14)
   const tDusk=clamp((-115-pz)/65,0,1);
   if(window.updateSky)window.updateSky(tDusk);
+
+  // The atmosphere's two inputs: chromatic biome air (deep enough to grade
+  // distance DOWN in value, not lift it toward pastel) and the day->dusk
+  // gild vector (authored absolute — see FOG_GILD).
+  if(gradePass){
+    gradePass.uniforms.uFogAqua.value.copy(_fogC);
+    gradePass.uniforms.uFogGild.value.copy(FOG_GILD.day).lerp(FOG_GILD.dusk,tDusk);
+    gradePass.uniforms.uFogCap.value=lerp(0.68,0.55,tDusk);
+  }
 
   hemi.color.copy(_hemiSkyDay).lerp(_hemiSkyDusk,tDusk);
   hemi.groundColor.copy(_hemiGndDay).lerp(_hemiGndDusk,tDusk);
@@ -962,12 +996,12 @@ function aoBlit(mat,target){
  * finished occlusion term in aoRT for the one in-chain pass to multiply.
  */
 function renderAO(){
+  if(!aoApply)return;
   // Refreshed every frame rather than once at setup: the review harness
   // retunes fov per framing, and reconstructing view positions through a
   // stale projection would put the occlusion somewhere else entirely.
   aoMat.uniforms.proj.value.copy(camera.projectionMatrix);
   aoMat.uniforms.projInv.value.copy(camera.projectionMatrixInverse);
-  renderDepth();
   aoBlit(aoMat,aoRT);
   aoBlurMat.uniforms.tAO.value=aoRT.texture;
   aoBlurMat.uniforms.dir.value.set(1,0);
@@ -990,11 +1024,12 @@ function renderDepth(){
   scene.background=bg;scene.fog=fog;
 }
 function syncAOSize(){
-  if(!aoApply)return;
+  if(!depthRT)return;
   const pr=renderer.getPixelRatio();
   const w=Math.max(2,Math.floor(window.innerWidth*pr)),h=Math.max(2,Math.floor(window.innerHeight*pr));
-  const hw=Math.max(2,w>>1),hh=Math.max(2,h>>1);
   depthRT.setSize(w,h);
+  if(!aoBlurMat)return;
+  const hw=Math.max(2,w>>1),hh=Math.max(2,h>>1);
   aoRT.setSize(hw,hh);
   aoRT2.setSize(hw,hh);
   aoBlurMat.uniforms.resolution.value.set(hw,hh);
@@ -1040,9 +1075,39 @@ const AGX_GLSL=[
 ].join('\n');
 
 /*
- * One pass, run once, at the end: exposure -> AgX -> colour script -> vignette
- * -> sRGB encode. Everything upstream of here is linear and unclamped; nothing
- * downstream of here is allowed to touch colour.
+ * One pass, run once, at the end: atmosphere -> exposure -> AgX -> colour
+ * script -> vignette -> sRGB encode. Everything upstream of here is linear
+ * and unclamped; nothing downstream of here is allowed to touch colour.
+ *
+ * PASS 20 — the atmosphere lives here now, not in the materials. scene.fog
+ * is null on the composer path; distance grade is driven by the same packed
+ * depth buffer the AO prepass already writes, so it costs zero extra draws.
+ * The design answers the pass-19 critique's #1 gap (midtone/distance
+ * washout) on every axis at once:
+ *
+ *   - COLOURED, not luminance: near-to-mid air is the biome aqua/moss/
+ *     indigo ramp (uFogAqua, FOG_STOPS by player z), so distance adds
+ *     chroma where it used to add paleness.
+ *   - The far field never converges on fog colour. The factor caps at 0.68
+ *     and the warm horizon enters as a MULTIPLICATIVE gild (uFogGild —
+ *     hue rotates gold-ward, value holds), so the sea stays turquoise-gold
+ *     at range and far silhouettes keep a third of their own colour.
+ *     Saturation and value spread survive to the horizon, which the first
+ *     two cuts of this pass proved the hard way: full warm convergence and
+ *     mid-value stops both read as washes on the probes.
+ *   - Air is thickest at the waterline (x1.35 at y=0, thinning by ~10 m),
+ *     so distant silhouettes carry a base-to-top gradient — the pillar-pit
+ *     legibility floor — instead of flattening to one value.
+ *   - Exponential^2.2 falloff (d/130): under ~2% at gameplay range, so the
+ *     hero and the corridor keep full contrast; ~30% at 80 m; ~90% by
+ *     250 m. The old linear ramp did nothing until 70 m then washed hard.
+ *   - A gentle sun-direction warmth (ray . sunDir)^3 so looking toward the
+ *     light reads warmer — a modulation, not the effect.
+ *   - Bloom stays UPSTREAM of the atmosphere on purpose: a distant torch
+ *     or the caldera rim glows THROUGH haze rather than being dimmed by
+ *     it, which is how far embers read in the reference class.
+ *
+ * ?ablate=atmos zeroes the whole term for A/B measurement.
  */
 const GradeShader={
   uniforms:{
@@ -1052,7 +1117,15 @@ const GradeShader={
     // flat blown one.
     exposure:{value:0.52},
     vignette:{value:0.40},
-    grade:{value:1.0}
+    grade:{value:1.0},
+    tDepth:{value:null},
+    uProjInv:{value:new THREE.Matrix4()},
+    uCamWorld:{value:new THREE.Matrix4()},
+    uFogAqua:{value:new THREE.Color(0x17667a)},
+    uFogGild:{value:new THREE.Vector3(1.35,1.05,0.72)},
+    uFogCap:{value:0.68},
+    uSunDir:{value:SUN_DIR.clone()},
+    uAtmos:{value:1.0}
   },
   vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
   fragmentShader:[
@@ -1061,13 +1134,59 @@ const GradeShader={
     'uniform float exposure;',
     'uniform float vignette;',
     'uniform float grade;',
+    'uniform sampler2D tDepth;',
+    'uniform mat4 uProjInv;',
+    'uniform mat4 uCamWorld;',
+    'uniform vec3 uFogAqua;',
+    'uniform vec3 uFogGild;',
+    'uniform float uFogCap;',
+    'uniform vec3 uSunDir;',
+    'uniform float uAtmos;',
     AGX_GLSL,
+    'const float UnpackDownscale=255.0/256.0;',
+    'const vec4 UnpackFactors=UnpackDownscale/vec4(256.0*256.0*256.0,256.0*256.0,256.0,1.0);',
+    'float readDepthG(sampler2D t,vec2 uv){return dot(texture2D(t,uv),UnpackFactors);}',
     'vec3 toSRGB(vec3 c){',
     '  c=max(c,vec3(0.0));',
     '  return mix(1.055*pow(c,vec3(1.0/2.4))-0.055,12.92*c,step(c,vec3(0.0031308)));',
     '}',
     'void main(){',
-    '  vec3 c=texture2D(tDiffuse,vUv).rgb*exposure;',
+    '  vec3 c=texture2D(tDiffuse,vUv).rgb;',
+    // Atmosphere, in linear HDR, before exposure — transmittance semantics,
+    // the same order a per-material fog would have reached the tonemap in.
+    '  if(uAtmos>0.001){',
+    '    float fd=readDepthG(tDepth,vUv);',
+    '    if(fd<0.99995){',
+    '      vec4 vp=uProjInv*vec4(vUv*2.0-1.0,fd*2.0-1.0,1.0);',
+    '      vp.xyz/=vp.w;',
+    '      float dst=length(vp.xyz);',
+    '      vec4 wp=uCamWorld*vec4(vp.xyz,1.0);',
+    // A 15 m dead zone under a steeper power: the corridor, the props and
+    // the hero sit under ~2% fog at gameplay range (the first cut fogged
+    // the money shot's final yard ~7.5% — the Gauntlet measured r -19/255
+    // there), while 100 m+ still climbs to the cap.
+    '      float f=1.0-exp(-pow(max(dst-15.0,0.0)/115.0,2.6));',
+    '      f*=1.0+0.38*exp(-max(wp.y,0.0)/9.0);',
+    // Cap at 0.68, not ~1: distance GRADES but never replaces. A full
+    // convergence — however warm the target — is a wash by definition and
+    // desaturates everything it lands on (the first cut of this pass did
+    // exactly that and the probes caught it). Far silhouettes keep ~a third
+    // of their own colour, so saturation and value spread survive at range.
+    // At dusk the cap eases to 0.55: golden-hour content (the torch-lit
+    // ridge, the ember sky) carries the frame, and violet air over it is a
+    // seasoning — full-strength fog there read as grey drain.
+    '      f=min(f,uFogCap)*uAtmos;',
+    // Warm gild: the air's hue rotates gold-ward at range MULTIPLICATIVELY,
+    // keeping the fog's own (deliberately deep) value. Mixing toward a
+    // bright warm target instead lifts and desaturates — that was cut two,
+    // and the row probes read it as cream.
+    '      float gild=smoothstep(0.26,0.64,f);',
+    '      vec3 fogCol=uFogAqua*mix(vec3(1.0),uFogGild,gild);',
+    '      fogCol*=mix(vec3(1.0),vec3(1.30,1.06,0.78),pow(max(dot(vp.xyz/dst,uSunDir),0.0),3.0));',
+    '      c=mix(c,fogCol,f);',
+    '    }',
+    '  }',
+    '  c*=exposure;',
     '  c=agx(c);',
     // Colour script: a teal-orange split applied in display space, after the
     // tonemap, so it grades the finished image instead of fighting the curve.
@@ -1080,7 +1199,15 @@ const GradeShader={
     '  vec2 uv=vUv-0.5;',
     '  float v=1.0-smoothstep(0.30,0.98,dot(uv,uv)*2.15);',
     '  c*=mix(1.0-vignette,1.0,v);',
-    '  gl_FragColor=vec4(toSRGB(c),1.0);',
+    '  vec3 outc=toSRGB(c);',
+    // Output dither: the atmosphere adds long smooth ramps (aqua->warm) that
+    // 8-bit quantisation would band. Same interleaved-gradient noise and
+    // ~1.5-level amplitude the sky canvas already uses — below visibility,
+    // above quantisation. Deterministic in screen position, so it cannot
+    // crawl frame to frame.
+    '  float ign=fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(0.06711056,0.00583715))));',
+    '  outc+=(ign-0.5)*(1.5/255.0);',
+    '  gl_FragColor=vec4(outc,1.0);',
     '}'
   ].join('\n')
 };
@@ -1269,14 +1396,19 @@ if(POST){
   composer=new THREE.EffectComposer(renderer,hdr);
   composer.addPass(new THREE.RenderPass(scene,camera));
 
+  // The packed-depth prepass is no longer AO-only: the grade pass's
+  // atmosphere reads the same buffer, so it exists whenever the composer
+  // does. (?ablate=ao removes the occlusion term; ?ablate=atmos removes the
+  // fog that depends on this depth — the two A/B independently.)
+  depthRT=new THREE.WebGLRenderTarget(1,1,{minFilter:THREE.NearestFilter,
+    magFilter:THREE.NearestFilter,format:THREE.RGBAFormat,
+    type:THREE.UnsignedByteType,stencilBuffer:false,depthBuffer:true});
+  depthMat=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking});
+
   if(!ablated('ao')){
     const rtOpt={minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,
       format:THREE.RGBAFormat,type:THREE.UnsignedByteType,
       stencilBuffer:false,depthBuffer:false};
-    depthRT=new THREE.WebGLRenderTarget(1,1,{minFilter:THREE.NearestFilter,
-      magFilter:THREE.NearestFilter,format:THREE.RGBAFormat,
-      type:THREE.UnsignedByteType,stencilBuffer:false,depthBuffer:true});
-    depthMat=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking});
     // Half resolution. AO is a low-frequency term and the blur that follows
     // would throw most of the extra detail away anyway.
     aoRT=new THREE.WebGLRenderTarget(1,1,rtOpt);
@@ -1324,7 +1456,14 @@ if(POST){
 
   gradePass=new THREE.ShaderPass(GradeShader);
   if(ablated('grade'))gradePass.uniforms.grade.value=0.0;
+  if(ablated('atmos'))gradePass.uniforms.uAtmos.value=0.0;
+  gradePass.uniforms.tDepth.value=depthRT.texture;
   composer.addPass(gradePass);
+  // Atmosphere owns distance now (see GradeShader). Nulling scene.fog takes
+  // the per-material linear fog out of the lit pass entirely — r128 detects
+  // the fog flag change and recompiles affected programs once, which the
+  // prewarm below pays before the first real frame.
+  scene.fog=null;
 
   if(!ablated('fxaa')){
     fxaaPass=new THREE.ShaderPass(THREE.FXAAShader);
@@ -5797,7 +5936,18 @@ function frameBody(){
   updateSlamVFX(dt);
   updateWaterVFX(dt);
   if(camRig.pose)camRig.applyPose();
+  // One packed-depth prepass serves both the AO term and the grade pass's
+  // atmosphere (see GradeShader) — it runs whenever the composer does, even
+  // when the AO half is ablated away.
+  if(depthRT)renderDepth();
   if(aoApply)renderAO();
+  // The atmosphere reconstructs world positions through these; hand it the
+  // camera as-of THIS frame (review framings retune fov between renders).
+  if(gradePass){
+    camera.updateMatrixWorld();
+    gradePass.uniforms.uProjInv.value.copy(camera.projectionMatrixInverse);
+    gradePass.uniforms.uCamWorld.value.copy(camera.matrixWorld);
+  }
   // Shadows render exactly once per frame, in the one lit pass. With
   // shadowMap.autoUpdate off (section 6) the AO depth prepass no longer pays
   // for a shadow map it never reads.
