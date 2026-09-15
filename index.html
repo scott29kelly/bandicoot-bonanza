@@ -4591,61 +4591,103 @@ const player={
           model.name="Hero_Blender_Sculpted";
           const uF=this.uFace;
           const uE=this.uEyes;
+          // Pass 21 — the hero's face rig lives in ONE string so the materials
+          // and the outline hull (below) displace the SAME vertices by the
+          // SAME amounts: a hull that didn't follow the jaw/blink would poke
+          // through the face every time uFace or uEyes moves.
+          const HERO_MORPH=[
+            'if(transformed.y>2.8){',
+            '  if(transformed.y<3.32&&transformed.z>0.55){',
+            '    float mDrop=smoothstep(3.32,2.95,transformed.y);',
+            '    transformed.y-=uFace.x*0.18*mDrop;',
+            '    transformed.z+=uFace.x*0.09*mDrop;',
+            '  }',
+            '  if(transformed.y>=3.35&&transformed.z>0.40){',
+            '    transformed.y+=uFace.z*0.12;',
+            '    transformed.z+=uFace.y*0.08;',
+            '    transformed.x*=(1.0+uFace.y*0.10);',
+            '  }',
+            '  if(uEyes.x>0.001){',
+            '    if(transformed.y>=3.60&&transformed.y<=4.02&&transformed.z>=0.45&&abs(transformed.x)<=0.28){',
+            '      float lidWeight=smoothstep(4.02,3.64,transformed.y);',
+            '      transformed.y-=uEyes.x*0.17*lidWeight;',
+            '      transformed.z+=uEyes.x*0.038*lidWeight;',
+            '    }',
+            '  }',
+            '  if(transformed.y>=3.55&&transformed.y<=3.82&&transformed.z>=0.72&&abs(transformed.x)>=0.04&&abs(transformed.x)<=0.25){',
+            '    transformed.x+=uEyes.y*0.038;',
+            '    transformed.y+=uEyes.z*0.028;',
+            '    transformed.z+=(1.0-(uEyes.y*uEyes.y+uEyes.z*uEyes.z)*0.22)*0.012*abs(uEyes.y);',
+            '    if(uEyes.x>0.12){',
+            '      transformed.y-=uEyes.x*0.07;',
+            '      transformed.z-=uEyes.x*0.025;',
+            '    }',
+            '  }',
+            '  if(transformed.y>=3.68&&transformed.y<=3.98&&transformed.z>=0.52&&transformed.z<=0.82&&abs(transformed.x)<=0.26){',
+            '    transformed.y+=uEyes.z*0.022-uEyes.w*0.032;',
+            '    transformed.x*=(1.0-uEyes.w*0.05);',
+            '  }',
+            '  if(uFace.w>0.001){',
+            '    transformed.y=2.8+(transformed.y-2.8)*(1.0-uFace.w*0.35);',
+            '    transformed.x*=(1.0+uFace.w*0.25);',
+            '    transformed.z*=(1.0+uFace.w*0.20);',
+            '  }',
+            '}'
+          ].join('\n');
+          // Pass 21 — rim light (Pillar B: "rim light separates the hero from
+          // the background at all times"). A fresnel term on the EXTERIOR
+          // materials only: cool sky-coloured on the anti-sun edge, warm on
+          // the sun edge, added in linear light before the tonemap so it
+          // grades with the rest of the frame. Eyes, teeth and mouth keep
+          // their contrast — a rimmed eye-white greys the read.
+          const RIM_MATS={FurOrange:1,ChestCream:1,DenimBlue:1,LeatherBrown:1,SneakerRed:1,RubberWhite:1,Gold:1};
+          const uRimDir={value:SUN_DIR.clone()};
+          const uRimStr={value:ablated('hero')?0.0:0.55};
+          this.uRimStr=uRimStr;
+          const heroPatch=(mat,withRim)=>{
+            mat.onBeforeCompile=shader=>{
+              shader.uniforms.uFace=uF;
+              shader.uniforms.uEyes=uE;
+              shader.vertexShader='uniform vec4 uFace;\nuniform vec4 uEyes;\n'+(withRim?'varying vec3 vWN;\n':'')+shader.vertexShader;
+              shader.vertexShader=shader.vertexShader.replace(
+                '#include <begin_vertex>',
+                ['#include <begin_vertex>',HERO_MORPH,withRim?'vWN=normalize(mat3(modelMatrix)*objectNormal);':''].join('\n')
+              );
+              if(withRim){
+                shader.uniforms.uRimDir=uRimDir;
+                shader.uniforms.uRimStr=uRimStr;
+                shader.fragmentShader='varying vec3 vWN;\nuniform vec3 uRimDir;\nuniform float uRimStr;\n'+shader.fragmentShader;
+                shader.fragmentShader=shader.fragmentShader.replace('#include <tonemapping_fragment>',[
+                  '  float rimf=pow(1.0-clamp(dot(normalize(vViewPosition),normal),0.0,1.0),4.0);',
+                  '  rimf=smoothstep(0.5,0.95,rimf);',
+                  // sunw includes the sun's steep elevation, so a flank can be
+                  // LIT from above while pointing across the sun azimuth — the
+                  // first cut rimmed exactly those lit flanks into pastel.
+                  // The rim now defers to illumination: near-full strength on
+                  // the shadow side (a cool sky-lit edge, the same blue the
+                  // toon ramp's shadows already carry), ~quarter strength
+                  // where the sun actually lands.
+                  '  float sunw=clamp(dot(vWN,uRimDir),0.0,1.0);',
+                  '  vec3 rimc=mix(vec3(0.16,0.30,0.55),vec3(1.0,0.55,0.22),pow(sunw,1.5));',
+                  '  float shade=mix(1.0,0.25,pow(sunw,0.75));',
+                  '  gl_FragColor.rgb+=rimc*rimf*uRimStr*shade;',
+                  '  #include <tonemapping_fragment>'
+                ].join('\n'));
+              }
+            };
+            // Two program variants (morph-only vs morph+rim) share an
+            // onBeforeCompile.toString(); without an explicit key three's
+            // program cache would compile one and serve it to both.
+            mat.customProgramCacheKey=()=>'heroMorph'+(withRim?'Rim':'');
+            mat.needsUpdate=true;
+          };
           model.traverse(o=>{
             if(o.isMesh){
               o.castShadow=true;
               o.receiveShadow=true;
               if(o.material){
                 o.material.gradientMap=toonRamp;
-                o.material.onBeforeCompile=shader=>{
-                  shader.uniforms.uFace=uF;
-                  shader.uniforms.uEyes=uE;
-                  shader.vertexShader='uniform vec4 uFace;\nuniform vec4 uEyes;\n'+shader.vertexShader;
-                  shader.vertexShader=shader.vertexShader.replace(
-                    '#include <begin_vertex>',
-                    [
-                      '#include <begin_vertex>',
-                      'if(transformed.y>2.8){',
-                      '  if(transformed.y<3.32&&transformed.z>0.55){',
-                      '    float mDrop=smoothstep(3.32,2.95,transformed.y);',
-                      '    transformed.y-=uFace.x*0.18*mDrop;',
-                      '    transformed.z+=uFace.x*0.09*mDrop;',
-                      '  }',
-                      '  if(transformed.y>=3.35&&transformed.z>0.40){',
-                      '    transformed.y+=uFace.z*0.12;',
-                      '    transformed.z+=uFace.y*0.08;',
-                      '    transformed.x*=(1.0+uFace.y*0.10);',
-                      '  }',
-                      '  if(uEyes.x>0.001){',
-                      '    if(transformed.y>=3.60&&transformed.y<=4.02&&transformed.z>=0.45&&abs(transformed.x)<=0.28){',
-                      '      float lidWeight=smoothstep(4.02,3.64,transformed.y);',
-                      '      transformed.y-=uEyes.x*0.17*lidWeight;',
-                      '      transformed.z+=uEyes.x*0.038*lidWeight;',
-                      '    }',
-                      '  }',
-                      '  if(transformed.y>=3.55&&transformed.y<=3.82&&transformed.z>=0.72&&abs(transformed.x)>=0.04&&abs(transformed.x)<=0.25){',
-                      '    transformed.x+=uEyes.y*0.038;',
-                      '    transformed.y+=uEyes.z*0.028;',
-                      '    transformed.z+=(1.0-(uEyes.y*uEyes.y+uEyes.z*uEyes.z)*0.22)*0.012*abs(uEyes.y);',
-                      '    if(uEyes.x>0.12){',
-                      '      transformed.y-=uEyes.x*0.07;',
-                      '      transformed.z-=uEyes.x*0.025;',
-                      '    }',
-                      '  }',
-                      '  if(transformed.y>=3.68&&transformed.y<=3.98&&transformed.z>=0.52&&transformed.z<=0.82&&abs(transformed.x)<=0.26){',
-                      '    transformed.y+=uEyes.z*0.022-uEyes.w*0.032;',
-                      '    transformed.x*=(1.0-uEyes.w*0.05);',
-                      '  }',
-                      '  if(uFace.w>0.001){',
-                      '    transformed.y=2.8+(transformed.y-2.8)*(1.0-uFace.w*0.35);',
-                      '    transformed.x*=(1.0+uFace.w*0.25);',
-                      '    transformed.z*=(1.0+uFace.w*0.20);',
-                      '  }',
-                      '}'
-                    ].join('\n')
-                  );
-                };
-                o.material.needsUpdate=true;
+                heroPatch(o.material,!!RIM_MATS[o.material.name]);
               }
             }
           });
@@ -4659,6 +4701,95 @@ const player={
           model.rotation.y=0;
           r.add(model);
           this.glbModel=model;
+          /*
+           * Pass 21 — the visible outline (QUALITY-BAR hero floor: "a visible
+           * outline" at portrait range; unmet since the sculpted hero shipped).
+           * Classic inverted hull: the EXTERIOR primitives merged into one
+           * back-face shell, pushed out along vertex normals. One mesh, one
+           * draw (+1 in the AO depth prepass) — the merged geometry sits in
+           * the same local space as the hero meshes, so HERO_MORPH above keeps
+           * the contour glued to the jaw, the blink and the squash instead of
+           * poking through them.
+           *
+           * The sculpt's node scale is non-uniform (0.78/0.52/0.44), so a
+           * constant local width would draw a side contour ~1.8x thicker than
+           * a top contour; the shader divides by |S*n| per vertex to keep the
+           * WORLD width constant. Mouth interior, eyes and glints are
+           * deliberately outside the hull — a shell behind the teeth would
+           * fill the mouth cavity, and rimming the eye whites greys them.
+           * Colour is the ramp's core-shadow blue-violet, one step down in
+           * value: a graphic contour in the shadow family, not a black line.
+           */
+          const HULL_MATS={FurOrange:1,ChestCream:1,DenimBlue:1,LeatherBrown:1,SneakerRed:1,RubberWhite:1,Gold:1,NoseBlack:1};
+          const hullGeos=[];
+          let hullParent=null;
+          model.traverse(o=>{
+            if(o.isMesh&&o.material&&HULL_MATS[o.material.name]){
+              hullGeos.push(o.geometry);
+              if(!hullParent)hullParent=o.parent;
+            }
+          });
+          if(hullGeos.length&&hullParent){
+            let nv=0,ni=0;
+            hullGeos.forEach(g=>{
+              nv+=g.attributes.position.count;
+              ni+=g.index?g.index.count:g.attributes.position.count;
+            });
+            const pos=new Float32Array(nv*3),nor=new Float32Array(nv*3);
+            const idx=nv>65535?new Uint32Array(ni):new Uint16Array(ni);
+            let vo=0,io=0;
+            hullGeos.forEach(g=>{
+              pos.set(g.attributes.position.array,vo*3);
+              if(g.attributes.normal)nor.set(g.attributes.normal.array,vo*3);
+              if(g.index){
+                const gi=g.index.array;
+                for(let k=0;k<gi.length;k++)idx[io+k]=gi[k]+vo;
+                io+=gi.length;
+              }else{
+                for(let k=0;k<g.attributes.position.count;k++)idx[io+k]=k+vo;
+                io+=g.attributes.position.count;
+              }
+              vo+=g.attributes.position.count;
+            });
+            const hullGeo=new THREE.BufferGeometry();
+            hullGeo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+            hullGeo.setAttribute('normal',new THREE.BufferAttribute(nor,3));
+            hullGeo.setIndex(new THREE.BufferAttribute(idx,1));
+            const uOutlineW={value:0.014};
+            const uHullScale={value:new THREE.Vector3(
+              Math.abs(model.scale.x*hullParent.scale.x),
+              Math.abs(model.scale.y*hullParent.scale.y),
+              Math.abs(model.scale.z*hullParent.scale.z))};
+            const hullMat=new THREE.MeshBasicMaterial({color:0x221a3e,side:THREE.BackSide});
+            // The hex is authored in display space; the composer path treats
+            // material colors as linear, and AgX lifts dark colours — without
+            // the conversion the contour rendered pale periwinkle (129,131,183),
+            // lighter than the ramp's shadow family it was meant to sit in.
+            hullMat.color.convertSRGBToLinear();
+            hullMat.onBeforeCompile=shader=>{
+              shader.uniforms.uFace=uF;
+              shader.uniforms.uEyes=uE;
+              shader.uniforms.uOutlineW=uOutlineW;
+              shader.uniforms.uHullScale=uHullScale;
+              shader.vertexShader='uniform vec4 uFace;\nuniform vec4 uEyes;\nuniform float uOutlineW;\nuniform vec3 uHullScale;\n'+shader.vertexShader;
+              shader.vertexShader=shader.vertexShader.replace(
+                '#include <begin_vertex>',
+                [
+                  '#include <begin_vertex>',
+                  HERO_MORPH,
+                  'transformed+=normal*(uOutlineW/length(uHullScale*normal));'
+                ].join('\n')
+              );
+            };
+            hullMat.customProgramCacheKey=()=>'heroHull';
+            const hull=new THREE.Mesh(hullGeo,hullMat);
+            hull.name='Hero_OutlineHull';
+            hull.castShadow=false;
+            hull.receiveShadow=false;
+            hull.visible=!ablated('hero');
+            hullParent.add(hull);
+            this.heroHull=hull;
+          }
         },err=>console.error("GLTF load error:",err));
       }catch(e){console.warn("GLB parse fallback:",e);}
     }

@@ -312,6 +312,79 @@ debris clustering, Kelvin V-wake, palm trunk texture.
 
 ---
 
+## Pass 21 — hero rim/outline (the unmet stated floor)
+
+The QUALITY-BAR's Hero-character floor reads "…markings, ears, brow, muzzle,
+tail and paw shapes readable; **a visible outline**; a contact shadow under
+the feet in every framing" — and the outline clause had been unmet since the
+sculpted GLB hero shipped (the procedural fallback's hull spheres were built
+and then deliberately never added after neck/waist seam problems). Pillar B's
+"rim light separates the hero from the background at all times" leaned on one
+0.46-intensity cool directional. The pass-20 re-critique kept hero rim/outline
+as the standing runner-up gap. Gauntlet verdict: **7/10 (B) SHIP** — the
+floor clause is closed at portrait and medium range; user feedback during the
+pass independently flagged the character as reading amateurish against Crash
+4 references, which scopes the NEXT pass (character fidelity), not this one.
+
+What changed (one hull mesh + shader injections on existing hero materials;
++1 draw main pass, +1 in the AO depth prepass):
+
+- **Inverted-hull contour.** The 8 exterior GLB primitives (fur, chest,
+  denim, leather, sneakers, rubber, gold, nose) merge into ONE back-face
+  shell — 84,448 tris, one draw — expanded along vertex normals by a constant
+  WORLD-space width (`uOutlineW` 0.014) with per-axis compensation dividing by
+  `|S·n|`, because the sculpt's node scale is non-uniform (0.78/0.52/0.44) and
+  an uncompensated hull draws side contours ~1.8× thicker than top contours.
+- **The contour follows the face rig.** The `uFace`/`uEyes` displacement GLSL
+  moved into a shared `HERO_MORPH` const used by BOTH the hero materials and
+  the hull; a hull that didn't morph would poke through the jaw on every
+  speak/blink frame. Verified with a forced jaw-open A/B: clean 9–18 px
+  contour bands at the dropped-jaw edges, zero mouth-cavity fill.
+- **Colour authored to survive the grade.** `#221a3e` is a display-space hex;
+  the composer path consumes material colours as linear and AgX lifts darks —
+  the first cut RENDERED pale periwinkle (129,131,183), lighter than the
+  shadow family it was meant to sit in. `convertSRGBToLinear()` fixed it to a
+  measured (34,64,132), sat 0.74 — a deep blue-violet in the ramp's
+  core-shadow family, not a black line.
+- **Fresnel rim that defers to illumination.** Exterior hero materials get a
+  pow-4 fresnel gated by smoothstep(0.5,0.95) so it hugs the contour, cool
+  sky-blue on the shadow side and warm at the sun terminator, scaled by
+  `mix(1.0, 0.25, sunw^0.75)`. The first cut rimmed sunLIT flanks into pastel
+  (199,151,79 → 202,176,167; saturation 0.60 → 0.17, flirting with Pillar B's
+  0.15 floor on lit pixels) because the hero-closeup flank points across the
+  sun azimuth while lit from above — the illumination term fixed it to 198
+  affected px. Eyes, teeth, mouth interior and glints are excluded by design.
+- **`?ablate=hero`** hides the hull and zeroes the rim for A/B.
+- Method note: sheet-to-sheet A/B is confounded by idle/water/cloud phase
+  drift; the trustworthy instrument this pass was the frozen-dt same-context
+  toggle (`setFixedDt(1e-9)`, hull+rim toggled in one page load) — which is
+  also the frozen-uTime capture mode the pass-20 critic asked for, proven on
+  hero-closeup (negative control 0.000–0.001% moved).
+
+Verification: 9/9 gate PASS (luma 0.512–0.655, sd 0.106–0.167); draws
+208–822 (floor ≤900); tris 583k–1141k (floors 220k/150k); controls clean;
+minfx boots with hull visible and no errors. Frozen-dt A/B at hero-closeup:
+5.97% of pixels changed, confined to the hero's screen column; contour edge
+runs 9/9/12 px (p10/med/p90) at portrait, median 4 px at title-hero; contact
+shadow and eye-centre landmarks untouched. Critic-measured artifacts fixed
+in-pass: lit-flank desaturation (above), periwinkle contour (above), and the
+contour/rim "moat" (rim now hugs the line).
+
+Residuals recorded by the critique (non-blocking, ranked): grazing-surface
+line pinch (~2 px at the right jaw — inverted-hull's known limit; a view-dir
+term would fix it); irregular line weight (76% of silhouette rows carry a
+strong contour; a 61-row torso band has none where fur meets denim without a
+silhouette); the hull draws in the AO depth prepass unexpanded/unmorphed
+(+84k tris for nothing — budget holds); gate-hero same-context A/B remains
+UNMEASURED (a dt-independent transient near the gate corrupts controls — the
+frozen-dt probe needs a second negative control there). The critique named
+CHARACTER FIDELITY the biggest remaining whole-bar gap (flat colour-zone
+materials, region-hack face rig, axis-squashed proportions, off-script hero
+light logic, idle life) — matching the user's Crash 4 reference feedback;
+that is the next pass's scope. Atmosphere residuals from pass 20 stand.
+
+---
+
 ## Closed
 
 - **#1 Everything floats** — closed pass 2 (`dc8fa57`). Platforms are craggy
@@ -341,6 +414,12 @@ debris clustering, Kelvin V-wake, palm trunk texture.
   saturation rose at every sunlit framing with value held or lowered, and
   the horizon seam (the pass-1 "hard white band" descendant) measures dead.
 - **#10 The hero has no surface** — closed pass 4. Saturated fur, denim shorts, sneakers, gloves, brows, glints, mohawk.
+- **#10b (pass 21) The hero has no visible outline** — closed pass 21.
+  The Hero-character floor's "a visible outline" clause is met at portrait
+  and medium range by a morph-following inverted-hull contour (one merged
+  shell, +1 draw) plus an illumination-deferring fresnel rim on the exterior
+  materials. Character FIDELITY (materials, rig, proportions, light logic)
+  remains open as the next pass's scope.
 - **#9 (pass 2) Draw calls are high for what is on screen** — closed pass 18.
   Group consolidation in `mergeGeos`, instanced crate/TNT bodies and contact
   shadows, chunk-merged static platform geometry, single shadow-map update per

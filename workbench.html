@@ -169,7 +169,7 @@
   <div class="stats-bar">
     <div class="stat-card">
 <div class="stat-label">Active Loop</div>
-<div class="stat-val active" style="color:var(--green)">Pass 20: Atmosphere</div>
+<div class="stat-val active" style="color:var(--green)">Pass 21: Hero Rim/Outline</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Model Engine</div>
@@ -181,7 +181,7 @@
     </div>
     <div class="stat-card">
 <div class="stat-label">Production Status</div>
-<div class="stat-val" style="color:var(--green)">Pass 20: 8.5 / 10 (Grade A-)</div>
+<div class="stat-val" style="color:var(--green)">Pass 21: 7.0 / 10 (Grade B) — outline floor closed</div>
     </div>
   </div>
 
@@ -189,10 +189,10 @@
     <div class="card">
       <div class="card-header">
         <span>Current Visual Contact Sheet</span>
-        <span style="font-size:12px; color:var(--text-muted);">Auto-captured via tools/shots.mjs (Pass 20)</span>
+        <span style="font-size:12px; color:var(--text-muted);">Auto-captured via tools/shots.mjs (Pass 21)</span>
       </div>
       <div class="sheet-container">
-        <img src="docs/shots/pass20/CONTACT-SHEET.png" alt="Pass 20 Contact Sheet" onerror="this.src='docs/shots/pass19/CONTACT-SHEET.png'">
+        <img src="docs/shots/pass21/CONTACT-SHEET.png" alt="Pass 21 Contact Sheet" onerror="this.src='docs/shots/pass20/CONTACT-SHEET.png'">
       </div>
     </div>
 
@@ -280,6 +280,13 @@
         </div>
         <div class="track-item">
           <div>
+            <div class="track-title">13. Hero Rim Light & Visible Outline (Character Floor)</div>
+            <div style="font-size:12px; color:var(--text-muted);">Merged inverted-hull contour (84k tris, +1 draw, face-rig-morph-following, scale-compensated world width) + illumination-deferring fresnel rim on exterior materials; critique 7/10 (B) SHIP — outline floor closed at portrait &amp; medium range</div>
+          </div>
+          <span class="track-status status-done">PASSED</span>
+        </div>
+        <div class="track-item">
+          <div>
             <div class="track-title">12. Atmosphere (Coloured Depth-Graded Fog in the Grade Pass)</div>
             <div style="font-size:12px; color:var(--text-muted);">Depth-driven exp^2.6 fog with 15m dead zone, deep biome stops (aqua→green→plum), multiplicative warm horizon gild (day/dusk vec3), sea-level air collar, dusk fog cap, output dither — zero extra draws; two-round Gauntlet 8.0 FIX-FIRST → 8.5/10 (A-) SHIP</div>
           </div>
@@ -304,6 +311,13 @@
         </tr>
       </thead>
       <tbody>
+        <tr>
+          <td>Pass 21</td>
+          <td>Hero Rim Light &amp; Visible Outline (QUALITY-BAR character floor: "a visible outline"; Pillar B rim clause)</td>
+          <td>The "visible outline" clause of the Hero-character floor had been unmet since the sculpted hero shipped (the procedural fallback's hull meshes were built but never added after seam issues), and Pillar B's "rim light separates the hero from the background at all times" leaned entirely on one cool directional light; pass-20 re-critique listed hero rim/outline as the standing runner-up gap while the user independently flagged the character as reading amateurish against Crash 4 references</td>
+          <td>Inverted-hull contour: the 8 exterior GLB primitives merged into ONE back-face shell (84,448 tris, +1 draw main / +1 AO prepass, 826→828 worst framing vs the ≤900 floor) sharing the exact HERO_MORPH face-rig GLSL so the contour follows jaw/blink/squash, expanded along vertex normals by a constant WORLD width (uOutlineW 0.014) with per-axis compensation ÷|S·n| for the sculpt's non-uniform 0.78/0.52/0.44 node scale, colour #221a3e convertSRGBToLinear (the raw hex rendered pale periwinkle 129,131,183 under AgX — fixed to a measured 34,64,132 contour, sat 0.74, in the ramp's core-shadow family); fresnel rim (pow4, gated smoothstep 0.5–0.95 to hug the contour) on exterior materials only, cool sky-blue on the shadow side deferring to illumination (×0.25 where the sun lands — the first cut pastel-washed lit flanks 199,151,79→202,176,167, sat 0.60→0.17, critic artifact #1, fixed to 198 affected px); eyes/teeth/mouth/glints deliberately excluded; ?ablate=hero A/B seam; frozen-dt (setFixedDt(1e-9)) same-context toggle probes: hero-closeup 5.97% changed confined to the hero column, contour bands 9–12px at portrait / 4px at title-hero, morph-follow verified with a forced jaw-open A/B — result: 9/9 gate PASS, draws 208–822, tris 583k–1141k, controls clean, minfx boots with hull visible; Gauntlet critique 7/10 (B) SHIP: outline floor clause closed at portrait and medium range, no floor regressions, remaining costs recorded (grazing-surface line pinch, irregular weight, AO-prepass hull draw for nothing) and character fidelity named the biggest whole-bar gap — scoping the next pass against the user's Crash 4 reference set</td>
+          <td><span class="track-status status-done">PASSED</span></td>
+        </tr>
         <tr>
           <td>Pass 20</td>
           <td>Atmosphere: Depth-Driven Coloured Fog in the Grade Pass (Deep Biome Stops, Warm Gild, Dusk Cap)</td>
