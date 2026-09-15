@@ -319,6 +319,13 @@
       </thead>
       <tbody>
         <tr>
+          <td>Pass 22b</td>
+          <td>User-directed character polish (live-render review: "tone down the purple shading — where are his eyes? why is he so topheavy? still v1ish")</td>
+          <td>Toggle-diff measurement showed the eyes' entire rendered footprint was 49 px: the head's face surface sat in front of the eye spheres, the muzzle's upper lobe (z≤2.05, front y 0.63–0.75) covered the eye line, and the eyelid sphere (front 0.503) shrouded the rest; the shadow-redirect band (val&lt;0.90 @ 0.85) was swallowing LIT fur so the character read mostly purple; head width was nearly equal to shoulder span with spindly limbs (topheavy)</td>
+          <td>Face-plane flatten engaged at eye height; eye cluster pushed proud (sclera ~0.49 / pupils 0.51); eyelid reduced to a thin tilted hood; muzzle halved in height and dropped (z≤1.90, front ≤0.58); mouth re-seated as horizontal hoop lips with proud teeth + EyeWhite emissive lift so sclera reads white — eye footprint 49 px → 4,076 px; shadow redirect narrowed twice to the genuinely-dark band (0.60/0.42 @ 0.55) so warm fur recovers (72.9k of 111k px) and the toon ramp's stepped shading shows through; head shrunk with crown taper + face flatten, body broadened (torso 0.66, deltoids 0.16, arms 0.095/0.092, fists 0.175, thighs 0.125, calves 0.07, fuller shorts/belt/tail/ears/mohawk/cheek fur) — head:shoulder ratio 0.62 (was ~1:1); contour 0.014→0.012; verification: 9/9 gate PASS (draws 207–815, tris 582.8k–721.9k), controls clean, minfx boots, morph A/B 14.35%/0.01%, hue A/B control 0.01%</td>
+          <td><span class="track-status status-done">PASSED</span></td>
+        </tr>
+        <tr>
           <td>Pass 22</td>
           <td>Character Fidelity Overhaul (Hero-character floor: markings, ears, brow, muzzle, tail and paw shapes readable; the user's binding Crash-4 reference feedback: "the Bandicoot character needs a lot of work — it looks very amateurish")</td>
           <td>Critic-ranked levers from the pass-21 critique plus user reference set: (1) flat colour-zone materials, (2) region-hack face rig, (3) axis-squashed proportions / sphere-cone DNA (0.78/0.52/0.44 node squash), (4) hero light logic off-script (shadow side warm-brown rgb(151,118,50) vs the scene's blue-shadow/warm-light rule), (5) outline line-weight irregularity, (6) idle life without weight shift or ear/tail follow-through</td>

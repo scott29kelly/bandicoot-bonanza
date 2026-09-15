@@ -4616,29 +4616,29 @@ const player={
            * in the shared string.
            */
           const HERO_MORPH=[
-            'if(transformed.y>1.495&&transformed.y<1.88&&transformed.z>0.20){',
+            'if(transformed.y>1.56&&transformed.y<1.84&&transformed.z>0.22){',
             '  float mDrop=smoothstep(1.88,1.60,transformed.y);',
             '  transformed.y-=uFace.x*0.085*mDrop;',
             '  transformed.z+=uFace.x*0.045*mDrop;',
             '}',
-            'if(transformed.y>2.04&&transformed.y<2.30&&transformed.z>0.20){',
-            '  float bBand=smoothstep(2.04,2.14,transformed.y)*smoothstep(2.30,2.20,transformed.y);',
+            'if(transformed.y>2.06&&transformed.y<2.28&&transformed.z>0.20){',
+            '  float bBand=smoothstep(2.06,2.16,transformed.y)*smoothstep(2.28,2.18,transformed.y);',
             '  transformed.y+=(uFace.z*0.045-uEyes.w*0.040)*bBand;',
             '  transformed.z+=uFace.y*0.030*bBand;',
             '  transformed.x+=(uEyes.y*0.012+uFace.y*0.020)*bBand;',
             '}',
-            'if(transformed.y>1.92&&transformed.y<2.24&&transformed.z>0.14&&abs(transformed.x)<0.31){',
-            '  float lidWeight=smoothstep(2.24,1.98,transformed.y);',
+            'if(transformed.y>1.90&&transformed.y<2.24&&transformed.z>0.16&&abs(transformed.x)<0.31){',
+            '  float lidWeight=smoothstep(2.24,2.00,transformed.y);',
             '  transformed.y-=uEyes.x*0.085*lidWeight;',
             '  transformed.z+=uEyes.x*0.018*lidWeight;',
             '}',
-            'if(uFace.w>0.001&&transformed.y>1.52){',
-            '  transformed.y=1.52+(transformed.y-1.52)*(1.0-uFace.w*0.35);',
+            'if(uFace.w>0.001&&transformed.y>1.56){',
+            '  transformed.y=1.56+(transformed.y-1.56)*(1.0-uFace.w*0.35);',
             '  transformed.x*=(1.0+uFace.w*0.25);',
             '  transformed.z*=(1.0+uFace.w*0.20);',
             '}',
-            'if(transformed.y>2.58&&transformed.y<2.90&&abs(transformed.x)>0.12){',
-            '  float eK=clamp((transformed.y-2.58)/0.27,0.0,1.0);',
+            'if(transformed.y>2.50&&transformed.y<2.90&&abs(transformed.x)>0.12){',
+            '  float eK=clamp((transformed.y-2.50)/0.30,0.0,1.0);',
             '  transformed.x+=(transformed.x<0.0?uEars.x:uEars.y)*0.09*eK;',
             '  transformed.z-=0.018*eK*abs(uEars.x+uEars.y)*0.5;',
             '}',
@@ -4649,7 +4649,7 @@ const player={
             '}'
           ].join('\n');
           const HERO_MORPH_EYES=[
-            'if(transformed.y>1.96&&transformed.y<2.10&&transformed.z>0.30){',
+            'if(transformed.y>1.98&&transformed.y<2.13&&transformed.z>0.36){',
             '  transformed.x+=uEyes.y*0.026;',
             '  transformed.y+=uEyes.z*0.016;',
             '}'
@@ -4725,8 +4725,8 @@ const player={
                   '    surfC*=1.0+(wFine-0.5)*0.14+(wMacro-0.5)*0.10;',
                   '  #endif',
                   '  #ifdef SURF_FUR',
-                  '    if(vOPos.y>2.55&&abs(vOPos.x)>0.12){',
-                  '      surfC*=mix(1.0,0.80,smoothstep(2.55,2.82,vOPos.y));',
+                  '    if(vOPos.y>2.50&&abs(vOPos.x)>0.12){',
+                  '      surfC*=mix(1.0,0.80,smoothstep(2.50,2.80,vOPos.y));',
                   '    }',
                   '    if(vOPos.z<-0.19&&abs(vOPos.x)<0.12&&vOPos.y>0.50&&vOPos.y<0.92){',
                   '      surfC*=1.0-0.13*smoothstep(0.30,0.90,sin(vOPos.y*30.0));',
@@ -4743,8 +4743,8 @@ const player={
                   // shadow (Pillar B + the hull/ramp family): redirect the
                   // shadow band into blue-violet at the same value so the fur
                   // obeys the same light logic as the rest of the world.
-                  '  float shCoolFur=smoothstep(0.90,0.70,val0);',
-                  '  surfC=mix(surfC,vec3(0.10,0.18,0.88)*val0,min(shCoolFur*0.85*uHueStr,1.0));',
+                  '  float shCoolFur=smoothstep(0.60,0.42,val0);',
+                  '  surfC=mix(surfC,vec3(0.16,0.22,0.72)*val0,min(shCoolFur*0.55*uHueStr,1.0));',
                   '  #endif',
                   '  #ifdef SURF_FUR_HUE',
                   // Deepest anti-sun end picks up the scene's blue-violet
@@ -4781,6 +4781,9 @@ const player={
               if(o.material){
                 o.material.gradientMap=toonRamp;
                 heroPatch(o.material,!!RIM_MATS[o.material.name],!!EYES_MATS[o.material.name]);
+                // cartoon eyes must read WHITE even where the face sits in a
+                // mid ramp step - a grey sclera reads as no eyes at all
+                if(o.material.name==='EyeWhite'){o.material.emissive=new THREE.Color(0x1c1c1c);}
               }
             }
           });
@@ -4849,7 +4852,7 @@ const player={
             hullGeo.setAttribute('position',new THREE.BufferAttribute(pos,3));
             hullGeo.setAttribute('normal',new THREE.BufferAttribute(nor,3));
             hullGeo.setIndex(new THREE.BufferAttribute(idx,1));
-            const uOutlineW={value:0.014};
+            const uOutlineW={value:0.012};
             const uHullScale={value:new THREE.Vector3(
               Math.abs(model.scale.x*hullParent.scale.x),
               Math.abs(model.scale.y*hullParent.scale.y),

@@ -468,6 +468,46 @@ need pose targets, not wider boxes); fur texture just above baseline; tail
 band sub-visible; pass-20 atmosphere residuals stand (pillar-pit stack
 separation, temple air desat, FAR<NEAR sat gradient, gate gold drift).
 
+### Pass 22b — user-directed polish (the screenshots round)
+
+The user reviewed live renders and flagged: the purple shading is way too
+strong, the eyes are INVISIBLE, the character is topheavy, still v1-ish.
+
+- **Eyes were literally buried.** The head's front surface at eye height sat
+  IN FRONT of the eye spheres (face ~0.44 vs sclera front 0.434), and the
+  muzzle's upper lobe (z up to 2.05, front y 0.63–0.75) covered the eye line
+  entirely; the eyelid sphere (front 0.503) shrouded what remained. Measured
+  with a toggle diff (hide EyeWhite/EyeBlack/Glint, frozen-dt): the eyes'
+  entire rendered footprint was **49 px**. Fixes: face-plane flatten that
+  actually engages at eye height, eye cluster pushed proud (sclera front
+  ~0.49, pupils 0.51), eyelid reduced to a thin top hood (scale z 0.45,
+  tilted), muzzle cut to half height and dropped (z ≤1.90, front ≤0.58),
+  mouth cluster re-seated on the muzzle surface as horizontal hoop lips with
+  proud teeth, EyeWhite given a small emissive lift so the sclera reads white
+  in mid ramp steps. Post-fix footprint: **4076 px** with sclera+lip clusters
+  — an ~80× increase.
+- **De-purple.** The pass-22 redirect band (val <0.90 at 0.85 weight) was
+  swallowing LIT fur — the character rendered mostly blue-violet. Re-tuned
+  twice: band 0.68/0.48 @ 0.62, then 0.60/0.42 @ 0.55 — only the genuinely
+  dark side redirects now; warm fur population recovers (furTotal ON
+  69.9k→72.9k of 111k OFF) and the toon ramp's stepped shading shows through
+  the redirect instead of being replaced by a flat recolour.
+- **Topheavy rebalance.** Head shrank (0.50/0.45/0.475 → 0.44/0.40/0.42 with
+  crown taper and stronger face flatten — the ball read dies), body grew:
+  torso 0.60→0.66 wide and deeper, deltoids 0.145→0.16 at ±0.60, upper arm
+  0.082→0.095, forearm 0.078→0.092, fists 0.155→0.175, thighs 0.105→0.125,
+  calves 0.058→0.07, fuller shorts/belt, thicker tail (base 0.115, tuft
+  0.075), bigger ears (0.155×0.52) and mohawk, scruffier cheek fur. Head
+  width 0.96 vs shoulder span 1.56 (was nearly 1:1).
+- Contour line refined 0.014→0.012 world (still 9–10 px at portrait).
+
+Verification: 9/9 gate PASS (draws 207–815, tris 582.8k–721.9k), controls
+clean, minfx boots, morph A/B 14.35% / control 0.01%, hue A/B negative
+control 0.01%. Probe lessons: toggle-diff (hide the meshes, diff frozen
+captures) is the only trustworthy visibility instrument — point projections
+of hero landmarks and raycasts against the GLB are both unreliable here
+(stale/degenerate matrixWorld paths, BackSide hull intercepting rays).
+
 ---
 
 ## Closed
