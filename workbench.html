@@ -169,7 +169,7 @@
   <div class="stats-bar">
     <div class="stat-card">
 <div class="stat-label">Active Loop</div>
-<div class="stat-val active" style="color:var(--green)">Pass 21: Hero Rim/Outline</div>
+<div class="stat-val active" style="color:var(--green)">Pass 22: Character Fidelity Overhaul</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Model Engine</div>
@@ -181,7 +181,7 @@
     </div>
     <div class="stat-card">
 <div class="stat-label">Production Status</div>
-<div class="stat-val" style="color:var(--green)">Pass 21: 7.0 / 10 (Grade B) — outline floor closed</div>
+<div class="stat-val" style="color:var(--green)">Pass 22: 8.3 / 10 (Grade A-) — character fidelity overhauled</div>
     </div>
   </div>
 
@@ -189,10 +189,10 @@
     <div class="card">
       <div class="card-header">
         <span>Current Visual Contact Sheet</span>
-        <span style="font-size:12px; color:var(--text-muted);">Auto-captured via tools/shots.mjs (Pass 21)</span>
+        <span style="font-size:12px; color:var(--text-muted);">Auto-captured via tools/shots.mjs (Pass 22)</span>
       </div>
       <div class="sheet-container">
-        <img src="docs/shots/pass21/CONTACT-SHEET.png" alt="Pass 21 Contact Sheet" onerror="this.src='docs/shots/pass20/CONTACT-SHEET.png'">
+        <img src="docs/shots/pass22/CONTACT-SHEET.png" alt="Pass 22 Contact Sheet" onerror="this.src='docs/shots/pass21/CONTACT-SHEET.png'">
       </div>
     </div>
 
@@ -280,6 +280,13 @@
         </div>
         <div class="track-item">
           <div>
+            <div class="track-title">14. Character Fidelity Overhaul (Crash-4-class re-sculpt, surface, light logic, idle life)</div>
+            <div style="font-size:12px; color:var(--text-muted);">Blender 5.2 re-sculpt with organic displaced-mass torso/head, Crash-class proportions and identity node transform (axis-squash removed); vertex rig re-derived + pupil gaze + ear/tail follow-through; two-scale fur noise, painted markings, shadow band redirected to the scene's blue-violet script; critique 7.5 FIX-FIRST → 8.3/10 (A-) SHIP</div>
+          </div>
+          <span class="track-status status-done">PASSED</span>
+        </div>
+        <div class="track-item">
+          <div>
             <div class="track-title">13. Hero Rim Light & Visible Outline (Character Floor)</div>
             <div style="font-size:12px; color:var(--text-muted);">Merged inverted-hull contour (84k tris, +1 draw, face-rig-morph-following, scale-compensated world width) + illumination-deferring fresnel rim on exterior materials; critique 7/10 (B) SHIP — outline floor closed at portrait &amp; medium range</div>
           </div>
@@ -311,6 +318,13 @@
         </tr>
       </thead>
       <tbody>
+        <tr>
+          <td>Pass 22</td>
+          <td>Character Fidelity Overhaul (Hero-character floor: markings, ears, brow, muzzle, tail and paw shapes readable; the user's binding Crash-4 reference feedback: "the Bandicoot character needs a lot of work — it looks very amateurish")</td>
+          <td>Critic-ranked levers from the pass-21 critique plus user reference set: (1) flat colour-zone materials, (2) region-hack face rig, (3) axis-squashed proportions / sphere-cone DNA (0.78/0.52/0.44 node squash), (4) hero light logic off-script (shadow side warm-brown rgb(151,118,50) vs the scene's blue-shadow/warm-light rule), (5) outline line-weight irregularity, (6) idle life without weight shift or ear/tail follow-through</td>
+          <td>Blender 5.2 headless re-sculpt of build_hero.py: torso and cranium as ONE displaced mass each (per-vertex profile shaping — shoulders, pecs, waist cinch, brow-shelf overhang, cheek flare, jaw taper), Crash-class ratios (head ~40% of standing height, oversized fists/sneakers, tall curved ears, five-spike mohawk, scruffy cheek fur, asymmetric attitude pose with cocked right fist and uneven brows), identity node transform killing the axis-squash (uHullScale measures 1,1,1), 22,204 tris, region bounds dumped to docs/hero_bounds.json as the HERO_MORPH source of truth; index.html: rig re-derived on the new geometry (jaw/brow/blink/squash boxes + pupil-gaze const injected only into EyeBlack/Glint), NEW ear-swivel and tail-sway regions with JS idle/run/air drivers so the hull contour follows them too, slow idle weight shift, fur surface stage (two-scale value noise, painted ear-tip/tail-band markings, denim/leather grain) and the shadow-hue fix — the fur's midtone-dark band redirected into the scene's blue-violet shadow family at equal value (frozen-dt A/B: hue-OFF reproduces the mud band rgb(144,109,37) hue 39.9, hue-ON cool population ~doubles to 107k px at sat ~0.49 hue ~210, negative control 0.00%); hull excluded from the AO depth prepass (~20.5k tris/frame saved, figures corrected from the stale 35k/84k claims); first Gauntlet round 7.5/10 (B+) FIX-FIRST caught the follow-through drivers as DEAD CODE (slamState 0 = the resting state routed to 'slam', pinning uEars/uTail at zero) — fixed to route only slamState 1/2, amplitudes raised (weight shift ×2.5, ears 0.045→0.09, tail 0.16/0.10→0.22/0.14), fur gains raised (fine 0.30 / macro 0.22); verification: live 40-frame driver sample non-zero 40/40 with GPU uniform readback matching the driver values, critic's zeroing A/B moves 0.121% confined to exactly two ear-shaped blobs with 0 px in control boxes, forced jaw+blink A/B 12.73% confined to the head band (control 0%), minfx boots, controls clean — result: 9/9 gate PASS, draws 211–831, tris 584.7k–727.8k; re-critique 8.3/10 (A-) SHIP</td>
+          <td><span class="track-status status-done">PASSED</span></td>
+        </tr>
         <tr>
           <td>Pass 21</td>
           <td>Hero Rim Light &amp; Visible Outline (QUALITY-BAR character floor: "a visible outline"; Pillar B rim clause)</td>

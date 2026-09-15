@@ -1014,6 +1014,12 @@ function renderAO(){
 function renderDepth(){
   if(!depthRT)return;
   const bg=scene.background,fog=scene.fog;
+  // Pass 22 — the outline hull is back-face-only and sits behind the body
+  // from any view, so it contributes nothing to the packed depth; drawing it
+  // here paid its ~20.5k triangles for nothing. Hide it for the prepass.
+  const hull=(window.BB&&window.BB.player&&window.BB.player.heroHull)?window.BB.player.heroHull:null;
+  const hullVis=hull?hull.visible:false;
+  if(hull)hull.visible=false;
   scene.background=null;scene.fog=null;
   scene.overrideMaterial=depthMat;
   renderer.setRenderTarget(depthRT);
@@ -1022,6 +1028,7 @@ function renderDepth(){
   renderer.setRenderTarget(null);
   scene.overrideMaterial=null;
   scene.background=bg;scene.fog=fog;
+  if(hull)hull.visible=hullVis;
 }
 function syncAOSize(){
   if(!depthRT)return;
@@ -4576,6 +4583,8 @@ const player={
     this.uFace={value:new THREE.Vector4(0,0,0,0)};
     this.faceTarget=new THREE.Vector4(0,0,0,0);
     this.uEyes={value:new THREE.Vector4(0,0,0,0)};
+    this.uEars={value:new THREE.Vector2(0,0)};
+    this.uTail={value:new THREE.Vector2(0,0)};
     this.blinkTimer=3.2;
     this.blinkDuration=0.13;
     this.gazeCurrent=new THREE.Vector2(0,0);
@@ -4591,94 +4600,178 @@ const player={
           model.name="Hero_Blender_Sculpted";
           const uF=this.uFace;
           const uE=this.uEyes;
-          // Pass 21 — the hero's face rig lives in ONE string so the materials
-          // and the outline hull (below) displace the SAME vertices by the
-          // SAME amounts: a hull that didn't follow the jaw/blink would poke
-          // through the face every time uFace or uEyes moves.
+          const uEA=this.uEars;
+          const uT=this.uTail;
+          /*
+           * Pass 22 — the vertex rig, re-derived for the re-sculpted GLB
+           * (identity node transform, feet at y=0, face +z; region boxes come
+           * from docs/hero_bounds.json, dumped by build_hero.py). Still ONE
+           * shared string so every material AND the outline hull displace the
+           * SAME vertices by the SAME amounts — but the head regions are
+           * authored against the new masses, and secondary-motion regions
+           * (ear swivel, tail sway) ride in the same rig so the contour
+           * follows them too. The eye-only part (pupil gaze) is a separate
+           * const injected solely into EyeBlack/Glint — its box overlaps the
+           * head's front surface, which FurOrange shares, so it cannot ride
+           * in the shared string.
+           */
           const HERO_MORPH=[
-            'if(transformed.y>2.8){',
-            '  if(transformed.y<3.32&&transformed.z>0.55){',
-            '    float mDrop=smoothstep(3.32,2.95,transformed.y);',
-            '    transformed.y-=uFace.x*0.18*mDrop;',
-            '    transformed.z+=uFace.x*0.09*mDrop;',
-            '  }',
-            '  if(transformed.y>=3.35&&transformed.z>0.40){',
-            '    transformed.y+=uFace.z*0.12;',
-            '    transformed.z+=uFace.y*0.08;',
-            '    transformed.x*=(1.0+uFace.y*0.10);',
-            '  }',
-            '  if(uEyes.x>0.001){',
-            '    if(transformed.y>=3.60&&transformed.y<=4.02&&transformed.z>=0.45&&abs(transformed.x)<=0.28){',
-            '      float lidWeight=smoothstep(4.02,3.64,transformed.y);',
-            '      transformed.y-=uEyes.x*0.17*lidWeight;',
-            '      transformed.z+=uEyes.x*0.038*lidWeight;',
-            '    }',
-            '  }',
-            '  if(transformed.y>=3.55&&transformed.y<=3.82&&transformed.z>=0.72&&abs(transformed.x)>=0.04&&abs(transformed.x)<=0.25){',
-            '    transformed.x+=uEyes.y*0.038;',
-            '    transformed.y+=uEyes.z*0.028;',
-            '    transformed.z+=(1.0-(uEyes.y*uEyes.y+uEyes.z*uEyes.z)*0.22)*0.012*abs(uEyes.y);',
-            '    if(uEyes.x>0.12){',
-            '      transformed.y-=uEyes.x*0.07;',
-            '      transformed.z-=uEyes.x*0.025;',
-            '    }',
-            '  }',
-            '  if(transformed.y>=3.68&&transformed.y<=3.98&&transformed.z>=0.52&&transformed.z<=0.82&&abs(transformed.x)<=0.26){',
-            '    transformed.y+=uEyes.z*0.022-uEyes.w*0.032;',
-            '    transformed.x*=(1.0-uEyes.w*0.05);',
-            '  }',
-            '  if(uFace.w>0.001){',
-            '    transformed.y=2.8+(transformed.y-2.8)*(1.0-uFace.w*0.35);',
-            '    transformed.x*=(1.0+uFace.w*0.25);',
-            '    transformed.z*=(1.0+uFace.w*0.20);',
-            '  }',
+            'if(transformed.y>1.495&&transformed.y<1.88&&transformed.z>0.20){',
+            '  float mDrop=smoothstep(1.88,1.60,transformed.y);',
+            '  transformed.y-=uFace.x*0.085*mDrop;',
+            '  transformed.z+=uFace.x*0.045*mDrop;',
+            '}',
+            'if(transformed.y>2.04&&transformed.y<2.30&&transformed.z>0.20){',
+            '  float bBand=smoothstep(2.04,2.14,transformed.y)*smoothstep(2.30,2.20,transformed.y);',
+            '  transformed.y+=(uFace.z*0.045-uEyes.w*0.040)*bBand;',
+            '  transformed.z+=uFace.y*0.030*bBand;',
+            '  transformed.x+=(uEyes.y*0.012+uFace.y*0.020)*bBand;',
+            '}',
+            'if(transformed.y>1.92&&transformed.y<2.24&&transformed.z>0.14&&abs(transformed.x)<0.31){',
+            '  float lidWeight=smoothstep(2.24,1.98,transformed.y);',
+            '  transformed.y-=uEyes.x*0.085*lidWeight;',
+            '  transformed.z+=uEyes.x*0.018*lidWeight;',
+            '}',
+            'if(uFace.w>0.001&&transformed.y>1.52){',
+            '  transformed.y=1.52+(transformed.y-1.52)*(1.0-uFace.w*0.35);',
+            '  transformed.x*=(1.0+uFace.w*0.25);',
+            '  transformed.z*=(1.0+uFace.w*0.20);',
+            '}',
+            'if(transformed.y>2.58&&transformed.y<2.90&&abs(transformed.x)>0.12){',
+            '  float eK=clamp((transformed.y-2.58)/0.27,0.0,1.0);',
+            '  transformed.x+=(transformed.x<0.0?uEars.x:uEars.y)*0.09*eK;',
+            '  transformed.z-=0.018*eK*abs(uEars.x+uEars.y)*0.5;',
+            '}',
+            'if(transformed.z<-0.19&&transformed.y>0.50&&transformed.y<0.92&&abs(transformed.x)<0.12){',
+            '  float tK=clamp((-0.19-transformed.z)/0.61,0.0,1.0);',
+            '  transformed.x+=uTail.x*0.22*tK;',
+            '  transformed.y+=uTail.y*0.14*tK;',
             '}'
           ].join('\n');
-          // Pass 21 — rim light (Pillar B: "rim light separates the hero from
-          // the background at all times"). A fresnel term on the EXTERIOR
-          // materials only: cool sky-coloured on the anti-sun edge, warm on
-          // the sun edge, added in linear light before the tonemap so it
-          // grades with the rest of the frame. Eyes, teeth and mouth keep
-          // their contrast — a rimmed eye-white greys the read.
+          const HERO_MORPH_EYES=[
+            'if(transformed.y>1.96&&transformed.y<2.10&&transformed.z>0.30){',
+            '  transformed.x+=uEyes.y*0.026;',
+            '  transformed.y+=uEyes.z*0.016;',
+            '}'
+          ].join('\n');
+          // Pass 21/22 — rim light + surface work on the EXTERIOR materials
+          // only. The rim hugs the contour and defers to illumination; the
+          // surface stage adds two-scale fur value noise, painted zone
+          // markings (ear tips, tail bands) and the shadow-hue fix that keeps
+          // the fur's shadow side in the scene's cool/ember script instead of
+          // mud-brown (the orange diffuse crushes blue at low light — the
+          // ramp alone cannot fix hue, so this is a fragment-stage chroma
+          // correction weighted by luminance).
           const RIM_MATS={FurOrange:1,ChestCream:1,DenimBlue:1,LeatherBrown:1,SneakerRed:1,RubberWhite:1,Gold:1};
+          const EYES_MATS={EyeBlack:1,Glint:1};
+          // Surface-stage flavour per exterior material: fur mats get
+          // two-scale value noise + painted markings + the shadow-hue fix;
+          // cloth/leather get a subtler two-scale grain; gold stays clean.
+          const SURF_DEFS={
+            FurOrange:['SURF_FUR','SURF_FUR_EMBER','SURF_FUR_HUE'],
+            ChestCream:['SURF_FUR_SOFT','SURF_FUR_HUE'],
+            DenimBlue:['SURF_CLOTH'],
+            LeatherBrown:['SURF_CLOTH'],
+            SneakerRed:['SURF_CLOTH'],
+            RubberWhite:['SURF_CLOTH'],
+            Gold:[]
+          };
           const uRimDir={value:SUN_DIR.clone()};
           const uRimStr={value:ablated('hero')?0.0:0.55};
+          const uHueStr={value:ablated('herohue')?0.0:1.0};
+          this.uHueStr=uHueStr;
           this.uRimStr=uRimStr;
-          const heroPatch=(mat,withRim)=>{
+          const SURF_GLSL=[
+            'float vhash(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}',
+            'float vnoise(vec3 p){',
+            '  vec3 i=floor(p);vec3 f=fract(p);f=f*f*(3.0-2.0*f);',
+            '  float a=vhash(i),b=vhash(i+vec3(1.,0.,0.)),c=vhash(i+vec3(0.,1.,0.)),d=vhash(i+vec3(1.,1.,0.));',
+            '  float e=vhash(i+vec3(0.,0.,1.)),g=vhash(i+vec3(1.,0.,1.)),h=vhash(i+vec3(0.,1.,1.)),k=vhash(i+vec3(1.,1.,1.));',
+            '  return mix(mix(mix(a,b,f.x),mix(c,d,f.x),f.y),mix(mix(e,g,f.x),mix(h,k,f.x),f.y),f.z);',
+            '}'
+          ].join('\n');
+          const heroPatch=(mat,withRim,withEyes)=>{
             mat.onBeforeCompile=shader=>{
               shader.uniforms.uFace=uF;
               shader.uniforms.uEyes=uE;
-              shader.vertexShader='uniform vec4 uFace;\nuniform vec4 uEyes;\n'+(withRim?'varying vec3 vWN;\n':'')+shader.vertexShader;
+              shader.uniforms.uEars=uEA;
+              shader.uniforms.uTail=uT;
+              const morph=HERO_MORPH+(withEyes?'\n'+HERO_MORPH_EYES:'');
+              shader.vertexShader='uniform vec4 uFace;\nuniform vec4 uEyes;\nuniform vec2 uEars;\nuniform vec2 uTail;\n'+(withRim?'varying vec3 vWN;\nvarying vec3 vOPos;\n':'')+shader.vertexShader;
               shader.vertexShader=shader.vertexShader.replace(
                 '#include <begin_vertex>',
-                ['#include <begin_vertex>',HERO_MORPH,withRim?'vWN=normalize(mat3(modelMatrix)*objectNormal);':''].join('\n')
+                ['#include <begin_vertex>',morph,withRim?'vWN=normalize(mat3(modelMatrix)*objectNormal);\nvOPos=position;':''].join('\n')
               );
               if(withRim){
                 shader.uniforms.uRimDir=uRimDir;
                 shader.uniforms.uRimStr=uRimStr;
-                shader.fragmentShader='varying vec3 vWN;\nuniform vec3 uRimDir;\nuniform float uRimStr;\n'+shader.fragmentShader;
+                shader.uniforms.uHueStr=uHueStr;
+                shader.fragmentShader='varying vec3 vWN;\nvarying vec3 vOPos;\nuniform vec3 uRimDir;\nuniform float uRimStr;\nuniform float uHueStr;\n'+SURF_GLSL+'\n'+shader.fragmentShader;
                 shader.fragmentShader=shader.fragmentShader.replace('#include <tonemapping_fragment>',[
+                  '  vec3 surfC=gl_FragColor.rgb;',
+                  '  #ifdef SURF_FUR',
+                  '    float fFine=vnoise(vOPos*vec3(5.0,4.0,5.0));',
+                  '    float fMacro=vnoise(vOPos*1.15);',
+                  '    surfC*=1.0+(fFine-0.5)*0.30+(fMacro-0.5)*0.22;',
+                  '    surfC*=mix(vec3(1.0),vec3(1.06,0.90,0.78),(0.5-fMacro)*1.4);',
+                  '  #endif',
+                  '  #ifdef SURF_FUR_SOFT',
+                  '    float cFine=vnoise(vOPos*vec3(4.5,3.6,4.5));',
+                  '    surfC*=1.0+(cFine-0.5)*0.20;',
+                  '  #endif',
+                  '  #ifdef SURF_CLOTH',
+                  '    float wFine=vnoise(vOPos*vec3(14.0,10.0,14.0));',
+                  '    float wMacro=vnoise(vOPos*1.6);',
+                  '    surfC*=1.0+(wFine-0.5)*0.14+(wMacro-0.5)*0.10;',
+                  '  #endif',
+                  '  #ifdef SURF_FUR',
+                  '    if(vOPos.y>2.55&&abs(vOPos.x)>0.12){',
+                  '      surfC*=mix(1.0,0.80,smoothstep(2.55,2.82,vOPos.y));',
+                  '    }',
+                  '    if(vOPos.z<-0.19&&abs(vOPos.x)<0.12&&vOPos.y>0.50&&vOPos.y<0.92){',
+                  '      surfC*=1.0-0.13*smoothstep(0.30,0.90,sin(vOPos.y*30.0));',
+                  '    }',
+                  '  #endif',
+                  '  #ifdef SURF_FUR_HUE',
+                  '  float slum=dot(surfC,vec3(0.2126,0.7152,0.0722));',
+                  '  float val0=max(surfC.r,max(surfC.g,surfC.b));',
+                  '  float sunw=clamp(dot(vWN,uRimDir),0.0,1.0);',
+                  '  #endif',
+                  '  #ifdef SURF_FUR_EMBER',
+                  // The orange fur's midtone-dark band reads yellow-brown mud
+                  // (the critic's 151,118,50). The scene's script is BLUE
+                  // shadow (Pillar B + the hull/ramp family): redirect the
+                  // shadow band into blue-violet at the same value so the fur
+                  // obeys the same light logic as the rest of the world.
+                  '  float shCoolFur=smoothstep(0.90,0.70,val0);',
+                  '  surfC=mix(surfC,vec3(0.10,0.18,0.88)*val0,min(shCoolFur*0.85*uHueStr,1.0));',
+                  '  #endif',
+                  '  #ifdef SURF_FUR_HUE',
+                  // Deepest anti-sun end picks up the scene's blue-violet
+                  // bounce family (Pillar B), value preserved.
+                  '  float shCool=(1.0-smoothstep(0.06,0.34,slum))*(1.0-sunw);',
+                  '  surfC=mix(surfC,vec3(0.393,0.443,1.0)*val0,min(shCool*0.55*uHueStr,1.0));',
+                  '  #endif',
+                  '  gl_FragColor.rgb=surfC;',
                   '  float rimf=pow(1.0-clamp(dot(normalize(vViewPosition),normal),0.0,1.0),4.0);',
                   '  rimf=smoothstep(0.5,0.95,rimf);',
-                  // sunw includes the sun's steep elevation, so a flank can be
-                  // LIT from above while pointing across the sun azimuth — the
-                  // first cut rimmed exactly those lit flanks into pastel.
-                  // The rim now defers to illumination: near-full strength on
-                  // the shadow side (a cool sky-lit edge, the same blue the
-                  // toon ramp's shadows already carry), ~quarter strength
-                  // where the sun actually lands.
-                  '  float sunw=clamp(dot(vWN,uRimDir),0.0,1.0);',
-                  '  vec3 rimc=mix(vec3(0.16,0.30,0.55),vec3(1.0,0.55,0.22),pow(sunw,1.5));',
-                  '  float shade=mix(1.0,0.25,pow(sunw,0.75));',
+                  '  float sunw2=clamp(dot(vWN,uRimDir),0.0,1.0);',
+                  '  vec3 rimc=mix(vec3(0.16,0.30,0.55),vec3(1.0,0.55,0.22),pow(sunw2,1.5));',
+                  '  float shade=mix(1.0,0.25,pow(sunw2,0.75));',
                   '  gl_FragColor.rgb+=rimc*rimf*uRimStr*shade;',
                   '  #include <tonemapping_fragment>'
                 ].join('\n'));
               }
             };
-            // Two program variants (morph-only vs morph+rim) share an
-            // onBeforeCompile.toString(); without an explicit key three's
-            // program cache would compile one and serve it to both.
-            mat.customProgramCacheKey=()=>'heroMorph'+(withRim?'Rim':'');
+            // Every variant needs its own program-cache key or three serves
+            // one compiled program to all of them — and the per-material
+            // SURF_* defines make the surface stage differ by material name,
+            // so the name belongs in the key.
+            mat.customProgramCacheKey=()=>'heroM22'+(withRim?'Rim':'')+(withEyes?'Eyes':'')+mat.name;
+            if(withRim){
+              mat.defines={};
+              (SURF_DEFS[mat.name]||[]).forEach(d=>{mat.defines[d]=1;});
+            }
             mat.needsUpdate=true;
           };
           model.traverse(o=>{
@@ -4687,7 +4780,7 @@ const player={
               o.receiveShadow=true;
               if(o.material){
                 o.material.gradientMap=toonRamp;
-                heroPatch(o.material,!!RIM_MATS[o.material.name]);
+                heroPatch(o.material,!!RIM_MATS[o.material.name],!!EYES_MATS[o.material.name]);
               }
             }
           });
@@ -4706,15 +4799,16 @@ const player={
            * outline" at portrait range; unmet since the sculpted hero shipped).
            * Classic inverted hull: the EXTERIOR primitives merged into one
            * back-face shell, pushed out along vertex normals. One mesh, one
-           * draw (+1 in the AO depth prepass) — the merged geometry sits in
-           * the same local space as the hero meshes, so HERO_MORPH above keeps
-           * the contour glued to the jaw, the blink and the squash instead of
-           * poking through them.
+           * draw — the merged geometry sits in the same local space as the
+           * hero meshes, so the shared rig above keeps the contour glued to
+           * the jaw, the blink, the squash AND the ear/tail sway instead of
+           * poking through them. (Pass 22: the hull no longer draws in the AO
+           * depth prepass — renderDepth hides it, saving its ~20.5k wasted tris.)
            *
-           * The sculpt's node scale is non-uniform (0.78/0.52/0.44), so a
-           * constant local width would draw a side contour ~1.8x thicker than
-           * a top contour; the shader divides by |S*n| per vertex to keep the
-           * WORLD width constant. Mouth interior, eyes and glints are
+           * The Pass 21 sculpt needed per-axis width compensation for its
+           * 0.78/0.52/0.44 node scale; the Pass 22 re-sculpt exports identity
+           * transforms, so uHullScale measures (1,1,1) and the division is
+           * kept only as a guard. Mouth interior, eyes and glints are
            * deliberately outside the hull — a shell behind the teeth would
            * fill the mouth cavity, and rimming the eye whites greys them.
            * Colour is the ramp's core-shadow blue-violet, one step down in
@@ -4769,9 +4863,11 @@ const player={
             hullMat.onBeforeCompile=shader=>{
               shader.uniforms.uFace=uF;
               shader.uniforms.uEyes=uE;
+              shader.uniforms.uEars=uEA;
+              shader.uniforms.uTail=uT;
               shader.uniforms.uOutlineW=uOutlineW;
               shader.uniforms.uHullScale=uHullScale;
-              shader.vertexShader='uniform vec4 uFace;\nuniform vec4 uEyes;\nuniform float uOutlineW;\nuniform vec3 uHullScale;\n'+shader.vertexShader;
+              shader.vertexShader='uniform vec4 uFace;\nuniform vec4 uEyes;\nuniform vec2 uEars;\nuniform vec2 uTail;\nuniform float uOutlineW;\nuniform vec3 uHullScale;\n'+shader.vertexShader;
               shader.vertexShader=shader.vertexShader.replace(
                 '#include <begin_vertex>',
                 [
@@ -5488,9 +5584,40 @@ const player={
       const idleHeadTiltZ=Math.sin(t*1.6)*0.035;
       const idleHeaveX=Math.sin(t*3.2)*0.02;
       if(this.glbModel){
+        // Pass 22 — slow weight shift: the hips drift and the spine leans a
+        // touch off-axis on a much slower clock than the breathing, so the
+        // stance never settles into a statue pose.
         this.glbModel.scale.set(idleBreathXZ,idleBreathY,idleBreathXZ);
-        this.glbModel.position.set(0,0,0);
-        this.glbModel.rotation.set(idleHeaveX,0,idleHeadTiltZ);
+        this.glbModel.position.set(Math.sin(t*0.85)*0.03,0,0);
+        this.glbModel.rotation.set(idleHeaveX,0,idleHeadTiltZ+Math.sin(t*0.85+0.4)*0.03);
+      }
+    }
+    // Pass 22 — secondary motion: ear swivel and tail sway ride in the same
+    // vertex rig the hull uses (uEars/uTail), phase-lagged from the body
+    // clock so they read as follow-through rather than a synchronized wiggle.
+    if(this.uEars&&this.uTail){
+      let heroMode='idle';
+      // slamState 0 is the NORMAL resting state (1/2 are the slam plunge) —
+      // routing 0 to 'slam' here would pin the follow-through drivers at
+      // zero for the entire game.
+      if(this.slamState===1||this.slamState===2)heroMode='slam';
+      else if(this.slideT>0)heroMode='slide';
+      else if(!this.grounded&&game.state==='PLAYING')heroMode='air';
+      else if(sp>0.6)heroMode='run';
+      if(heroMode==='run'){
+        const rf=Math.min(1,sp/CFG.runSpeed);
+        this.uEars.value.set(Math.sin(this.runT*0.5+1.2)*0.55*rf,-Math.sin(this.runT*0.5)*0.55*rf);
+        this.uTail.value.set(Math.sin(this.runT*0.5)*0.5*rf,Math.sin(this.runT*0.5-0.9)*0.35*rf);
+      }else if(heroMode==='air'){
+        this.uEars.value.set(0.5+Math.sin(t*9)*0.5,-0.5-Math.sin(t*9)*0.5);
+        this.uTail.value.set(Math.sin(t*6)*0.4,-0.45);
+      }else if(heroMode==='idle'){
+        const wsw=Math.sin(t*0.85);
+        this.uEars.value.set(Math.sin(t*1.55)*0.45+Math.sin(t*3.2+1.1)*0.15,Math.sin(t*1.55+0.85)*0.45+Math.sin(t*3.2+1.7)*0.15);
+        this.uTail.value.set(Math.sin(t*1.9)*0.42+wsw*0.10,Math.sin(t*1.9-0.75)*0.28);
+      }else{
+        this.uEars.value.set(0,0);
+        this.uTail.value.set(0,0);
       }
     }
     P.earL.rotation.z=0.22+Math.sin(t*3.1)*0.09;
@@ -6177,3 +6304,11 @@ frame();
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+

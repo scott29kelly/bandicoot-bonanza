@@ -385,6 +385,91 @@ that is the next pass's scope. Atmosphere residuals from pass 20 stand.
 
 ---
 
+## Pass 22 — character fidelity overhaul (the amateurish-read pass)
+
+Pass 21's critique named CHARACTER FIDELITY the biggest remaining whole-bar
+gap, matching the user's binding Crash 4 reference feedback ("the Bandicoot
+character needs a lot of work — it looks very amateurish"). Six ranked levers,
+all in scope: flat colour-zone materials, region-hack face rig, axis-squashed
+proportions, off-script hero light logic, outline line-weight irregularity,
+idle life. Gauntlet trajectory: **7.5/10 (B+) FIX-FIRST** (caught the
+follow-through drivers as dead code) → **8.3/10 (A-) SHIP** after the fix.
+
+What changed:
+
+- **Re-sculpt via the Blender pipeline** (`tools/blender/build_hero.py`,
+  headless Blender 5.2): torso and cranium are now ONE continuous displaced
+  mass each — per-vertex profile shaping for shoulders, pec push, waist cinch
+  and hip flare on the torso; brow-shelf overhang, cheek flare, jaw taper and
+  chin projection on the head — replacing the old overlapping-cube-wedge DNA.
+  Crash-class ratios: head ~40% of standing height, oversized fists and
+  elongated sneakers, tall curved ears, five varied mohawk spikes, scruffy
+  cheek fur, asymmetric attitude pose (cocked right fist, one brow higher).
+  The 0.78/0.52/0.44 node axis-squash is GONE: the export bakes identity
+  transforms (proportions live in the geometry), so the hull's uHullScale
+  measures (1,1,1). 22,204 tris (was ~104k; scene totals hold at 584.7k–727.8k
+  vs the 220k/150k floors). Region bounds are dumped by the build script to
+  `docs/hero_bounds.json` — the source of truth the rig boxes are derived
+  from, so the next geometry change re-derives instead of guessing.
+- **Vertex rig v2** (index.html, geometry space): jaw/brow/blink/squash boxes
+  re-derived for the new masses; a pupil-gaze const injected ONLY into
+  EyeBlack/Glint (its box overlaps the head's front surface, so it cannot
+  ride in the shared string); NEW ear-swivel and tail-sway regions driven by
+  uEars/uTail from the idle/run/air clock with phase lag — the hull shares
+  the rig, so the contour follows the follow-through.
+- **Surface stage** on the exterior materials: two-scale fur value noise,
+  painted markings (ear-tip shading, tail bands), denim/leather grain.
+- **Hero light logic put on the scene's script** (lever 4): the fur's
+  midtone-dark band read yellow-brown mud (baseline rgb(144,109,37), hue
+  39.9° — the critic's 151,118,50 complaint reproduced); a luminance-banded
+  fragment redirect now sends that band into the ramp's blue-violet shadow
+  family at equal value. Frozen-dt same-context A/B (uHueStr toggle):
+  hue-OFF reproduces the mud; hue-ON roughly doubles the frame's cool
+  population (46k→107k px, sat ~0.49, hue ~210°) with zero world leak;
+  negative control 0.00–0.01%. Lit fur stays warm — warm-light/blue-shadow
+  as Pillar B asks. Probe lesson recorded: hue-class filters that only admit
+  warm pixels are blind to the very band being redirected; matched-pixel
+  RGB pairs are the honest instrument.
+- **Hull no longer draws in the AO depth prepass** (~20.5k tris/frame saved;
+  the pass-21 ledger's "+84k in the prepass" figure described the OLD hull —
+  corrected here and in comments).
+- **The first Gauntlet round earned its keep**: 7.5/10 FIX-FIRST found the
+  ear/tail drivers DEAD at runtime — `slamState===0` is the resting state,
+  and the mode chain routed it to 'slam', pinning uEars/uTail at zero for
+  the whole game (40-frame live sample all zeros). Fixed to route only
+  slamState 1/2; weight-shift amplitude ×2.5, ear gain 0.045→0.09, tail
+  gains 0.22/0.14; fur gains raised. Post-fix: live 40-frame sample non-zero
+  40/40; GPU uniform readback on the FurOrange program matches the driver
+  values; the critic's zeroing A/B moves 0.121% of frame confined to exactly
+  two ear-shaped blobs (0 px in sky/torso/sneaker control boxes); forced
+  jaw+blink A/B 12.73% confined to the head band (control 0%).
+- Method notes: manually setting uEars/uTail for a frozen A/B is
+  self-defeating — the driver overwrites the uniform every frame; the honest
+  instruments are live GPU readback and time-advancing diffs at a held review
+  camera. Also: PowerShell Get-Content/Set-Content round-trips corrupt UTF-8
+  (109 mojibake sequences, incl. the HUD hearts) — UTF-8 files are edited
+  with UTF-8-safe tools only; a cp1252-reverse script recovered the file.
+
+Verification: 9/9 gate PASS (luma 0.511–0.635, sd 0.106–0.171); draws
+211–831 (floor ≤900); tris 584.7k–727.8k (floors 220k/150k); controls clean;
+minfx boots; washout pass21→pass22 shows no new washout flags (hero-closeup
+FAR sat −0.067 is the shadow-band hue change, not fog). Critic's per-lever
+verdicts: proportions CLOSED (screen-space head fraction 0.400–0.413, was
+the squashed build), light logic CLOSED, face rig CLOSED as scoped (still
+box-regions — no expression poses; ceiling noted), materials PARTIAL (fur
+noise above flat baseline but subtle; tail band sub-visible), outline
+PARTIAL (median contour 1px→10px at portrait; grazing pinch and ~1px at
+gameplay range stand), idle life CLOSED after the fix.
+
+Residuals (ranked for pass 23): outline at range (view-dir width term for
+the grazing pinch; background-adaptive lift against sea/sky where the
+blue-violet line loses separation); region-box rig ceiling (expression poses
+need pose targets, not wider boxes); fur texture just above baseline; tail
+band sub-visible; pass-20 atmosphere residuals stand (pillar-pit stack
+separation, temple air desat, FAR<NEAR sat gradient, gate gold drift).
+
+---
+
 ## Closed
 
 - **#1 Everything floats** — closed pass 2 (`dc8fa57`). Platforms are craggy
@@ -418,8 +503,15 @@ that is the next pass's scope. Atmosphere residuals from pass 20 stand.
   The Hero-character floor's "a visible outline" clause is met at portrait
   and medium range by a morph-following inverted-hull contour (one merged
   shell, +1 draw) plus an illumination-deferring fresnel rim on the exterior
-  materials. Character FIDELITY (materials, rig, proportions, light logic)
-  remains open as the next pass's scope.
+  materials.
+- **#10c (pass 22) The hero reads amateurish against the Crash 4 class** —
+  closed pass 22 (user's binding feedback). Proportions re-sculpted in the
+  Blender pipeline (organic masses, Crash-class ratios, axis-squash removed),
+  surface given two-scale fur noise + painted markings, the hero's shadow
+  side moved onto the scene's blue-shadow script, face rig re-derived with
+  pupil gaze, and idle life delivered (weight shift, ear/tail follow-through
+  that the outline hull follows). Character FIDELITY's remaining ceiling
+  (outline-at-range, expression poses) is recorded as pass-23 residuals.
 - **#9 (pass 2) Draw calls are high for what is on screen** — closed pass 18.
   Group consolidation in `mergeGeos`, instanced crate/TNT bodies and contact
   shadows, chunk-merged static platform geometry, single shadow-map update per
