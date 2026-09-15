@@ -508,6 +508,31 @@ captures) is the only trustworthy visibility instrument — point projections
 of hero landmarks and raycasts against the GLB are both unreliable here
 (stale/degenerate matrixWorld paths, BackSide hull intercepting rays).
 
+### Pass 22c — "just make it a regular cartoon dog"
+
+The user's verdict after the screenshots round: stop iterating on the
+bandicoot attitude sculpt — a regular friendly cartoon dog. What changed
+(all in `build_hero.py`, rebuilt GLB + rig):
+
+- **Floppy ears**: the tall curved cones became flattened teardrops
+  (LeatherBrown) hanging at the head's cheek line, tips curling out/back —
+  the strongest "dog" signal on the character. Their follow-through rides a
+  NEW `HERO_MORPH_EARS` const injected only into the LeatherBrown program
+  (its region box overlaps the head's side surface, which FurOrange shares,
+  so it cannot ride in the shared string); the hull includes it so the
+  contour follows the flop.
+- **Face softened**: brow-shelf overhang and crown taper reduced (fierce →
+  friendly), attitude brow slabs replaced by small symmetric dark-brown oval
+  brows, smile crescent tightened and lowered, small pink tongue peeking at
+  the smile centre, tooth rows removed.
+- **Gone entirely**: mohawk spikes, scruffy cheek fur, sideburn wedges.
+- **Tail**: the cone-chain + cream tuft became two smooth rounded segments
+  with the tip angled up — a plain cartoon dog tail, same follow-through
+  region.
+
+Verification: 9/9 gate PASS (draws 206–814, tris 583.6k–712.1k), controls
+clean, minfx boots, jaw/blink morph A/B 13.13% / control 0%.
+
 ---
 
 ## Closed

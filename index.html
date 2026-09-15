@@ -4637,15 +4637,21 @@ const player={
             '  transformed.x*=(1.0+uFace.w*0.25);',
             '  transformed.z*=(1.0+uFace.w*0.20);',
             '}',
-            'if(transformed.y>2.50&&transformed.y<2.90&&abs(transformed.x)>0.12){',
-            '  float eK=clamp((transformed.y-2.50)/0.30,0.0,1.0);',
-            '  transformed.x+=(transformed.x<0.0?uEars.x:uEars.y)*0.09*eK;',
-            '  transformed.z-=0.018*eK*abs(uEars.x+uEars.y)*0.5;',
-            '}',
+
             'if(transformed.z<-0.19&&transformed.y>0.50&&transformed.y<0.92&&abs(transformed.x)<0.12){',
             '  float tK=clamp((-0.19-transformed.z)/0.61,0.0,1.0);',
             '  transformed.x+=uTail.x*0.22*tK;',
             '  transformed.y+=uTail.y*0.14*tK;',
+            '}'
+          ].join('\n');
+          // Ear flop rides only in the LeatherBrown program: its region box
+          // overlaps the head's own side surface, which FurOrange shares, so
+          // it cannot ride in the shared string.
+          const HERO_MORPH_EARS=[
+            'if(transformed.y>1.78&&transformed.y<2.28&&abs(transformed.x)>0.24){',
+            '  float eK=clamp((2.26-transformed.y)/0.45,0.0,1.0);',
+            '  transformed.z+=uEars.x*0.06*eK;',
+            '  transformed.x+=(transformed.x<0.0?-uEars.y:uEars.y)*0.035*eK;',
             '}'
           ].join('\n');
           const HERO_MORPH_EYES=[
@@ -4664,6 +4670,7 @@ const player={
           // correction weighted by luminance).
           const RIM_MATS={FurOrange:1,ChestCream:1,DenimBlue:1,LeatherBrown:1,SneakerRed:1,RubberWhite:1,Gold:1};
           const EYES_MATS={EyeBlack:1,Glint:1};
+          const EARS_MATS={LeatherBrown:1};
           // Surface-stage flavour per exterior material: fur mats get
           // two-scale value noise + painted markings + the shadow-hue fix;
           // cloth/leather get a subtler two-scale grain; gold stays clean.
@@ -4690,13 +4697,13 @@ const player={
             '  return mix(mix(mix(a,b,f.x),mix(c,d,f.x),f.y),mix(mix(e,g,f.x),mix(h,k,f.x),f.y),f.z);',
             '}'
           ].join('\n');
-          const heroPatch=(mat,withRim,withEyes)=>{
+          const heroPatch=(mat,withRim,withEyes,withEars)=>{
             mat.onBeforeCompile=shader=>{
               shader.uniforms.uFace=uF;
               shader.uniforms.uEyes=uE;
               shader.uniforms.uEars=uEA;
               shader.uniforms.uTail=uT;
-              const morph=HERO_MORPH+(withEyes?'\n'+HERO_MORPH_EYES:'');
+              const morph=HERO_MORPH+(withEyes?'\n'+HERO_MORPH_EYES:'')+(withEars?'\n'+HERO_MORPH_EARS:'');
               shader.vertexShader='uniform vec4 uFace;\nuniform vec4 uEyes;\nuniform vec2 uEars;\nuniform vec2 uTail;\n'+(withRim?'varying vec3 vWN;\nvarying vec3 vOPos;\n':'')+shader.vertexShader;
               shader.vertexShader=shader.vertexShader.replace(
                 '#include <begin_vertex>',
@@ -4725,9 +4732,6 @@ const player={
                   '    surfC*=1.0+(wFine-0.5)*0.14+(wMacro-0.5)*0.10;',
                   '  #endif',
                   '  #ifdef SURF_FUR',
-                  '    if(vOPos.y>2.50&&abs(vOPos.x)>0.12){',
-                  '      surfC*=mix(1.0,0.80,smoothstep(2.50,2.80,vOPos.y));',
-                  '    }',
                   '    if(vOPos.z<-0.19&&abs(vOPos.x)<0.12&&vOPos.y>0.50&&vOPos.y<0.92){',
                   '      surfC*=1.0-0.13*smoothstep(0.30,0.90,sin(vOPos.y*30.0));',
                   '    }',
@@ -4767,7 +4771,7 @@ const player={
             // one compiled program to all of them — and the per-material
             // SURF_* defines make the surface stage differ by material name,
             // so the name belongs in the key.
-            mat.customProgramCacheKey=()=>'heroM22'+(withRim?'Rim':'')+(withEyes?'Eyes':'')+mat.name;
+            mat.customProgramCacheKey=()=>'heroM22'+(withRim?'Rim':'')+(withEyes?'Eyes':'')+(withEars?'Ears':'')+mat.name;
             if(withRim){
               mat.defines={};
               (SURF_DEFS[mat.name]||[]).forEach(d=>{mat.defines[d]=1;});
@@ -4780,7 +4784,7 @@ const player={
               o.receiveShadow=true;
               if(o.material){
                 o.material.gradientMap=toonRamp;
-                heroPatch(o.material,!!RIM_MATS[o.material.name],!!EYES_MATS[o.material.name]);
+                heroPatch(o.material,!!RIM_MATS[o.material.name],!!EYES_MATS[o.material.name],!!EARS_MATS[o.material.name]);
                 // cartoon eyes must read WHITE even where the face sits in a
                 // mid ramp step - a grey sclera reads as no eyes at all
                 if(o.material.name==='EyeWhite'){o.material.emissive=new THREE.Color(0x1c1c1c);}
@@ -4875,7 +4879,7 @@ const player={
                 '#include <begin_vertex>',
                 [
                   '#include <begin_vertex>',
-                  HERO_MORPH,
+                  HERO_MORPH+HERO_MORPH_EARS,
                   'transformed+=normal*(uOutlineW/length(uHullScale*normal));'
                 ].join('\n')
               );

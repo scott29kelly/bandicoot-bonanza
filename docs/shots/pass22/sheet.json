@@ -24,17 +24,17 @@
         "frame": 35,
         "fps": 60,
         "ms": 16.7,
-        "triangles": 673824,
-        "drawCalls": 519,
-        "programs": 71,
+        "triangles": 669500,
+        "drawCalls": 518,
+        "programs": 70,
         "geometries": 358,
         "textures": 33
       },
       "gate": {
         "verdict": "PASS",
-        "luma": 0.6572221432123162,
-        "stdDev": 0.13727956828495713,
-        "spread": 0.08507669781454245,
+        "luma": 0.6592840013687193,
+        "stdDev": 0.13493437331333685,
+        "spread": 0.08171855085784313,
         "reasons": []
       }
     },
@@ -55,20 +55,20 @@
       "fov": 38,
       "file": "C:\\Users\\scott\\Documents\\repos\\other\\bandicoot-bonanza\\docs\\shots\\pass22\\hero-closeup.png",
       "stats": {
-        "frame": 65,
+        "frame": 67,
         "fps": 60,
         "ms": 16.7,
-        "triangles": 668628,
-        "drawCalls": 485,
-        "programs": 71,
+        "triangles": 663852,
+        "drawCalls": 484,
+        "programs": 70,
         "geometries": 358,
         "textures": 33
       },
       "gate": {
         "verdict": "PASS",
-        "luma": 0.579759012456342,
-        "stdDev": 0.18276537757277983,
-        "spread": 0.035014836090686285,
+        "luma": 0.5886721176914828,
+        "stdDev": 0.17261834512206625,
+        "spread": 0.044692430044934624,
         "reasons": []
       }
     },
@@ -89,20 +89,20 @@
       "fov": 55,
       "file": "C:\\Users\\scott\\Documents\\repos\\other\\bandicoot-bonanza\\docs\\shots\\pass22\\beach-corridor.png",
       "stats": {
-        "frame": 94,
+        "frame": 95,
         "fps": 60,
         "ms": 16.7,
-        "triangles": 721932,
-        "drawCalls": 815,
-        "programs": 71,
+        "triangles": 717608,
+        "drawCalls": 814,
+        "programs": 70,
         "geometries": 359,
         "textures": 33
       },
       "gate": {
         "verdict": "PASS",
-        "luma": 0.63248850082644,
-        "stdDev": 0.12542547050293779,
-        "spread": 0.12994823835784314,
+        "luma": 0.6346709286044729,
+        "stdDev": 0.1244896609509233,
+        "spread": 0.1299717167075163,
         "reasons": []
       }
     },
@@ -123,20 +123,20 @@
       "fov": 50,
       "file": "C:\\Users\\scott\\Documents\\repos\\other\\bandicoot-bonanza\\docs\\shots\\pass22\\water-gap.png",
       "stats": {
-        "frame": 124,
+        "frame": 128,
         "fps": 60,
         "ms": 16.7,
-        "triangles": 657904,
-        "drawCalls": 481,
-        "programs": 71,
+        "triangles": 657280,
+        "drawCalls": 482,
+        "programs": 70,
         "geometries": 359,
         "textures": 33
       },
       "gate": {
         "verdict": "PASS",
-        "luma": 0.6085825702205883,
-        "stdDev": 0.14121615271923096,
-        "spread": 0.11232706290849676,
+        "luma": 0.6089161652542892,
+        "stdDev": 0.13747197610750625,
+        "spread": 0.1123402650122549,
         "reasons": []
       }
     },
@@ -157,20 +157,20 @@
       "fov": 45,
       "file": "C:\\Users\\scott\\Documents\\repos\\other\\bandicoot-bonanza\\docs\\shots\\pass22\\crate-cluster.png",
       "stats": {
-        "frame": 154,
+        "frame": 159,
         "fps": 60,
         "ms": 16.7,
-        "triangles": 682608,
-        "drawCalls": 517,
-        "programs": 71,
+        "triangles": 678612,
+        "drawCalls": 542,
+        "programs": 70,
         "geometries": 359,
         "textures": 33
       },
       "gate": {
         "verdict": "PASS",
-        "luma": 0.6161463803936887,
-        "stdDev": 0.15708217884754222,
-        "spread": 0.09352994536356207,
+        "luma": 0.6175006748651961,
+        "stdDev": 0.1567900134089835,
+        "spread": 0.09463925142973852,
         "reasons": []
       }
     },
@@ -191,20 +191,20 @@
       "fov": 52,
       "file": "C:\\Users\\scott\\Documents\\repos\\other\\bandicoot-bonanza\\docs\\shots\\pass22\\jungle-totem.png",
       "stats": {
-        "frame": 185,
+        "frame": 188,
         "fps": 60,
         "ms": 16.7,
-        "triangles": 716766,
-        "drawCalls": 645,
-        "programs": 71,
+        "triangles": 712058,
+        "drawCalls": 644,
+        "programs": 70,
         "geometries": 359,
         "textures": 33
       },
       "gate": {
         "verdict": "PASS",
-        "luma": 0.5588647846369484,
-        "stdDev": 0.13001276571508724,
-        "spread": 0.14868292738970584,
+        "luma": 0.5634783848077513,
+        "stdDev": 0.12909653548394426,
+        "spread": 0.14460969158496734,
         "reasons": []
       }
     },
@@ -225,20 +225,20 @@
       "fov": 52,
       "file": "C:\\Users\\scott\\Documents\\repos\\other\\bandicoot-bonanza\\docs\\shots\\pass22\\pillar-pit.png",
       "stats": {
-        "frame": 215,
+        "frame": 219,
         "fps": 60,
         "ms": 16.7,
-        "triangles": 582826,
-        "drawCalls": 454,
-        "programs": 71,
+        "triangles": 583594,
+        "drawCalls": 456,
+        "programs": 70,
         "geometries": 359,
         "textures": 33
       },
       "gate": {
         "verdict": "PASS",
-        "luma": 0.5851325389851408,
-        "stdDev": 0.10581590895417463,
-        "spread": 0.09519697967728757,
+        "luma": 0.5851210274042585,
+        "stdDev": 0.10653726569357679,
+        "spread": 0.09472718545751635,
         "reasons": []
       }
     },
@@ -259,20 +259,20 @@
       "fov": 50,
       "file": "C:\\Users\\scott\\Documents\\repos\\other\\bandicoot-bonanza\\docs\\shots\\pass22\\temple-torches.png",
       "stats": {
-        "frame": 247,
+        "frame": 252,
         "fps": 60,
         "ms": 16.7,
-        "triangles": 656046,
-        "drawCalls": 360,
-        "programs": 71,
+        "triangles": 651722,
+        "drawCalls": 359,
+        "programs": 70,
         "geometries": 359,
         "textures": 33
       },
       "gate": {
         "verdict": "PASS",
-        "luma": 0.5447158679840686,
-        "stdDev": 0.11290461214049703,
-        "spread": 0.06132167075163401,
+        "luma": 0.5458824586236213,
+        "stdDev": 0.11225772446754388,
+        "spread": 0.06254296619689542,
         "reasons": []
       }
     },
@@ -293,20 +293,20 @@
       "fov": 52,
       "file": "C:\\Users\\scott\\Documents\\repos\\other\\bandicoot-bonanza\\docs\\shots\\pass22\\gate-hero.png",
       "stats": {
-        "frame": 279,
+        "frame": 282,
         "fps": 60,
         "ms": 16.7,
-        "triangles": 614256,
-        "drawCalls": 207,
-        "programs": 71,
+        "triangles": 609356,
+        "drawCalls": 206,
+        "programs": 70,
         "geometries": 359,
         "textures": 33
       },
       "gate": {
         "verdict": "PASS",
-        "luma": 0.5113175109888174,
-        "stdDev": 0.12164352465739166,
-        "spread": 0.03035344158496731,
+        "luma": 0.5103879828308823,
+        "stdDev": 0.12154995608972737,
+        "spread": 0.029728229677287603,
         "reasons": []
       }
     }

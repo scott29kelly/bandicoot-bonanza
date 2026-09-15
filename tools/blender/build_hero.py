@@ -192,14 +192,11 @@ make_obj(lambda: bpy.ops.mesh.primitive_cube_add(size=0.14),
 # ==============================================================================
 # 3. TAIL — thick base, up-curled tip (life), cream tuft
 # ==============================================================================
-tail1 = make_obj(lambda: bpy.ops.mesh.primitive_cone_add(vertices=12, radius1=0.115, radius2=0.075, depth=0.34),
-                 "Hero_TailBase", m_fur_orange, loc=(0, -0.38, 0.72), rot=(-1.85, 0, 0), region="tail")
+tail1 = make_obj(lambda: bpy.ops.mesh.primitive_uv_sphere_add(segments=14, ring_count=10, radius=1.0),
+                 "Hero_TailBase", m_fur_orange, loc=(0, -0.40, 0.72), scale=(0.095, 0.21, 0.095), region="tail")
 
-tail2 = make_obj(lambda: bpy.ops.mesh.primitive_cone_add(vertices=12, radius1=0.075, radius2=0.045, depth=0.30),
-                 "Hero_TailMid", m_fur_orange, loc=(0, -0.63, 0.66), rot=(-2.35, 0, 0), region="tail")
-
-make_obj(lambda: bpy.ops.mesh.primitive_uv_sphere_add(segments=14, ring_count=10, radius=0.075),
-         "Hero_TailTuft", m_chest_cream, loc=(0, -0.80, 0.77), scale=(1.0, 1.0, 1.25), region="tail")
+tail2 = make_obj(lambda: bpy.ops.mesh.primitive_uv_sphere_add(segments=12, ring_count=10, radius=1.0),
+                 "Hero_TailTip", m_fur_orange, loc=(0, -0.575, 0.79), rot=(0.35, 0, 0), scale=(0.065, 0.17, 0.065), region="tail")
 
 # Ear/tail follow-through needs a defined tail ARC region too (GLB space,
 # from the bounds dump): recorded via "tail" above.
@@ -297,14 +294,14 @@ def head_shape(co):
     if y < 0:
         co.y -= 0.06 * sstep(0.2, 0.9, -y) * sstep(-0.2, 0.6, t)
     # Crown taper: the ball read dies when the top narrows
-    co.x *= 1.0 - 0.16 * sstep(0.50, 0.95, t)
+    co.x *= 1.0 - 0.10 * sstep(0.50, 0.95, t)
     # Face plane: flatten the front so the eyes sit proud of it
     if y > 0.35:
         co.y = 0.35 + (y - 0.35) * (1.0 - 0.30 * sstep(0.05, 0.45, t))
-    # Brow shelf: front-upper overhang ABOVE the eyes
-    band = gauss(t, 0.42, 0.22) * sstep(0.15, 0.75, y)
-    co.y += 0.16 * band
-    co.z -= 0.10 * band
+    # Gentle brow ridge (friendly, not fierce)
+    band = gauss(t, 0.36, 0.20) * sstep(0.15, 0.75, y)
+    co.y += 0.09 * band
+    co.z -= 0.055 * band
     # Cheek flare: widen mid-face
     cheek = gauss(t, 0.02, 0.30) * sstep(0.0, 0.7, y)
     co.x *= 1.0 + 0.16 * cheek
@@ -331,34 +328,24 @@ sculpt(muzzle, muzzle_shape)
 make_obj(lambda: bpy.ops.mesh.primitive_uv_sphere_add(segments=14, ring_count=10, radius=0.075),
          "Hero_Nose", m_nose_black, loc=(0, 0.63, 1.86), scale=(1.3, 0.9, 0.85), region="nose")
 
-# Grin: curved lip arcs (toruses — back halves embedded in the muzzle)
-make_obj(lambda: bpy.ops.mesh.primitive_torus_add(major_radius=0.26, minor_radius=0.028),
-         "Hero_UpperLip", m_chest_cream, loc=(0, 0.70, 1.70), rot=(1.62, 0, 0), region="mouth")
-make_obj(lambda: bpy.ops.mesh.primitive_torus_add(major_radius=0.23, minor_radius=0.024),
-         "Hero_LowerLip", m_chest_cream, loc=(0, 0.665, 1.635), rot=(1.72, 0, 0), region="mouth")
+# Grin: ONE dark patch riding the muzzle's own curvature — its lower-front
+# cap pokes 3.5% outside the muzzle skin and the rest tucks inside, so the
+# mouth reads as a wide dark crescent (no lip rings).
+mouth = make_obj(lambda: bpy.ops.mesh.primitive_uv_sphere_add(segments=24, ring_count=16, radius=1.0),
+                 "Hero_MouthPatch", m_mouth_dark, loc=(0, 0.28, 1.74), scale=(0.408, 0.310, 0.166), region="mouth")
 
-# Mouth cavity (deep dark wedge behind the teeth — fixes the shallow-cavity read)
-make_obj(lambda: bpy.ops.mesh.primitive_cube_add(size=0.24),
-         "Hero_MouthCavity", m_mouth_dark, loc=(0, 0.56, 1.68), rot=(0.12, 0, 0), scale=(1.45, 0.50, 0.38), subsurf=1, region="mouth")
+def mouth_shape(co):
+    k = sstep(0.22, 0.52, co.y) * sstep(-0.32, -0.62, co.z)
+    r = 0.958 + 0.078 * k
+    co.x *= r
+    co.y *= r
+    co.z *= r
 
-# Teeth: two arcs following the grin curve (corners droop)
-upper_teeth = [(-0.16, 0.062, 0.048), (-0.096, 0.066, 0.054), (-0.032, 0.068, 0.060),
-               (0.032, 0.068, 0.060), (0.096, 0.066, 0.054), (0.16, 0.062, 0.048)]
-for i, (tx, th, tw) in enumerate(upper_teeth):
-    arc = 1.72 - 0.10 * (tx / 0.16) ** 2
-    make_obj(lambda: bpy.ops.mesh.primitive_cube_add(size=1.0),
-             f"Hero_UpperTooth_{i}", m_teeth_white, loc=(tx, 0.665, arc - th / 2),
-             rot=(-0.10, 0, -tx * 1.4), scale=(tw, 0.030, th), region="teeth")
-lower_teeth = [(-0.115, 0.050), (-0.04, 0.055), (0.04, 0.055), (0.115, 0.050)]
-for i, (tx, th) in enumerate(lower_teeth):
-    arc = 1.66 - 0.08 * (tx / 0.115) ** 2
-    make_obj(lambda: bpy.ops.mesh.primitive_cube_add(size=1.0),
-             f"Hero_LowerTooth_{i}", m_teeth_white, loc=(tx, 0.62, arc + th / 2),
-             rot=(0.12, 0, -tx * 1.2), scale=(0.046, 0.026, th), region="teeth")
+sculpt(mouth, mouth_shape)
 
-# Tongue
-make_obj(lambda: bpy.ops.mesh.primitive_uv_sphere_add(segments=12, ring_count=8, radius=0.115),
-         "Hero_Tongue", m_tongue_pink, loc=(0, 0.55, 1.62), scale=(0.95, 1.1, 0.38), region="tongue")
+# Small pink tongue peeking at the smile centre
+make_obj(lambda: bpy.ops.mesh.primitive_uv_sphere_add(segments=12, ring_count=8, radius=0.085),
+         "Hero_Tongue", m_tongue_pink, loc=(0, 0.60, 1.655), scale=(1.15, 0.85, 0.42), region="tongue")
 
 # Eyes: BIG ovals under the brow shelf, heavy top lids, big pupils, double glints
 for sx in [-0.155, 0.155]:
@@ -373,58 +360,25 @@ for sx in [-0.155, 0.155]:
     make_obj(lambda: bpy.ops.mesh.primitive_uv_sphere_add(segments=6, ring_count=5, radius=0.010),
              f"Hero_Glint2_{sx}", m_glint, loc=(sx - 0.022, 0.498, 2.015), region="glints")
 
-# Brows: thick, ASYMMETRIC (left cocked — attitude)
-make_obj(lambda: bpy.ops.mesh.primitive_cube_add(size=0.14),
-         "Hero_Brow_L", m_fur_orange, loc=(-0.165, 0.385, 2.20), rot=(0.10, 0.12, 0.42), scale=(1.35, 0.30, 0.34), subsurf=1, region="brows")
-make_obj(lambda: bpy.ops.mesh.primitive_cube_add(size=0.14),
-         "Hero_Brow_R", m_fur_orange, loc=(0.165, 0.385, 2.16), rot=(0.14, -0.06, -0.18), scale=(1.35, 0.30, 0.34), subsurf=1, region="brows")
+# Brows: small friendly dark-brown ovals
+for sx in [-0.16, 0.16]:
+    make_obj(lambda: bpy.ops.mesh.primitive_uv_sphere_add(segments=10, ring_count=8, radius=0.05),
+             f"Hero_Brow_{sx}", m_leather_brown, loc=(sx, 0.405, 2.165), rot=(0.15, 0, sx * 0.14), scale=(1.55, 0.5, 0.5), region="brows")
 
 # ==============================================================================
-# 8. EARS — tall, curved back, deep-embedded; peach inner hollow
+# 8. EARS — floppy cartoon-dog ears: flattened teardrops hanging at the sides
 # ==============================================================================
-for sx in [-0.21, 0.21]:
-    ear = make_obj(lambda: bpy.ops.mesh.primitive_cone_add(vertices=14, radius1=0.155, depth=0.52),
-                   f"Hero_EarOuter_{sx}", m_fur_orange, loc=(sx, -0.05, 2.56), rot=(-0.24, sx * 0.46, -sx * 0.12), scale=(1.0, 0.60, 1.0), region="ears")
-
-    def ear_bend(co, s=sx):
-        co.x += s * 0.06 * (co.z + 0.26) ** 2  # curve outward with height
-        co.y -= 0.12 * (co.z + 0.26) ** 2      # sweep back
-
-    sculpt(ear, ear_bend)
-    inner = make_obj(lambda: bpy.ops.mesh.primitive_cone_add(vertices=8, radius1=0.092, depth=0.40),
-                     f"Hero_EarInner_{sx}", m_chest_cream, loc=(sx * 1.05, 0.015, 2.50), rot=(-0.20, sx * 0.46, -sx * 0.12), scale=(0.95, 0.40, 0.95), region="ears")
-    sculpt(inner, ear_bend)
-
-# ==============================================================================
-# 9. MOHAWK — five varied swept spikes with a slight S-curve
-# ==============================================================================
-mohawk_spec = [
-    (0.105, 0.46, -0.50, 2.40, -0.015, 0.010),
-    (0.115, 0.54, -0.72, 2.43, -0.085, -0.004),
-    (0.100, 0.50, -0.95, 2.42, -0.165, 0.006),
-    (0.085, 0.41, -1.18, 2.38, -0.245, -0.008),
-    (0.065, 0.31, -1.42, 2.32, -0.315, 0.005),
-]
-for i, (r, ln, pitch, z0, y0, x0) in enumerate(mohawk_spec):
-    spike = make_obj(lambda: bpy.ops.mesh.primitive_cone_add(vertices=8, radius1=r, depth=ln),
-                     f"Hero_Mohawk_{i}", m_fur_orange, loc=(x0, y0, z0), rot=(pitch, 0, 0), subsurf=1, region="mohawk")
-
-    def spike_curve(co, L=ln):
-        co.x += 0.06 * math.sin(2.4 * (co.z / L + 0.5) * math.pi) * (co.z / L + 0.5)
-
-    sculpt(spike, spike_curve)
-
-# Scruffy cheek fur: three swept spikes per side
-for sx in [-0.44, 0.44]:
-    for i, (dz, dy, rz) in enumerate([(-0.02, 0.02, 0.55), (-0.10, -0.01, 0.75), (-0.16, -0.05, 0.95)]):
-        make_obj(lambda: bpy.ops.mesh.primitive_cone_add(vertices=6, radius1=0.06, depth=0.22),
-                 f"Hero_CheekFur_{sx}_{i}", m_fur_orange, loc=(sx, 0.06 + dy, 1.88 + dz),
-                 rot=(0.15, sx * 1.05, sx * rz), region="cheekfur")
-
-# Sideburn wedges bridging head to cheeks
 for sx in [-0.40, 0.40]:
-    make_obj(lambda: bpy.ops.mesh.primitive_uv_sphere_add(segments=12, ring_count=10, radius=0.115),
-             f"Hero_Sideburn_{sx}", m_fur_orange, loc=(sx, 0.055, 1.88), scale=(0.7, 0.55, 1.10), region="head")
+    ear = make_obj(lambda: bpy.ops.mesh.primitive_uv_sphere_add(segments=16, ring_count=12, radius=1.0),
+                   f"Hero_EarOuter_{sx}", m_leather_brown, loc=(sx, -0.04, 2.00),
+                   rot=(0.14, sx * 0.12, sx * 0.22), scale=(0.095, 0.13, 0.245), region="ears")
+
+    def ear_flop(co, s=sx):
+        co.z *= 1.0 - 0.10 * sstep(0.0, 1.0, co.z)          # rounder tip
+        co.x += s * 0.035 * sstep(-0.1, -0.9, co.z)         # tip curls outward
+        co.y -= 0.05 * sstep(-0.1, -0.9, co.z)              # tip sweeps back
+
+    sculpt(ear, ear_flop)
 
 # ==============================================================================
 # 10. JOIN, PIVOT, EXPORT

@@ -319,6 +319,13 @@
       </thead>
       <tbody>
         <tr>
+          <td>Pass 22c</td>
+          <td>User direction: "just make it a regular cartoon dog" — simplify the character away from the bandicoot attitude sculpt</td>
+          <td>The Crash-style signifiers (mohawk spikes, scruffy cheek fur, sideburns, fierce brow shelf, tooth rows, cone-spiked ears, tail tuft) kept the character reading busy and v1-ish; the user wanted a clean friendly cartoon dog</td>
+          <td>Rebuilt the head-adjacent sculpt in build_hero.py: floppy dark-brown teardrop ears hanging at the cheek line (their follow-through rides a new HERO_MORPH_EARS const injected only into the LeatherBrown program — its region box overlaps the head's shared FurOrange side surface — with the hull including it so the contour follows the flop); softened brow shelf + crown taper; small symmetric oval brows; tightened smile crescent + peeking tongue; tooth rows, mohawk, cheek fur and sideburns deleted; tail rebuilt as two smooth rounded segments with the tip up; verification: 9/9 gate PASS (draws 206–814, tris 583.6k–712.1k), controls clean, minfx boots, jaw/blink morph A/B 13.13% / control 0%</td>
+          <td><span class="track-status status-done">PASSED</span></td>
+        </tr>
+        <tr>
           <td>Pass 22b</td>
           <td>User-directed character polish (live-render review: "tone down the purple shading — where are his eyes? why is he so topheavy? still v1ish")</td>
           <td>Toggle-diff measurement showed the eyes' entire rendered footprint was 49 px: the head's face surface sat in front of the eye spheres, the muzzle's upper lobe (z≤2.05, front y 0.63–0.75) covered the eye line, and the eyelid sphere (front 0.503) shrouded the rest; the shadow-redirect band (val&lt;0.90 @ 0.85) was swallowing LIT fur so the character read mostly purple; head width was nearly equal to shoulder span with spindly limbs (topheavy)</td>
