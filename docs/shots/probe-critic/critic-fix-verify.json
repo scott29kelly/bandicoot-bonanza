@@ -1,0 +1,77 @@
+{
+ "live": {
+  "earsXY": [
+   0.3,
+   0.38,
+   0.126,
+   0.461
+  ],
+  "tailXY": [
+   0.34,
+   0.486,
+   0.017,
+   0.269
+  ],
+  "nonzeroFrames": "40/40",
+  "slamState": 0
+ },
+ "box": {
+  "x0": 601,
+  "x1": 682,
+  "y0": 184,
+  "y1": 273
+ },
+ "earBox": {
+  "pctOfBox": 0,
+  "bbox": {
+   "minX": 1000000000,
+   "maxX": -1,
+   "minY": 1000000000,
+   "maxY": -1
+  }
+ },
+ "skyBox": {
+  "pctOfBox": 0,
+  "bbox": {
+   "minX": 1000000000,
+   "maxX": -1,
+   "minY": 1000000000,
+   "maxY": -1
+  }
+ },
+ "headBox": {
+  "pctOfBox": 0,
+  "bbox": {
+   "minX": 1000000000,
+   "maxX": -1,
+   "minY": 1000000000,
+   "maxY": -1
+  }
+ },
+ "whole": {
+  "pctOfBox": 0,
+  "bbox": {
+   "minX": 1000000000,
+   "maxX": -1,
+   "minY": 1000000000,
+   "maxY": -1
+  }
+ },
+ "neg": {
+  "pctOfBox": 0,
+  "bbox": {
+   "minX": 592,
+   "maxX": 592,
+   "minY": 235,
+   "maxY": 235
+  }
+ },
+ "fur": {
+  "n": 18330,
+  "lc": 0.0024
+ },
+ "sky": {
+  "n": 5,
+  "lc": 0.498
+ }
+}

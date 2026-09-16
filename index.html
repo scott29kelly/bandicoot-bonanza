@@ -45,7 +45,7 @@ h1.logo{font-size:min(11vw,90px);line-height:.95;margin:0 0 10px;color:#ffb020;-
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-<script src="assets/models/hero_model.js"></script>
+<script src="assets/models/cat_model.js"></script>
 <script src="assets/models/props_model.js"></script>
 <script src="assets/models/log_model.js"></script>
 <script src="assets/models/totem_model.js"></script>
@@ -4579,322 +4579,215 @@ const player={
     P.armL=mkLimb(-0.48,1.32,0.08,0.58,0.1,false);
     P.armR=mkLimb(0.48,1.32,0.08,0.58,0.1,false);
 
-    // Load sculpted Blender 5.2 master mascot mesh
-    this.uFace={value:new THREE.Vector4(0,0,0,0)};
-    this.faceTarget=new THREE.Vector4(0,0,0,0);
-    this.uEyes={value:new THREE.Vector4(0,0,0,0)};
+    /* ======================================================================
+       Pass 23 — BLACK CAT character. The bandicoot is retired: its embedded
+       GLB payload, coordinate-region vertex rig, material-name shader
+       patches and inverted-hull outline do NOT apply to the cat and are not
+       loaded. The supplied skinned cat (assets/models/black-cat.glb,
+       embedded as window.CAT_GLB_BASE64 by assets/models/cat_model.js)
+       plays its two supplied clips (CAT_Beg_Loop idle flourish,
+       CAT_Celebrate_Loop victory) through an AnimationMixer; all other
+       locomotion is procedural bone animation over the captured rest pose.
+       The orange procedural fallback below stays as a null target for
+       legacy animation writes but is force-hidden BEFORE the load: on
+       failure an explicit error is shown instead of any bandicoot.
+       ====================================================================== */
+    this.uFace={value:new THREE.Vector4(0,0,0,0)};   // inert slots - legacy
+    this.faceTarget=new THREE.Vector4(0,0,0,0);      // writers (takeDamage,
+    this.uEyes={value:new THREE.Vector4(0,0,0,0)};   // respawn) stay safe
     this.uEars={value:new THREE.Vector2(0,0)};
     this.uTail={value:new THREE.Vector2(0,0)};
     this.blinkTimer=3.2;
     this.blinkDuration=0.13;
     this.gazeCurrent=new THREE.Vector2(0,0);
     this.slamRecoverT=0;
-    if(window.THREE&&THREE.GLTFLoader&&window.HERO_GLB_BASE64){
+    body.visible=false;belly.visible=false;tuft.visible=false;head.visible=false;snout.visible=false;nose.visible=false;shorts.visible=false;
+    P.earL.visible=false;P.earR.visible=false;P.tail.visible=false;
+    P.legL.visible=false;P.legR.visible=false;P.armL.visible=false;P.armR.visible=false;
+    for(const eg of P.eyes)eg.visible=false;
+    if(P.spikes)for(const s of P.spikes)s.visible=false;
+    this.catLoadError=null;
+    const catFail=msg=>{
+      console.error(msg);
+      this.catLoadError=msg;
+      window.CAT_LOAD_ERROR=msg;
+      const box=document.createElement('div');
+      box.id='cat-load-error';
+      box.style.cssText='position:fixed;left:12px;right:12px;bottom:12px;z-index:99;background:#3a0d12;color:#ffd9d9;border:2px solid #b03a3a;padding:10px 14px;font:600 14px "Segoe UI",sans-serif;border-radius:8px';
+      box.textContent='The black cat model failed to load ('+msg+'). The bandicoot has been retired, so there is no playable character. Reload to retry.';
+      document.body.appendChild(box);
+    };
+    if(window.THREE&&THREE.GLTFLoader&&window.CAT_GLB_BASE64){
       try{
         const loader=new THREE.GLTFLoader();
-        const bin=atob(window.HERO_GLB_BASE64);
+        const bin=atob(window.CAT_GLB_BASE64);
         const buf=new Uint8Array(bin.length);
         for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);
         loader.parse(buf.buffer,'',gltf=>{
+          try{
           const model=gltf.scene;
-          model.name="Hero_Blender_Sculpted";
-          const uF=this.uFace;
-          const uE=this.uEyes;
-          const uEA=this.uEars;
-          const uT=this.uTail;
-          /*
-           * Pass 22 — the vertex rig, re-derived for the re-sculpted GLB
-           * (identity node transform, feet at y=0, face +z; region boxes come
-           * from docs/hero_bounds.json, dumped by build_hero.py). Still ONE
-           * shared string so every material AND the outline hull displace the
-           * SAME vertices by the SAME amounts — but the head regions are
-           * authored against the new masses, and secondary-motion regions
-           * (ear swivel, tail sway) ride in the same rig so the contour
-           * follows them too. The eye-only part (pupil gaze) is a separate
-           * const injected solely into EyeBlack/Glint — its box overlaps the
-           * head's front surface, which FurOrange shares, so it cannot ride
-           * in the shared string.
-           */
-          const HERO_MORPH=[
-            'if(transformed.y>1.56&&transformed.y<1.84&&transformed.z>0.22){',
-            '  float mDrop=smoothstep(1.88,1.60,transformed.y);',
-            '  transformed.y-=uFace.x*0.085*mDrop;',
-            '  transformed.z+=uFace.x*0.045*mDrop;',
-            '}',
-            'if(transformed.y>2.06&&transformed.y<2.28&&transformed.z>0.20){',
-            '  float bBand=smoothstep(2.06,2.16,transformed.y)*smoothstep(2.28,2.18,transformed.y);',
-            '  transformed.y+=(uFace.z*0.045-uEyes.w*0.040)*bBand;',
-            '  transformed.z+=uFace.y*0.030*bBand;',
-            '  transformed.x+=(uEyes.y*0.012+uFace.y*0.020)*bBand;',
-            '}',
-            'if(transformed.y>1.90&&transformed.y<2.24&&transformed.z>0.16&&abs(transformed.x)<0.31){',
-            '  float lidWeight=smoothstep(2.24,2.00,transformed.y);',
-            '  transformed.y-=uEyes.x*0.085*lidWeight;',
-            '  transformed.z+=uEyes.x*0.018*lidWeight;',
-            '}',
-            'if(uFace.w>0.001&&transformed.y>1.56){',
-            '  transformed.y=1.56+(transformed.y-1.56)*(1.0-uFace.w*0.35);',
-            '  transformed.x*=(1.0+uFace.w*0.25);',
-            '  transformed.z*=(1.0+uFace.w*0.20);',
-            '}',
-
-            'if(transformed.z<-0.19&&transformed.y>0.50&&transformed.y<0.92&&abs(transformed.x)<0.12){',
-            '  float tK=clamp((-0.19-transformed.z)/0.61,0.0,1.0);',
-            '  transformed.x+=uTail.x*0.22*tK;',
-            '  transformed.y+=uTail.y*0.14*tK;',
-            '}'
-          ].join('\n');
-          // Ear flop rides only in the LeatherBrown program: its region box
-          // overlaps the head's own side surface, which FurOrange shares, so
-          // it cannot ride in the shared string.
-          const HERO_MORPH_EARS=[
-            'if(transformed.y>1.78&&transformed.y<2.28&&abs(transformed.x)>0.24){',
-            '  float eK=clamp((2.26-transformed.y)/0.45,0.0,1.0);',
-            '  transformed.z+=uEars.x*0.06*eK;',
-            '  transformed.x+=(transformed.x<0.0?-uEars.y:uEars.y)*0.035*eK;',
-            '}'
-          ].join('\n');
-          const HERO_MORPH_EYES=[
-            'if(transformed.y>1.98&&transformed.y<2.13&&transformed.z>0.36){',
-            '  transformed.x+=uEyes.y*0.026;',
-            '  transformed.y+=uEyes.z*0.016;',
-            '}'
-          ].join('\n');
-          // Pass 21/22 — rim light + surface work on the EXTERIOR materials
-          // only. The rim hugs the contour and defers to illumination; the
-          // surface stage adds two-scale fur value noise, painted zone
-          // markings (ear tips, tail bands) and the shadow-hue fix that keeps
-          // the fur's shadow side in the scene's cool/ember script instead of
-          // mud-brown (the orange diffuse crushes blue at low light — the
-          // ramp alone cannot fix hue, so this is a fragment-stage chroma
-          // correction weighted by luminance).
-          const RIM_MATS={FurOrange:1,ChestCream:1,DenimBlue:1,LeatherBrown:1,SneakerRed:1,RubberWhite:1,Gold:1};
-          const EYES_MATS={EyeBlack:1,Glint:1};
-          const EARS_MATS={LeatherBrown:1};
-          // Surface-stage flavour per exterior material: fur mats get
-          // two-scale value noise + painted markings + the shadow-hue fix;
-          // cloth/leather get a subtler two-scale grain; gold stays clean.
-          const SURF_DEFS={
-            FurOrange:['SURF_FUR','SURF_FUR_EMBER','SURF_FUR_HUE'],
-            ChestCream:['SURF_FUR_SOFT','SURF_FUR_HUE'],
-            DenimBlue:['SURF_CLOTH'],
-            LeatherBrown:['SURF_CLOTH'],
-            SneakerRed:['SURF_CLOTH'],
-            RubberWhite:['SURF_CLOTH'],
-            Gold:[]
-          };
-          const uRimDir={value:SUN_DIR.clone()};
-          const uRimStr={value:ablated('hero')?0.0:0.55};
-          const uHueStr={value:ablated('herohue')?0.0:1.0};
-          this.uHueStr=uHueStr;
-          this.uRimStr=uRimStr;
-          const SURF_GLSL=[
-            'float vhash(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}',
-            'float vnoise(vec3 p){',
-            '  vec3 i=floor(p);vec3 f=fract(p);f=f*f*(3.0-2.0*f);',
-            '  float a=vhash(i),b=vhash(i+vec3(1.,0.,0.)),c=vhash(i+vec3(0.,1.,0.)),d=vhash(i+vec3(1.,1.,0.));',
-            '  float e=vhash(i+vec3(0.,0.,1.)),g=vhash(i+vec3(1.,0.,1.)),h=vhash(i+vec3(0.,1.,1.)),k=vhash(i+vec3(1.,1.,1.));',
-            '  return mix(mix(mix(a,b,f.x),mix(c,d,f.x),f.y),mix(mix(e,g,f.x),mix(h,k,f.x),f.y),f.z);',
-            '}'
-          ].join('\n');
-          const heroPatch=(mat,withRim,withEyes,withEars)=>{
-            mat.onBeforeCompile=shader=>{
-              shader.uniforms.uFace=uF;
-              shader.uniforms.uEyes=uE;
-              shader.uniforms.uEars=uEA;
-              shader.uniforms.uTail=uT;
-              const morph=HERO_MORPH+(withEyes?'\n'+HERO_MORPH_EYES:'')+(withEars?'\n'+HERO_MORPH_EARS:'');
-              shader.vertexShader='uniform vec4 uFace;\nuniform vec4 uEyes;\nuniform vec2 uEars;\nuniform vec2 uTail;\n'+(withRim?'varying vec3 vWN;\nvarying vec3 vOPos;\n':'')+shader.vertexShader;
-              shader.vertexShader=shader.vertexShader.replace(
-                '#include <begin_vertex>',
-                ['#include <begin_vertex>',morph,withRim?'vWN=normalize(mat3(modelMatrix)*objectNormal);\nvOPos=position;':''].join('\n')
-              );
-              if(withRim){
-                shader.uniforms.uRimDir=uRimDir;
-                shader.uniforms.uRimStr=uRimStr;
-                shader.uniforms.uHueStr=uHueStr;
-                shader.fragmentShader='varying vec3 vWN;\nvarying vec3 vOPos;\nuniform vec3 uRimDir;\nuniform float uRimStr;\nuniform float uHueStr;\n'+SURF_GLSL+'\n'+shader.fragmentShader;
-                shader.fragmentShader=shader.fragmentShader.replace('#include <tonemapping_fragment>',[
-                  '  vec3 surfC=gl_FragColor.rgb;',
-                  '  #ifdef SURF_FUR',
-                  '    float fFine=vnoise(vOPos*vec3(5.0,4.0,5.0));',
-                  '    float fMacro=vnoise(vOPos*1.15);',
-                  '    surfC*=1.0+(fFine-0.5)*0.30+(fMacro-0.5)*0.22;',
-                  '    surfC*=mix(vec3(1.0),vec3(1.06,0.90,0.78),(0.5-fMacro)*1.4);',
-                  '  #endif',
-                  '  #ifdef SURF_FUR_SOFT',
-                  '    float cFine=vnoise(vOPos*vec3(4.5,3.6,4.5));',
-                  '    surfC*=1.0+(cFine-0.5)*0.20;',
-                  '  #endif',
-                  '  #ifdef SURF_CLOTH',
-                  '    float wFine=vnoise(vOPos*vec3(14.0,10.0,14.0));',
-                  '    float wMacro=vnoise(vOPos*1.6);',
-                  '    surfC*=1.0+(wFine-0.5)*0.14+(wMacro-0.5)*0.10;',
-                  '  #endif',
-                  '  #ifdef SURF_FUR',
-                  '    if(vOPos.z<-0.19&&abs(vOPos.x)<0.12&&vOPos.y>0.50&&vOPos.y<0.92){',
-                  '      surfC*=1.0-0.13*smoothstep(0.30,0.90,sin(vOPos.y*30.0));',
-                  '    }',
-                  '  #endif',
-                  '  #ifdef SURF_FUR_HUE',
-                  '  float slum=dot(surfC,vec3(0.2126,0.7152,0.0722));',
-                  '  float val0=max(surfC.r,max(surfC.g,surfC.b));',
-                  '  float sunw=clamp(dot(vWN,uRimDir),0.0,1.0);',
-                  '  #endif',
-                  '  #ifdef SURF_FUR_EMBER',
-                  // The orange fur's midtone-dark band reads yellow-brown mud
-                  // (the critic's 151,118,50). The scene's script is BLUE
-                  // shadow (Pillar B + the hull/ramp family): redirect the
-                  // shadow band into blue-violet at the same value so the fur
-                  // obeys the same light logic as the rest of the world.
-                  '  float shCoolFur=smoothstep(0.60,0.42,val0);',
-                  '  surfC=mix(surfC,vec3(0.16,0.22,0.72)*val0,min(shCoolFur*0.55*uHueStr,1.0));',
-                  '  #endif',
-                  '  #ifdef SURF_FUR_HUE',
-                  // Deepest anti-sun end picks up the scene's blue-violet
-                  // bounce family (Pillar B), value preserved.
-                  '  float shCool=(1.0-smoothstep(0.06,0.34,slum))*(1.0-sunw);',
-                  '  surfC=mix(surfC,vec3(0.393,0.443,1.0)*val0,min(shCool*0.55*uHueStr,1.0));',
-                  '  #endif',
-                  '  gl_FragColor.rgb=surfC;',
-                  '  float rimf=pow(1.0-clamp(dot(normalize(vViewPosition),normal),0.0,1.0),4.0);',
-                  '  rimf=smoothstep(0.5,0.95,rimf);',
-                  '  float sunw2=clamp(dot(vWN,uRimDir),0.0,1.0);',
-                  '  vec3 rimc=mix(vec3(0.16,0.30,0.55),vec3(1.0,0.55,0.22),pow(sunw2,1.5));',
-                  '  float shade=mix(1.0,0.25,pow(sunw2,0.75));',
-                  '  gl_FragColor.rgb+=rimc*rimf*uRimStr*shade;',
-                  '  #include <tonemapping_fragment>'
-                ].join('\n'));
-              }
-            };
-            // Every variant needs its own program-cache key or three serves
-            // one compiled program to all of them — and the per-material
-            // SURF_* defines make the surface stage differ by material name,
-            // so the name belongs in the key.
-            mat.customProgramCacheKey=()=>'heroM22'+(withRim?'Rim':'')+(withEyes?'Eyes':'')+(withEars?'Ears':'')+mat.name;
-            if(withRim){
-              mat.defines={};
-              (SURF_DEFS[mat.name]||[]).forEach(d=>{mat.defines[d]=1;});
-            }
-            mat.needsUpdate=true;
-          };
+          model.name="Black_Cat";
+          /* Normalization wrapper: gameplay animation keeps writing glbModel
+           * (below) exactly as it did for the bandicoot, while the asset's
+           * base scale / facing / foot offset live on catNorm where no
+           * reset or state pose can overwrite them. Facing and bounds are
+           * MEASURED from the loaded rig, not guessed from the source
+           * convention. */
+          const catNorm=new THREE.Group();
+          catNorm.name="Cat_Normalization";
+          catNorm.add(model);
+          model.rotation.y=-Math.PI/2;   // source rig is +X forward -> +Z
+          model.updateMatrixWorld(true);
+          const byName={};
+          model.traverse(o=>{byName[o.name]=o;});
+          const headN=byName['Head']||byName['CAT_Head'];
+          const tailN=byName['Tail_0']||byName['CAT_Tail'];
+          if(headN&&tailN){
+            const hp=new THREE.Vector3(),tp=new THREE.Vector3();
+            headN.getWorldPosition(hp);
+            tailN.getWorldPosition(tp);
+            if(hp.z<tp.z)model.rotation.y+=Math.PI;   // facing backwards: flip
+            model.updateMatrixWorld(true);
+          }
+          const bbox=new THREE.Box3().setFromObject(model);
+          const h=Math.max(0.01,bbox.max.y-bbox.min.y);
+          const fitS=1.55/h;                          // mascot height target
+          catNorm.scale.setScalar(fitS);
+          catNorm.position.y=-bbox.min.y*fitS;        // feet on the rig origin
+          const catRoot=new THREE.Group();
+          catRoot.name="Black_Cat_Wrapper";
+          catRoot.add(catNorm);
+          r.add(catRoot);
+          this.glbModel=catRoot;
+          /* second-pass ground snap: the rest pose (skinned) differs slightly
+           * from the bind-pose box measured above, so re-measure once the cat
+           * is in the world and drop the remaining gap onto the origin */
+          r.updateMatrixWorld(true);
+          const box2=new THREE.Box3().setFromObject(catRoot);
+          catNorm.position.y-=box2.min.y;
           model.traverse(o=>{
-            if(o.isMesh){
+            if(o.isMesh||o.isSkinnedMesh){
               o.castShadow=true;
               o.receiveShadow=true;
-              if(o.material){
-                o.material.gradientMap=toonRamp;
-                heroPatch(o.material,!!RIM_MATS[o.material.name],!!EYES_MATS[o.material.name],!!EARS_MATS[o.material.name]);
-                // cartoon eyes must read WHITE even where the face sits in a
-                // mid ramp step - a grey sclera reads as no eyes at all
-                if(o.material.name==='EyeWhite'){o.material.emissive=new THREE.Color(0x1c1c1c);}
-              }
+              if(o.isSkinnedMesh)o.frustumCulled=false;
             }
           });
-          body.visible=false;belly.visible=false;tuft.visible=false;head.visible=false;snout.visible=false;nose.visible=false;shorts.visible=false;
-          P.earL.visible=false;P.earR.visible=false;P.tail.visible=false;
-          P.legL.visible=false;P.legR.visible=false;P.armL.visible=false;P.armR.visible=false;
-          for(const eg of P.eyes)eg.visible=false;
-          if(P.spikes)for(const s of P.spikes)s.visible=false;
-
-          model.position.set(0,0,0);
-          model.rotation.y=0;
-          r.add(model);
-          this.glbModel=model;
-          /*
-           * Pass 21 — the visible outline (QUALITY-BAR hero floor: "a visible
-           * outline" at portrait range; unmet since the sculpted hero shipped).
-           * Classic inverted hull: the EXTERIOR primitives merged into one
-           * back-face shell, pushed out along vertex normals. One mesh, one
-           * draw — the merged geometry sits in the same local space as the
-           * hero meshes, so the shared rig above keeps the contour glued to
-           * the jaw, the blink, the squash AND the ear/tail sway instead of
-           * poking through them. (Pass 22: the hull no longer draws in the AO
-           * depth prepass — renderDepth hides it, saving its ~20.5k wasted tris.)
-           *
-           * The Pass 21 sculpt needed per-axis width compensation for its
-           * 0.78/0.52/0.44 node scale; the Pass 22 re-sculpt exports identity
-           * transforms, so uHullScale measures (1,1,1) and the division is
-           * kept only as a guard. Mouth interior, eyes and glints are
-           * deliberately outside the hull — a shell behind the teeth would
-           * fill the mouth cavity, and rimming the eye whites greys them.
-           * Colour is the ramp's core-shadow blue-violet, one step down in
-           * value: a graphic contour in the shadow family, not a black line.
-           */
-          const HULL_MATS={FurOrange:1,ChestCream:1,DenimBlue:1,LeatherBrown:1,SneakerRed:1,RubberWhite:1,Gold:1,NoseBlack:1};
-          const hullGeos=[];
-          let hullParent=null;
+          /* rest pose + bone table for procedural locomotion */
+          this.catBones={};
+          this.catRest={};
           model.traverse(o=>{
-            if(o.isMesh&&o.material&&HULL_MATS[o.material.name]){
-              hullGeos.push(o.geometry);
-              if(!hullParent)hullParent=o.parent;
+            if(o.isBone){
+              this.catBones[o.name]=o;
+              this.catRest[o.name]={q:o.quaternion.clone(),p:o.position.clone()};
             }
           });
-          if(hullGeos.length&&hullParent){
-            let nv=0,ni=0;
-            hullGeos.forEach(g=>{
-              nv+=g.attributes.position.count;
-              ni+=g.index?g.index.count:g.attributes.position.count;
-            });
-            const pos=new Float32Array(nv*3),nor=new Float32Array(nv*3);
-            const idx=nv>65535?new Uint32Array(ni):new Uint16Array(ni);
-            let vo=0,io=0;
-            hullGeos.forEach(g=>{
-              pos.set(g.attributes.position.array,vo*3);
-              if(g.attributes.normal)nor.set(g.attributes.normal.array,vo*3);
-              if(g.index){
-                const gi=g.index.array;
-                for(let k=0;k<gi.length;k++)idx[io+k]=gi[k]+vo;
-                io+=gi.length;
-              }else{
-                for(let k=0;k<g.attributes.position.count;k++)idx[io+k]=k+vo;
-                io+=g.attributes.position.count;
-              }
-              vo+=g.attributes.position.count;
-            });
-            const hullGeo=new THREE.BufferGeometry();
-            hullGeo.setAttribute('position',new THREE.BufferAttribute(pos,3));
-            hullGeo.setAttribute('normal',new THREE.BufferAttribute(nor,3));
-            hullGeo.setIndex(new THREE.BufferAttribute(idx,1));
-            const uOutlineW={value:0.012};
-            const uHullScale={value:new THREE.Vector3(
-              Math.abs(model.scale.x*hullParent.scale.x),
-              Math.abs(model.scale.y*hullParent.scale.y),
-              Math.abs(model.scale.z*hullParent.scale.z))};
-            const hullMat=new THREE.MeshBasicMaterial({color:0x221a3e,side:THREE.BackSide});
-            // The hex is authored in display space; the composer path treats
-            // material colors as linear, and AgX lifts dark colours — without
-            // the conversion the contour rendered pale periwinkle (129,131,183),
-            // lighter than the ramp's shadow family it was meant to sit in.
-            hullMat.color.convertSRGBToLinear();
-            hullMat.onBeforeCompile=shader=>{
-              shader.uniforms.uFace=uF;
-              shader.uniforms.uEyes=uE;
-              shader.uniforms.uEars=uEA;
-              shader.uniforms.uTail=uT;
-              shader.uniforms.uOutlineW=uOutlineW;
-              shader.uniforms.uHullScale=uHullScale;
-              shader.vertexShader='uniform vec4 uFace;\nuniform vec4 uEyes;\nuniform vec2 uEars;\nuniform vec2 uTail;\nuniform float uOutlineW;\nuniform vec3 uHullScale;\n'+shader.vertexShader;
-              shader.vertexShader=shader.vertexShader.replace(
-                '#include <begin_vertex>',
-                [
-                  '#include <begin_vertex>',
-                  HERO_MORPH+HERO_MORPH_EARS,
-                  'transformed+=normal*(uOutlineW/length(uHullScale*normal));'
-                ].join('\n')
-              );
-            };
-            hullMat.customProgramCacheKey=()=>'heroHull';
-            const hull=new THREE.Mesh(hullGeo,hullMat);
-            hull.name='Hero_OutlineHull';
-            hull.castShadow=false;
-            hull.receiveShadow=false;
-            hull.visible=!ablated('hero');
-            hullParent.add(hull);
-            this.heroHull=hull;
+          this.catMixer=new THREE.AnimationMixer(model);
+          this.catClips={};
+          this.catActions={};
+          for(const clip of gltf.animations){
+            this.catClips[clip.name]=clip;
+            this.catActions[clip.name]=this.catMixer.clipAction(clip);
           }
-        },err=>console.error("GLTF load error:",err));
-      }catch(e){console.warn("GLB parse fallback:",e);}
+          this.catClipPlaying=null;
+          this.catClipLoop=false;
+          this.catClipT=0;
+          this.begTimer=rand(7,13);
+          const _catE=new THREE.Euler();
+          const _catQ=new THREE.Quaternion();
+          this.catPoseRest=()=>{
+            for(const k of Object.keys(this.catBones)){
+              const b=this.catBones[k],rst=this.catRest[k];
+              b.quaternion.copy(rst.q);
+              b.position.copy(rst.p);
+            }
+          };
+          this.playCatClip=(name,loop)=>{
+            const a=this.catActions&&this.catActions[name];
+            if(!a)return false;
+            for(const k of Object.keys(this.catActions))if(k!==name)this.catActions[k].stop();
+            a.reset();
+            if(loop){a.setLoop(THREE.LoopRepeat,Infinity);}else{a.setLoop(THREE.LoopOnce,1);a.clampWhenFinished=true;}
+            a.fadeIn(0.15).play();
+            this.catClipPlaying=name;
+            this.catClipLoop=!!loop;
+            this.catClipT=this.catClips[name].duration;
+            return true;
+          };
+          this.stopCatClip=()=>{
+            if(this.catMixer)this.catMixer.stopAllAction();
+            this.catClipPlaying=null;
+            this.catPoseRest();
+          };
+          this.setCatBone=(name,rx,ry,rz)=>{
+            const b=this.catBones[name];
+            const rst=this.catRest[name];
+            if(!b||!rst)return;
+            _catE.set(rx,ry,rz);
+            _catQ.setFromEuler(_catE);
+            b.quaternion.copy(rst.q).multiply(_catQ);
+          };
+          this.updateCatBones=(dt,t)=>{
+            if(!this.catBones)return;
+            if(this.catClipPlaying){
+              this.catMixer.update(dt);
+              if(!this.catClipLoop){
+                this.catClipT-=dt;
+                if(this.catClipT<=0)this.stopCatClip();
+              }
+              return;                       // the mixer owns the pose
+            }
+            const sp=this.pos?Math.hypot(this.vel.x,this.vel.z):0;
+            for(let i=0;i<5;i++){
+              const n='Tail_'+i;
+              if(this.catBones[n])this.setCatBone(n,-0.10+Math.sin(t*3.1+i*0.7)*0.10,Math.sin(t*2.6+i*0.55)*(0.14+0.05*i),0);
+            }
+            if(this.slamState===1||this.slamState===2){
+              this.setCatBone('Fore_L_Upper',-1.1,0,0.5);this.setCatBone('Fore_R_Upper',-1.1,0,-0.5);
+              this.setCatBone('Hind_L_Upper',-0.8,0,0.5);this.setCatBone('Hind_R_Upper',-0.8,0,-0.5);
+              return;
+            }
+            if(this.slideT>0){
+              this.setCatBone('Fore_L_Upper',0.55,0,0.22);this.setCatBone('Fore_R_Upper',0.55,0,-0.22);
+              this.setCatBone('Hind_L_Upper',-0.45,0,0.28);this.setCatBone('Hind_R_Upper',-0.45,0,-0.28);
+              this.setCatBone('Head',0.25,0,0);
+              return;
+            }
+            if(!this.grounded&&game.state==='PLAYING'){
+              this.setCatBone('Fore_L_Upper',-0.55,0,0.10);this.setCatBone('Fore_R_Upper',-0.55,0,-0.10);
+              this.setCatBone('Fore_L_Lower',-0.35,0,0);this.setCatBone('Fore_R_Lower',-0.35,0,0);
+              this.setCatBone('Hind_L_Upper',0.45,0,0.12);this.setCatBone('Hind_R_Upper',0.45,0,-0.12);
+              this.setCatBone('Hind_L_Lower',-0.75,0,0);this.setCatBone('Hind_R_Lower',-0.75,0,0);
+              this.setCatBone('Head',-0.12,0,0);
+              return;
+            }
+            if(sp>0.6){
+              const rf=Math.min(1,sp/CFG.runSpeed);
+              const g=this.runT;
+              this.setCatBone('Fore_L_Upper',Math.sin(g)*0.75*rf,0,0);
+              this.setCatBone('Fore_R_Upper',-Math.sin(g)*0.75*rf,0,0);
+              this.setCatBone('Fore_L_Lower',Math.max(0,-Math.sin(g))*0.5*rf,0,0);
+              this.setCatBone('Fore_R_Lower',Math.max(0,Math.sin(g))*0.5*rf,0,0);
+              this.setCatBone('Hind_L_Upper',-Math.sin(g+0.5)*0.6*rf,0,0);
+              this.setCatBone('Hind_R_Upper',Math.sin(g+0.5)*0.6*rf,0,0);
+              this.setCatBone('Hind_L_Lower',Math.max(0,Math.sin(g+0.5))*0.6*rf,0,0);
+              this.setCatBone('Hind_R_Lower',Math.max(0,-Math.sin(g+0.5))*0.6*rf,0,0);
+              this.setCatBone('Chest',0.12*rf,0,0);
+              return;
+            }
+            /* idle: soft breath + look-around; occasionally begs */
+            this.setCatBone('Chest',Math.sin(t*3.2)*0.03,0,0);
+            this.setCatBone('Head',Math.sin(t*1.6)*0.05,Math.sin(t*0.6)*0.12,0);
+            this.begTimer-=dt;
+            if(this.begTimer<=0){
+              if(this.playCatClip('CAT_Beg_Loop',false))this.begTimer=rand(9,17);
+              else this.begTimer=999;
+            }
+          };
+          }catch(e){catFail('cat scene build: '+(e&&e.message||e));}
+        },err=>catFail('GLTF parse: '+(err&&err.message||err)));
+      }catch(e){catFail('cat decode: '+(e&&e.message||e));}
+    }else{
+      catFail('window.CAT_GLB_BASE64 is missing (cat_model.js did not load?)');
     }
 
     // spin whirlwind vfx mesh (Crash 4 horizontal comic speed ribbons & starbursts)
@@ -5107,6 +5000,10 @@ const player={
     }
   },
   updateFace(dt){
+    /* Pass 23 - the bandicoot expression rig is retired with the character;
+     * the cat's face is bone-attached static meshes. Kept as a no-op for
+     * its callers. */
+    return;
     if(this.slamState===1){
       this.faceTarget.set(1.0,1.0,1.0,0.0);
     }else if(this.slamState===2){
@@ -5599,34 +5496,9 @@ const player={
         this.glbModel.rotation.set(idleHeaveX,0,idleHeadTiltZ+Math.sin(t*0.85+0.4)*0.03);
       }
     }
-    // Pass 22 — secondary motion: ear swivel and tail sway ride in the same
-    // vertex rig the hull uses (uEars/uTail), phase-lagged from the body
-    // clock so they read as follow-through rather than a synchronized wiggle.
-    if(this.uEars&&this.uTail){
-      let heroMode='idle';
-      // slamState 0 is the NORMAL resting state (1/2 are the slam plunge) —
-      // routing 0 to 'slam' here would pin the follow-through drivers at
-      // zero for the entire game.
-      if(this.slamState===1||this.slamState===2)heroMode='slam';
-      else if(this.slideT>0)heroMode='slide';
-      else if(!this.grounded&&game.state==='PLAYING')heroMode='air';
-      else if(sp>0.6)heroMode='run';
-      if(heroMode==='run'){
-        const rf=Math.min(1,sp/CFG.runSpeed);
-        this.uEars.value.set(Math.sin(this.runT*0.5+1.2)*0.55*rf,-Math.sin(this.runT*0.5)*0.55*rf);
-        this.uTail.value.set(Math.sin(this.runT*0.5)*0.5*rf,Math.sin(this.runT*0.5-0.9)*0.35*rf);
-      }else if(heroMode==='air'){
-        this.uEars.value.set(0.5+Math.sin(t*9)*0.5,-0.5-Math.sin(t*9)*0.5);
-        this.uTail.value.set(Math.sin(t*6)*0.4,-0.45);
-      }else if(heroMode==='idle'){
-        const wsw=Math.sin(t*0.85);
-        this.uEars.value.set(Math.sin(t*1.55)*0.45+Math.sin(t*3.2+1.1)*0.15,Math.sin(t*1.55+0.85)*0.45+Math.sin(t*3.2+1.7)*0.15);
-        this.uTail.value.set(Math.sin(t*1.9)*0.42+wsw*0.10,Math.sin(t*1.9-0.75)*0.28);
-      }else{
-        this.uEars.value.set(0,0);
-        this.uTail.value.set(0,0);
-      }
-    }
+    // Pass 23 - the cat's bone layer replaces the bandicoot's vertex-rig
+    // secondary motion: tail wave, gait, limb poses, clip playback.
+    if(this.updateCatBones)this.updateCatBones(dt,t);
     P.earL.rotation.z=0.22+Math.sin(t*3.1)*0.09;
     P.earR.rotation.z=-0.22-Math.sin(t*3.3+1)*0.09;
     P.tail.rotation.y=Math.sin(t*4)*0.35;
@@ -5697,6 +5569,8 @@ const player={
     if(this.uFace)this.uFace.value.set(0,0,0,0);
     if(this.uEyes)this.uEyes.value.set(0,0,0,0);
     if(this.gazeCurrent)this.gazeCurrent.set(0,0);
+    if(this.stopCatClip)this.stopCatClip();
+    this.begTimer=rand(7,13);
     this.blinkTimer=3.5;
     this.prevVel.set(0,0,0);this.prevY=p.y;
     if(this.spinMesh)this.spinMesh.visible=false;
@@ -5719,6 +5593,8 @@ const player={
   },
   teleport(x,y,z){this.pos.set(x,y,z);this.vel.set(0,0,0);this.groundPlatform=null;},
   victoryAnim(dt,t){
+    if(this.catClipPlaying!=='CAT_Celebrate_Loop'&&this.playCatClip)this.playCatClip('CAT_Celebrate_Loop',true);
+    if(this.updateCatBones)this.updateCatBones(dt,t);
     this.rig.position.y=Math.abs(Math.sin(t*5))*0.45;
     this.rig.rotation.y+=dt*2.4;
     const P=this.parts;

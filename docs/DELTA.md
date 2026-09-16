@@ -533,6 +533,77 @@ bandicoot attitude sculpt — a regular friendly cartoon dog. What changed
 Verification: 9/9 gate PASS (draws 206–814, tris 583.6k–712.1k), controls
 clean, minfx boots, jaw/blink morph A/B 13.13% / control 0%.
 
+### Pass 23 — the Black Cat replaces the Bandicoot (user handoff)
+
+User directive with a supplied asset: replace the playable bandicoot
+completely with the black cat from the blender-asset-library
+(`black-cat-shark-racer/output/black-cat.glb`), cat only, never the shark or
+rider prefab; preserve controls/physics/collision/levels/camera/combat/
+progression; no commit, push or deploy.
+
+Asset note: the handoff's verified facts (554,812 B / SHA F971C3DD…) were
+stale — the library's own `character-package-validation.json` (status pass)
+matches the on-disk file (553,676 B, 13 meshes, 1 skin, CAT_Beg_Loop +
+CAT_Celebrate_Loop, 7 flat materials, 18.5k tris, no shark nodes; the
+strings "shark"/"rider" occur only in scene extras metadata). The on-disk
+validated export was integrated; appearance confirmed against the supplied
+preview via image analysis.
+
+What changed in `index.html`:
+
+- **Payload swap**: `assets/models/black-cat.glb` copied into the asset
+  directory and embedded as `window.CAT_GLB_BASE64` by the new
+  `assets/models/cat_model.js` (offline/file-open behaviour preserved); the
+  page now loads `cat_model.js` instead of `hero_model.js` (the old bandicoot
+  payload file remains on disk but is unreferenced).
+- **The entire bandicoot GLB pipeline was removed from the load path**
+  (~17.5k chars): the coordinate-region vertex rig (HERO_MORPH/…/EARS),
+  material-name shader patches, fresnel rim and inverted-hull outline do not
+  apply to the cat and are not loaded. `?ablate=hero` and the
+  `renderDepth` hull guard degrade to harmless no-ops (heroHull stays
+  undefined).
+- **Normalization wrapper** (handoff #4): rig → `glbModel` (gameplay
+  wrapper, written by every state pose/reset exactly as before) →
+  `Cat_Normalization` (base scale 1.55/height, facing, foot offset) → raw
+  scene. Facing is MEASURED, not guessed: initial rotation from the source
+  +X-forward convention, then a Head-vs-Tail_0 bone position check flips it
+  if backwards; a second-pass ground snap re-measures the box after world
+  attachment and drops the rest-pose gap onto the origin.
+- **Animation**: the two supplied clips play through an AnimationMixer —
+  CAT_Celebrate_Loop loops in the victory state (hooked into
+  `victoryAnim`; the game skips updateAnimation in VICTORY, so the mixer
+  update happens there), CAT_Beg_Loop plays as a timed idle flourish.
+  Everything else is procedural bone animation over the captured rest pose
+  (17 bones): tail wave (Tail_0–4 chain), run gait (fore/hind phase-offset
+  swings scaled by speed), air tuck/reach, slide and slam poses, head
+  look-around, chest breath. While a clip plays, the mixer owns the pose;
+  respawn stops the clip and restores the rest pose. The bandicoot
+  expression rig (`updateFace`) and the uEars/uTail vertex-rig drivers are
+  retired (inert slots remain so legacy writers stay safe); the P.*
+  fallback parts are force-hidden BEFORE the load attempt.
+- **Loading failure** (handoff #1/#6): if the payload or parse fails, an
+  explicit on-page error box appears (`#cat-load-error`,
+  `window.CAT_LOAD_ERROR`) and NO bandicoot ever shows — the fallback is
+  hidden before the load, not on success.
+
+Verification (Playwright + harness, all green): game boots to PLAYING with
+the cat (17 bones, both clips registered, zero visible FurOrange/Denim/
+ChestCream bandicoot meshes); movement/jump/damage exercised
+(hp 3→2, airborne y 1.01); death → auto-respawn flow clean; VICTORY plays
+CAT_Celebrate_Loop (mixer time advancing); forced payload-block shows the
+error box with no bandicoot and no cat; controls suite passes; minfx boots;
+9/9 frame gates PASS (draws 206–819, tris 582.7k–694.4k — floors hold).
+Image analysis of hero-closeup confirms the feline read: charcoal coat,
+pink inner ears, mauve nose, whiskers, chartreuse vertical-pupil eyes,
+clean silhouette on the sand, no missing parts or deformation.
+
+Known animation limitations (honest): no hand-keyed locomotion clips exist
+in the asset — idle/run/air/slide/slam are procedural bone poses (functional
+but not hand-tuned); no blink or facial expression (face meshes are static,
+no lid bones); slide/slam keep rigid-model transforms over procedural leg
+poses; the two supplied clips are used only for victory and the idle beg
+flourish.
+
 ---
 
 ## Closed

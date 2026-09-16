@@ -1,0 +1,88 @@
+{
+ "closeup21": {
+  "edgeDip": {
+   "rows": 761,
+   "dipHitRate": 0.223,
+   "longestNoDipRun": [
+    196,
+    454,
+    649
+   ],
+   "widthP50": 1,
+   "widthP90": 3,
+   "nWidths": 6
+  },
+  "fur": {
+   "furN": 62413,
+   "litLocalContrast": 0.0082,
+   "vP80": 0.855
+  }
+ },
+ "closeup22": {
+  "edgeDip": {
+   "rows": 761,
+   "dipHitRate": 0.368,
+   "longestNoDipRun": [
+    116,
+    244,
+    359
+   ],
+   "widthP50": 10,
+   "widthP90": 16,
+   "nWidths": 234
+  },
+  "fur": {
+   "furN": 28304,
+   "litLocalContrast": 0.0037,
+   "vP80": 0.859
+  }
+ },
+ "title21": {
+  "edgeDip": {
+   "rows": 381,
+   "dipHitRate": 0.113,
+   "longestNoDipRun": [
+    121,
+    440,
+    560
+   ],
+   "widthP50": 1,
+   "widthP90": 1,
+   "nWidths": 11
+  },
+  "fur": {
+   "furN": 19624,
+   "litLocalContrast": 0.0041,
+   "vP80": 0.867
+  }
+ },
+ "title22": {
+  "edgeDip": {
+   "rows": 381,
+   "dipHitRate": 0.134,
+   "longestNoDipRun": [
+    94,
+    467,
+    560
+   ],
+   "widthP50": 1,
+   "widthP90": 5,
+   "nWidths": 10
+  },
+  "fur": {
+   "furN": 18548,
+   "litLocalContrast": 0.0043,
+   "vP80": 0.867
+  }
+ },
+ "hueAB": {
+  "pct": 26.84,
+  "bbox": {
+   "minX": 34,
+   "maxX": 1152,
+   "minY": 0,
+   "maxY": 799
+  },
+  "outsideHeroColPct": 3.11
+ }
+}
