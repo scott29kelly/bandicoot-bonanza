@@ -430,6 +430,26 @@ const TEX={};
   }
   speckle(x,800,['#ebd59e','#c8a25c','#b48a40','#faebb8'],0.8,2.4,0.5);
   speckle(x,140,['#845e22','#fff0c8','#704a18'],1.2,3.5,0.4);
+  /* Pass 24 — macro value breakup (two-scale rule): large soft dune-tone
+   * blotches so the sand does not read as one regular ripple weave end to
+   * end. Deliberately NOT drawn from the seeded rnd()/rand() stream — every
+   * call those take reorders the whole world's scatter, so this layer runs
+   * on its own fixed LCG and the level layout stays byte-identical. */
+    {
+      let ts=987654321;
+      const trnd=()=>{ts=(ts*1103515245+12345)&0x7fffffff;return ts/0x7fffffff;};
+      for(let i=0;i<16;i++){
+        const bx=trnd()*256,by=trnd()*256,br=34+trnd()*54;
+        const light=trnd()<0.5;
+        for(const ox of[-256,0,256])for(const oy of[-256,0,256]){
+          const gr=x.createRadialGradient(bx+ox,by+oy,br*0.12,bx+ox,by+oy,br);
+          gr.addColorStop(0,light?'rgba(242,221,168,0.15)':'rgba(157,118,58,0.15)');
+          gr.addColorStop(1,'rgba(0,0,0,0)');
+          x.fillStyle=gr;
+          x.beginPath();x.arc(bx+ox,by+oy,br,0,7);x.fill();
+        }
+      }
+    }
   TEX.sand=toTex(c,true);TEX.sand.repeat.set(3,3);
   // mossy jungle floor
   c=mkCanvas(256);x=c.getContext('2d');
@@ -641,6 +661,18 @@ const TEX={};
   dsg.addColorStop(1,'rgba(0,0,0,0)');
   x.fillStyle=dsg;x.fillRect(0,0,64,64);
   TEX.dropShadow=toTex(c);
+  // Pass 24 — the cat's contact shadow. The old soft blob (above, still used
+  // by fruit/crates) measured Δ-0.04..-0.08 under the feet at 1x: invisible.
+  // The Gauntlet named contact shadow under the hero a hard floor; this one
+  // has a dense core that survives a black cat on bright sand.
+  c=mkCanvas(128);x=c.getContext('2d');
+  const hsg=x.createRadialGradient(64,64,0,64,64,64);
+  hsg.addColorStop(0,'rgba(6,12,10,0.92)');
+  hsg.addColorStop(0.34,'rgba(8,15,12,0.72)');
+  hsg.addColorStop(0.66,'rgba(6,10,8,0.34)');
+  hsg.addColorStop(1,'rgba(0,0,0,0)');
+  x.fillStyle=hsg;x.fillRect(0,0,128,128);
+  TEX.heroShadow=toTex(c);
   // contact ambient occlusion shadow for crates & props (rounded-box AO, NOT a circle)
   c=mkCanvas(128);x=c.getContext('2d');
   const cImg=x.createImageData(128,128),cD=cImg.data;
@@ -872,9 +904,13 @@ const FOG_STOPS=[
   {z:0,   c:new THREE.Color(0x17667a)},  // beach: deep aqua — darker than the sea it fogs
   {z:-60, c:new THREE.Color(0x1a6a58)},  // beach-to-jungle transition: deep aqua-green
   {z:-110,c:new THREE.Color(0x155840)},  // jungle: deep saturated green
-  {z:-135,c:new THREE.Color(0x3a2547)},  // canyon entrance: dusky PLUM — violet that leans warm, not grey
-  {z:-160,c:new THREE.Color(0x2c1c42)},  // temple landing: plum-indigo twilight
-  {z:-230,c:new THREE.Color(0x241636)}   // temple gate climax: deep plum-indigo
+  // Pass 24: canyon/temple stops pushed more chromatic (sat 0.48->0.58,
+  // 0.58->0.67, 0.59->0.71) — the Gauntlet's washout probe had the far band
+  // of gate-hero/pillar-pit/temple-torches collapsing to sat 0.23-0.31, and
+  // the 68% fog mix over grey stone was the desaturator. Values stay deep.
+  {z:-135,c:new THREE.Color(0x43214f)},  // canyon entrance: dusky PLUM — violet that leans warm, not grey
+  {z:-160,c:new THREE.Color(0x341a4e)},  // temple landing: plum-indigo twilight
+  {z:-230,c:new THREE.Color(0x2a1342)}   // temple gate climax: deep plum-indigo
 ];
 // The horizon GILD is multiplicative, not a mix toward a bright warm target:
 // at range the air's hue rotates gold-ward while keeping the fog's own value,
@@ -924,7 +960,9 @@ function updateFog(pz){
   if(gradePass){
     gradePass.uniforms.uFogAqua.value.copy(_fogC);
     gradePass.uniforms.uFogGild.value.copy(FOG_GILD.day).lerp(FOG_GILD.dusk,tDusk);
-    gradePass.uniforms.uFogCap.value=lerp(0.68,0.55,tDusk);
+    // dusk cap 0.55->0.60 (pass 24): golden-hour far field keeps a little
+    // more of its own colour — the washout probe's last failing band
+    gradePass.uniforms.uFogCap.value=lerp(0.68,0.60,tDusk);
   }
 
   hemi.color.copy(_hemiSkyDay).lerp(_hemiSkyDusk,tDusk);
@@ -1016,10 +1054,11 @@ function renderDepth(){
   const bg=scene.background,fog=scene.fog;
   // Pass 22 — the outline hull is back-face-only and sits behind the body
   // from any view, so it contributes nothing to the packed depth; drawing it
-  // here paid its ~20.5k triangles for nothing. Hide it for the prepass.
-  const hull=(window.BB&&window.BB.player&&window.BB.player.heroHull)?window.BB.player.heroHull:null;
-  const hullVis=hull?hull.visible:false;
-  if(hull)hull.visible=false;
+  // here paid its triangles for nothing. Hide it for the prepass. Pass 24:
+  // the cat's hull is a SET of shells (skinned + static parts), not one mesh.
+  const hulls=(window.BB&&window.BB.player&&window.BB.player.catHulls)?window.BB.player.catHulls:null;
+  const hullVis=hulls?hulls.map(h=>h.visible):null;
+  if(hulls)for(const h of hulls)h.visible=false;
   scene.background=null;scene.fog=null;
   scene.overrideMaterial=depthMat;
   renderer.setRenderTarget(depthRT);
@@ -1028,7 +1067,7 @@ function renderDepth(){
   renderer.setRenderTarget(null);
   scene.overrideMaterial=null;
   scene.background=bg;scene.fog=fog;
-  if(hull)hull.visible=hullVis;
+  if(hulls)for(let i=0;i<hulls.length;i++)hulls[i].visible=hullVis[i];
 }
 function syncAOSize(){
   if(!depthRT)return;
@@ -2548,10 +2587,23 @@ class MovingPlatform{
     this.group.position.set(x,y,z);
 
     const slabGeo=new THREE.BoxGeometry(w,this.h,d);
-    const slabMat=opts.mat==='wood'?MATS.wood():MATS.stone();
-    const slab=new THREE.Mesh(slabGeo,slabMat);
+    let slab;
+    if(opts.mat==='wood'){
+      slab=new THREE.Mesh(slabGeo,MATS.wood());
+    }else{
+      /* Pass 24 — the Gauntlet named the stone mover a "bare slab sandwich":
+       * pale untextured box sides over flat dark corbels (underside sat 0.103
+       * < the 0.15 floor). Same top/cliff split the static islands use, so
+       * the mover speaks the platform material language. */
+      slab=new THREE.Group();
+      const top=new THREE.Mesh(extractGroupGeo(slabGeo,2),MATS.stone());
+      const sideGeos=[0,1,3,4,5].map(i=>extractGroupGeo(slabGeo,i));
+      const sides=new THREE.Mesh(mergeGeos(sideGeos),MATS.cliff());
+      top.castShadow=top.receiveShadow=sides.castShadow=sides.receiveShadow=true;
+      slab.add(top);slab.add(sides);
+    }
     slab.position.y=-this.h/2;
-    slab.castShadow=slab.receiveShadow=true;
+    if(slab.isMesh){slab.castShadow=slab.receiveShadow=true;}
     this.group.add(slab);
 
     if(opts.mat!=='wood'){
@@ -2563,7 +2615,8 @@ class MovingPlatform{
     }
 
     const trimGeo=new THREE.BoxGeometry(w+0.12,0.14,d+0.12);
-    const trimMat=opts.mat==='wood'?toonMat({color:0x422612}):toonMat({color:0xffd24a});
+    // stone movers: gold over the stone relief (flat cream read, Gauntlet #2)
+    const trimMat=opts.mat==='wood'?toonMat({color:0x422612}):toonMat({color:0xffd24a,map:TEX.stone,noCache:true});
     const trim=new THREE.Mesh(trimGeo,trimMat);
     trim.position.y=0;
     this.group.add(trim);
@@ -2645,12 +2698,26 @@ class MovingPlatform{
       raftFoam.position.y=logY+0.05;
       this.group.add(raftFoam);
     }else{
-      // Stepped Mayan carved stone corbel keystone for stone moving platforms
-      const stoneParts=[];
-      const t1=new THREE.BoxGeometry(w-0.35,0.28,d-0.35);t1.translate(0,-this.h-0.14,0);stoneParts.push(t1);
-      const t2=new THREE.BoxGeometry(w-0.85,0.32,d-0.85);t2.translate(0,-this.h-0.42,0);stoneParts.push(t2);
-      const t3=new THREE.BoxGeometry(w-1.45,0.36,d-1.45);t3.translate(0,-this.h-0.74,0);stoneParts.push(t3);
-      const stoneMesh=new THREE.Mesh(mergeGeos(stoneParts),MATS.stone());
+      // Stepped Mayan carved stone corbel keystone for stone moving platforms.
+      // Pass 24: cliff strata instead of flat shadow-crushed stone, and each
+      // tier ragged the way the static island cliffs are, so the underside is
+      // carved rock rather than a stacked-box silhouette.
+      const ragged=(gw,gh,gd,gy,seed)=>{
+        const g=new THREE.BoxGeometry(gw,gh,gd);
+        const p=g.attributes.position,v=new THREE.Vector3();
+        for(let i=0;i<p.count;i++){
+          v.fromBufferAttribute(p,i);
+          v.x+=(hash3(v.x*7.7+seed,v.y*5.3,v.z*6.1)-0.5)*0.055;
+          v.z+=(hash3(v.z*6.3-seed,v.x*4.1,v.y*7.9)-0.5)*0.055;
+          p.setXYZ(i,v.x,v.y,v.z);
+        }
+        g.computeVertexNormals();g.translate(0,gy,0);return g;
+      };
+      const stoneMesh=new THREE.Mesh(mergeGeos([
+        ragged(w-0.35,0.28,d-0.35,-this.h-0.14,3.1),
+        ragged(w-0.85,0.32,d-0.85,-this.h-0.42,7.7),
+        ragged(w-1.45,0.36,d-1.45,-this.h-0.74,12.9)
+      ]),MATS.cliff());
       stoneMesh.castShadow=stoneMesh.receiveShadow=true;
       this.group.add(stoneMesh);
     }
@@ -4406,8 +4473,11 @@ waterMat.onBeforeCompile=function(shader){
       // Depth grade: mint collar at the contact line -> vibrant turquoise
       // mid -> sapphire offshore. Collar stays tight — a 3m mint band reads
       // as a swimming pool; the turquoise is the water's resting colour.
-      '  vec3 grade=mix(vec3(0.220,0.620,0.550),vec3(0.078,0.550,0.780),smoothstep(0.45,2.6,sd));',
-      '  grade=mix(grade,vec3(0.028,0.235,0.395),smoothstep(4.0,14.0,sd));',
+      // Pass 24: r shaved / b raised per band — the Gauntlet's pillarB probe
+      // measured shadowed water WARMER than lit water (cool shift -0.13 on
+      // three framings); the dark bands now carry the scene's blue script.
+      '  vec3 grade=mix(vec3(0.185,0.615,0.575),vec3(0.052,0.545,0.805),smoothstep(0.45,2.6,sd));',
+      '  grade=mix(grade,vec3(0.014,0.225,0.430),smoothstep(4.0,14.0,sd));',
       // Caustics/glint detail rides ON the grade with real contrast — the
       // pass-19 critique flagged the first version as invisible at gameplay
       // distance. Streaks swing the surface ±30-40%, glints clip to white.
@@ -4607,6 +4677,7 @@ const player={
     for(const eg of P.eyes)eg.visible=false;
     if(P.spikes)for(const s of P.spikes)s.visible=false;
     this.catLoadError=null;
+    this.catHulls=null;
     const catFail=msg=>{
       console.error(msg);
       this.catLoadError=msg;
@@ -4671,6 +4742,71 @@ const player={
               o.receiveShadow=true;
               if(o.isSkinnedMesh)o.frustumCulled=false;
             }
+          });
+          /* Pass 24 — hero separation. The Gauntlet measured the cat merging
+           * with its backgrounds: no rim, no outline, and torchlight flooding
+           * the #020203 fur to mud-brown (contrast 1.33:1 at temple-torches;
+           * under-feet shadow Δ +0.009). Three instruments, one system:
+           *
+           *  1. fresnel RIM, cool (the scene's blue-violet shadow family),
+           *     deferred to dark render so lit fur keeps the toon ramp;
+           *     boosted by uRimK when a torch is near (JS below);
+           *  2. a warm-light CLAMP gated by uWarmK (torch radius) — pulls the
+           *     mud flood back toward the charcoal the asset actually is;
+           *  3. an inverted-hull ink outline on the big forms (the bandicoot
+           *     trick, rebuilt for a skinned character: hulls share the
+           *     source skeleton so they follow the procedural bone layer). */
+          this.catRimK={value:1.0};
+          this.catWarmK={value:0.0};
+          const rimUniforms={uRimK:this.catRimK,uWarmK:this.catWarmK,
+            uRimC:{value:new THREE.Color(0x5a72b8)}};
+          const rimPatch=mat=>{
+            if(!mat||mat.isMeshBasicMaterial||mat.userData.catRim)return;
+            mat.userData.catRim=true;
+            mat.onBeforeCompile=sh=>{
+              Object.assign(sh.uniforms,rimUniforms);
+              sh.fragmentShader=sh.fragmentShader
+                .replace('#include <common>',
+                  '#include <common>\nuniform float uRimK;\nuniform float uWarmK;\nuniform vec3 uRimC;')
+                .replace('#include <output_fragment>',[
+                  'float cLum=dot(outgoingLight,vec3(0.2126,0.7152,0.0722));',
+                  'float cWarm=max(0.0,(outgoingLight.r+outgoingLight.g)*0.5-outgoingLight.b-0.045);',
+                  'outgoingLight-=outgoingLight*(cWarm*1.35*uWarmK);',
+                  'vec3 cV=normalize(vViewPosition);',
+                  'vec3 cN=normalize(normal);',
+                  'float cFres=pow(clamp(1.0-abs(dot(cV,cN)),0.0,1.0),2.3);',
+                  'float cDef=clamp(1.0-cLum*2.1,0.0,1.0);',
+                  'outgoingLight+=uRimC*(cFres*(0.40+0.85*cDef)*uRimK);',
+                  '#include <output_fragment>'
+                ].join('\n'));
+            };
+            mat.customProgramCacheKey=()=> 'catRim';
+          };
+          model.traverse(o=>{if(o.isMesh||o.isSkinnedMesh)rimPatch(o.material);});
+          const hullMat=new THREE.MeshBasicMaterial({color:0x0a0a10,side:THREE.BackSide});
+          hullMat.onBeforeCompile=sh=>{
+            sh.uniforms.uInkW={value:0.020};
+            sh.vertexShader=('uniform float uInkW;\n'+sh.vertexShader).replace(
+              '#include <begin_vertex>',
+              '#include <begin_vertex>\ntransformed+=normal*uInkW;');
+          };
+          hullMat.customProgramCacheKey=()=>'catHull';
+          this.catHulls=[];
+          const HULL_OF={CAT_Torso:1,CAT_Tail:1,CAT_Head:1,CAT_Ear_L_Mesh:1,CAT_Ear_R_Mesh:1,CAT_Muzzle:1};
+          model.traverse(o=>{
+            if(!o.isMesh||!HULL_OF[o.name])return;
+            let h;
+            if(o.isSkinnedMesh){
+              h=new THREE.SkinnedMesh(o.geometry,hullMat);
+              h.bind(o.skeleton,o.bindMatrix);
+              h.frustumCulled=false;
+            }else{
+              h=new THREE.Mesh(o.geometry,hullMat);
+            }
+            h.position.copy(o.position);h.quaternion.copy(o.quaternion);h.scale.copy(o.scale);
+            h.castShadow=false;h.receiveShadow=false;
+            o.parent.add(h);
+            this.catHulls.push(h);
           });
           /* rest pose + bone table for procedural locomotion */
           this.catBones={};
@@ -4774,9 +4910,11 @@ const player={
               this.setCatBone('Chest',0.12*rf,0,0);
               return;
             }
-            /* idle: soft breath + look-around; occasionally begs */
-            this.setCatBone('Chest',Math.sin(t*3.2)*0.03,0,0);
-            this.setCatBone('Head',Math.sin(t*1.6)*0.05,Math.sin(t*0.6)*0.12,0);
+            /* idle: breath + asymmetric weight shift + look-around; the
+             * pass-24 Gauntlet read the old symmetric rest as a stiff plush
+             * toy — the spine now rolls and the head tilts so weight moves */
+            this.setCatBone('Chest',Math.sin(t*3.2)*0.03,Math.sin(t*0.7)*0.10,Math.sin(t*0.46)*0.06);
+            this.setCatBone('Head',Math.sin(t*1.6)*0.05,Math.sin(t*0.6)*0.12,Math.sin(t*0.42+1.3)*0.08);
             this.begTimer-=dt;
             if(this.begTimer<=0){
               if(this.playCatClip('CAT_Beg_Loop',false))this.begTimer=rand(9,17);
@@ -4841,10 +4979,11 @@ const player={
     this.spinRing2=ring2;
     this.spinStars=spinStars;
 
-    // Contact drop shadow on ground
+    // Contact drop shadow on ground — Pass 24: analytic surface placement
+    // (heroFloorY) instead of hero-feet placement, denser TEX.heroShadow core.
     this.dropShadow=new THREE.Mesh(
-      new THREE.PlaneGeometry(1.3,1.3),
-      new THREE.MeshBasicMaterial({map:TEX.dropShadow,transparent:true,opacity:0.65,depthWrite:false})
+      new THREE.PlaneGeometry(1.55,1.55),
+      new THREE.MeshBasicMaterial({map:TEX.heroShadow,transparent:true,opacity:0.8,depthWrite:false})
     );
     this.dropShadow.rotation.x=-Math.PI/2;
     this.dropShadow.position.set(0,0.02,0);
@@ -4856,6 +4995,33 @@ const player={
     scene.add(this.root);
     this.pos=this.root.position;
     this.pos.set(0,0.1,0);
+  },
+  /* Pass 24 — the support surface under the hero, from the same solid data
+   * the physics uses (a raycast against the visual hull proved unreliable
+   * back in the pass-22 probe work; the analytic boxes are the ground truth).
+   * Topmost solid top at/below the feet; the beach sand plane (y 0) or the
+   * water surface (WATER_Y) when no solid is in the column. */
+  heroFloorY(){
+    let best=-99;
+    const px=this.pos.x,pz=this.pos.z,py=this.pos.y+0.2;
+    for(const s of solids){
+      if(s.dead)continue;
+      if(px>=s.x0-0.2&&px<=s.x1+0.2&&pz>=s.z0-0.2&&pz<=s.z1+0.2){
+        if(s.y1<=py&&s.y1>best)best=s.y1;
+      }
+    }
+    if(best>-90)return best;
+    return this.pos.z>-60?0:WATER_Y;
+  },
+  updateDropShadow(){
+    if(!this.dropShadow)return;
+    const gy=this.heroFloorY();
+    const h=Math.max(0,this.pos.y-gy);
+    this.dropShadow.position.set(this.pos.x,gy+0.03,this.pos.z);
+    // rises/softens with real height above the surface it lands on — a jump
+    // on a 6 m ledge no longer fades the blob just because the ledge is high
+    this.dropShadow.scale.setScalar(clamp(1.06+h*0.22,1.0,1.9));
+    this.dropShadow.material.opacity=clamp(0.80-h*0.14,0.10,0.80);
   },
   trySpin(){
     if(game.state!=='PLAYING'||this.dead||this.spinCdT>0)return;
@@ -5365,12 +5531,7 @@ const player={
     this.rig.scale.set(1-this.squash*0.5,1+this.squash,1-this.squash*0.5);
     this.animate(dt);
     // update drop shadow
-    if(this.dropShadow){
-      this.dropShadow.position.set(this.pos.x,this.pos.y+0.02,this.pos.z);
-      const hOff=Math.max(0,this.pos.y-WATER_Y);
-      this.dropShadow.scale.setScalar(clamp(1-hOff*0.06,0.4,1.1));
-      this.dropShadow.material.opacity=clamp(0.65-hOff*0.08,0.1,0.65);
-    }
+    this.updateDropShadow();
     // fruit pickup
     const px=this.pos.x,py=this.pos.y+0.8,pz=this.pos.z;
     for(const f of fruits){
@@ -5385,11 +5546,18 @@ const player={
     const P=this.parts;
     const sp=Math.hypot(this.vel.x,this.vel.z);
     const t=game.t;
-    if(this.dropShadow){
-      this.dropShadow.position.set(this.pos.x,this.pos.y+0.02,this.pos.z);
-      const hOff=Math.max(0,this.pos.y-WATER_Y);
-      this.dropShadow.scale.setScalar(clamp(1-hOff*0.06,0.4,1.1));
-      this.dropShadow.material.opacity=clamp(0.65-hOff*0.08,0.1,0.65);
+    this.updateDropShadow();
+    /* Pass 24 — torch proximity drives the cat's rim boost + warm-light
+     * clamp (one uniform pair shared by every patched cat material) */
+    if(this.catRimK){
+      let tk=0;
+      for(const tc of torches){
+        const dx=this.pos.x-tc.x,dy=this.pos.y+0.8-tc.y,dz=this.pos.z-tc.z;
+        tk=Math.max(tk,1-Math.sqrt(dx*dx+dy*dy+dz*dz)/5.5);
+      }
+      tk=clamp(tk,0,1);
+      this.catRimK.value=1.0+tk*1.25;
+      this.catWarmK.value=tk;
     }
     if(P.eyes){
       this.blinkT-=dt;
@@ -5879,7 +6047,7 @@ function buildFramings(){
 
   add('jungle-totem','Jungle ledge and totem',
     'Pillars C/D/F — the mossy ledge as an ecosystem: palms, ferns, grass, the checkpoint totem, and canopy motion',
-    [c1.x+6.6,c1.y+5.2,c1.z+9.8],[c1.x+0.6,c1.y+1.4,c1.z-6],52,[c1.x+2.8,c1.y+0.1,c1.z+1.5]);
+    [c1.x+6.6,c1.y+5.2,c1.z+9.8],[c1.x+0.6,c1.y+1.4,c1.z-6],52,[c1.x+3.45,c1.y+0.1,c1.z-3]);
 
   add('pillar-pit','Pillar hops over the pit',
     'Pillar D — silhouette legibility: do the stone pillars read as distinct volumes against sky and fog at depth?',
@@ -5890,8 +6058,8 @@ function buildFramings(){
     [temple.x+5.6,temple.y+3.4,temple.z+9.6],[temple.x,temple.y+1.3,temple.z-1],50,[temple.x+1.6,temple.y+0.1,temple.z-1.5]);
 
   add('gate-hero','Temple gate (money shot)',
-    'Pillar E — the composed pay-off: gate massing, the gem, torchlight, and the final yard leading the eye into it',
-    [fin.x+6.2,fin.y+7.2,gateZ+21],[fin.x,fin.y+3.2,gateZ+1],52,[fin.x+1.8,fin.y+0.1,gateZ+9],Math.PI);
+    'Pillar E — the composed pay-off: gate massing, the gem, torchlight, and the hero crossing the portal glow (pass 24: camera dropped in — the cat was ~2.3% of frame height in its own money shot)',
+    [fin.x+1.4,fin.y+5.6,gateZ+16.8],[fin.x-0.3,fin.y+2.4,gateZ+1.2],48,[fin.x-1.1,fin.y+0.1,gateZ+8.2],Math.PI);
 
   return F;
 }

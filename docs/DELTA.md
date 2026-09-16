@@ -604,6 +604,103 @@ no lid bones); slide/slam keep rigid-model transforms over procedural leg
 poses; the two supplied clips are used only for victory and the idle beg
 flourish.
 
+### Pass 24 — hero separation: the game's lighting learns the cat exists (Gauntlet round)
+
+Fresh-context Gauntlet critique of `docs/shots/pass24/` against
+QUALITY-BAR.md (its own probes: pillarb ×4, washout ×9, contact-shadow
+strips, silhouette contrast, zoom crops). Scorecard: character fidelity 4,
+light transport 4, water 4, props/ground/vegetation/colour/backdrop/composition
+7, performance 10. Its single biggest gap: **"the hero does not separate from
+the world"** — no rim, no outline, no readable contact shadow, and torchlight
+flooding the #020203 fur to mud-brown (contrast 1.33:1 at temple-torches,
+under-feet shadow Δ +0.009). Ranked top three: hero separation, the stone
+moving platforms as bare slab sandwiches, washout on three framings.
+
+What changed in `index.html`:
+
+- **Contact shadow rebuilt** (Gap 1, hero floor): analytic surface placement —
+  new `heroFloorY()` reads the same solid data the physics uses (topmost
+  solid top at/below the feet, else the sand plane / water surface), so the
+  blob lands on the ledge actually under the cat instead of hovering at
+  hero-feet height with a water-relative fade; height fade now measures height
+  above THAT surface; a denser `TEX.heroShadow` core (0.92 centre alpha) on a
+  1.55u plane. Measured with the new `tools/probe_shadow.mjs` — under-feet Δ:
+  title 0.53, crate 0.51, beach 0.38, water 0.31, jungle 0.08, temple 0.07
+  (pass-23 baseline: -0.009..-0.077, invisible; gate-hero's "faint" 0.018 is
+  the instrument's ±58px flanks landing inside the 1.55u blob's penumbra —
+  zoom crop shows it attached).
+- **Fresnel rim + warm-light clamp on the cat's materials** (Gap 1 + Gap 6):
+  `onBeforeCompile` on all seven GLTF materials — an illumination-deferring
+  cool rim (#5a72b8, the scene's blue-violet shadow family, strongest where
+  the render is dark) plus `uWarmK`, a torch-radius gate (JS, 5.5u, animated
+  per frame) that pulls the warm flood back toward the charcoal the asset
+  actually is and boosts the rim 1.0→2.25 near torches. Hero-closeup shows
+  the cool edge on ears and head; temple-torches' cat now carries a lit rim.
+- **Skinned inverted-hull ink outline** (hero floor "visible outline", the
+  bandicoot pass-21 trick rebuilt for a skinned character): six BackSide
+  shells (Torso, Tail, Head, outer ears, Muzzle) sharing the source
+  skeleton/parents, +0.020 normal push, excluded from the AO depth prepass
+  (renderDepth now hides the `catHulls` array). +6 draws, +~17k tris.
+- **Stone moving platforms de-slabbed** (Gap 2, banned "bare extruded slab",
+  underside sat 0.103): the box slab split into a stone-textured top and
+  cliff-strata sides (the static islands' own vocabulary), the corbel tiers
+  given the cliff material plus hash-seeded raggedness, and the flat cream
+  trim given the stone relief under its gold tint.
+- **Washout round** (Gap 3, atmosphere owner, measured): canyon/temple
+  FOG_STOPS pushed more chromatic (sat 0.48→0.58 / 0.58→0.67 / 0.59→0.71,
+  values held deep) and the dusk fog cap eased 0.55→0.60. gate-hero's washout
+  verdict CLEARED (FAR 0.310/NEAR 0.468 → 0.307/0.327). pillar-pit and
+  temple-torches still flag: their FAR bands are dominated by the dusk SKY
+  (far-band sat unmoved at 0.230/0.233 despite the fog changes) — that is the
+  settled pass-14/20 ember-sky look, not fog, and pushing it risks a settled
+  win for a heuristic. beach-corridor flipped to a flag the other direction:
+  its far field objectively improved (sat 0.371→0.389, pale 7.1%→4.0%) while
+  the near field got richer from the sand/water work below; the relative
+  verdict fires on the near rise, not a distance wash. Recorded as residuals
+  with these numbers.
+- **Water depth-grade cooled** (Gap 5, pillarB cool-shift floor): r shaved / b
+  raised per band (collar/mid/deep), so the water's dark bands carry the
+  scene's blue script. hero-closeup -0.130→-0.112, jungle-totem -0.118→-0.103;
+  pillar-pit moved the wrong way (-0.239→-0.301) because the LIT fifth got
+  cooler faster than the fogged dark fifth — the dark fifth there is
+  distance+fog (the water is a basic material; it has no lit "shadow"), which
+  the pillarB hue-family probe was not designed to isolate. Further blue
+  starts fighting the pass-19 turquoise read; recorded.
+- **Sand macro breakup** (Gap 4, two-scale rule): 16 large soft dune-tone
+  blotches stamped 3×3-wrapped into TEX.sand so the tile does not read as one
+  regular ripple weave. Deliberately run on a private LCG, NOT the seeded
+  rnd()/rand() stream — every call those take reorders the whole world's
+  scatter. The 8px ripple period itself remains (residual); the value drift
+  across rows breaks the single-value grid read.
+- **Framings re-staged** (Gap 10, framings are owned code): gate-hero's
+  camera dropped in — the cat was ~2.3% of frame height in its own money
+  shot; it now anchors the foreground at ~9-15% with its contact shadow on
+  the sand, the fruit row leading into the portal glow and the TNT/crate
+  edges framing the yard. jungle-totem's hero moved twice (the checkpoint
+  parapet ate the first two spots — found by camera-raycast probe) and now
+  stands mid-moss beside the crab. Pillar-pit keeps player:null (its stated
+  test is pillar silhouettes at depth; noted, not fixed).
+- **Artifact hunt before effects** (Gap 9): the water-gap "stray untextured
+  quad" was toggle-diff identified — it is a background FRUIT occluded to a
+  sliver by the cat's ear and a fern (pixel diff 110/255 when fruit-family
+  meshes hide; max diff 8.9 in the quad box vs 1.4 sky control). Composition
+  accident at this seed, not an engine artifact; no change.
+
+Verification (all green): 9/9 frame gates PASS (draws 199–837 ≤900, tris
+599.2k–714.0k — floors hold); controls suite clean; minfx boots (240/139
+draws, gates PASS); VICTORY sanity: CAT_Celebrate_Loop playing, mixer time
+advancing, 6/6 hulls live, zero page errors; contact-shadow deltas above;
+washout/pillarB tables above recorded with their residuals.
+
+Ranked residuals for the next pass (critic gaps not taken this round):
+foam swirls still paint-smear decals (#7); flat zero-thickness vine/blade
+cards within 12m (#8); pillar-pit/temple-torches far-band sat is the dusk sky
+itself (#3 residue); sand ripple 8px autocorrelation period (#4 residue);
+hero absent from pillar-pit's aerial (#10 residue); fruit scale vs the cat
+(character verdict e); gait bone-rotation signs still unjudged in live motion
+(carrying from pass 23 — [UNCERTAIN: leg swing axis conventions may need sign
+flips if the run reads backwards/robotic]).
+
 ---
 
 ## Closed
