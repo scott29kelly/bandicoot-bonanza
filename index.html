@@ -450,6 +450,23 @@ const TEX={};
         }
       }
     }
+    /* Pass 25 — ripple phase warp. The 8px ripple rows are straight
+     * parallel bands, and the Gauntlet's autocorrelation probe reads the
+     * period straight through the pass-24 blotch layer. Row-shifting the
+     * finished canvas with a smooth low-frequency sine pair wanders the
+     * ripple phase without touching the seeded stream (pure math, no
+     * rnd()/rand() calls), so the bands stop reading as one weave while the
+     * blotch layer keeps its macro job. */
+    {
+      const wc=mkCanvas(256),wx=wc.getContext('2d');
+      for(let ry=0;ry<256;ry++){
+        const sh=Math.round(Math.sin(ry*0.055)*5+Math.sin(ry*0.023+1.7)*3);
+        wx.drawImage(c,0,ry,256,1,sh,ry,256,1);
+        wx.drawImage(c,0,ry,256,1,sh-256,ry,256,1);
+        wx.drawImage(c,0,ry,256,1,sh+256,ry,256,1);
+      }
+      c=wc;x=wc.getContext('2d');
+    }
   TEX.sand=toTex(c,true);TEX.sand.repeat.set(3,3);
   // mossy jungle floor
   c=mkCanvas(256);x=c.getContext('2d');
@@ -457,9 +474,11 @@ const TEX={};
   speckle(x,700,['#417c28','#254c17','#528f36','#2a561b'],2,6,0.5);
   speckle(x,140,['#7fc75e','#245018'],1,3,0.5);
   TEX.moss=toTex(c,true);TEX.moss.repeat.set(3,3);
-  // mossy stone
+  // mossy stone — Pass 25: the grey base carried almost no chroma, so shadowed
+  // stone faces sampled sat 0.02-0.10 (under the 0.15 floor). The base is warm
+  // stone now; the temple/canyon chunk tint below adds the blue-violet cast.
   c=mkCanvas(256);x=c.getContext('2d');
-  x.fillStyle='#74746b';x.fillRect(0,0,256,256);
+  x.fillStyle='#7a7160';x.fillRect(0,0,256,256);
   speckle(x,320,['#8b8b80','#5f5f57','#7f7f74','#525249'],3,9,0.5);
   // cracks
   x.strokeStyle='rgba(60,60,54,0.55)';x.lineWidth=2;
@@ -604,12 +623,16 @@ const TEX={};
   x.fillStyle=fg;x.fillRect(0,0,128,128);
   speckle(x,90,['#ffffff','#e0ffff'],1,3,0.6);
   TEX.foam=toTex(c);
-  // shoreline surf ring (Pass 19). TEX.foam is a soft radial GLOW — the right
-  // shape for wake puffs, but as a shoreline collar it reads as haze, and on
-  // the new pale shallows it vanishes. The surf texture is an annulus of
-  // broken lumps hugging the band radius, so the instanced shoreline mesh
-  // reads as foam AT the contact line. Deterministic math only — no rnd()
-  // calls, so the seed stream that scatter/foam phases consume is untouched.
+  // shoreline surf ring (Pass 19, rebuilt Pass 25). TEX.foam is a soft radial
+  // GLOW — the right shape for wake puffs, but as a shoreline collar it reads
+  // as haze, and on the new pale shallows it vanishes. The pass-19 annulus of
+  // broken lumps still read as one continuous paint smear (and as bullseye
+  // rings around small pilings), so Pass 25 rebuilds it: a scalloped inner
+  // edge (overlapping arc bumps), a fragment gate that opens real GAPS in the
+  // band, discrete lump crests instead of a filled annulus, and recesses
+  // tinted AQUA at low alpha so the water between fragments carries the foam's
+  // own colour. Deterministic math only — no rnd() calls, so the seed stream
+  // that scatter/foam phases consume is untouched.
   c=mkCanvas(256);x=c.getContext('2d');
   {
     const img=x.createImageData(256,256),d=img.data;
@@ -617,15 +640,27 @@ const TEX={};
     for(let py=0;py<256;py++)for(let px=0;px<256;px++){
       const dx=px-127.5,dy=py-127.5;
       const r=Math.sqrt(dx*dx+dy*dy)/128,th=Math.atan2(dy,dx);
-      // Meandering band radius with two lump harmonics -> broken surf line.
-      const bandR=0.74+0.035*Math.sin(th*9+0.8);
+      // Meandering band radius: two lump harmonics + an 18-fold scallop, so
+      // the inner edge is a row of overlapping arc bumps rather than a circle.
+      const scallop=0.030*Math.pow(0.5+0.5*Math.cos(th*18),2.2);
+      const bandR=0.74+0.035*Math.sin(th*9+0.8)+scallop;
       const l1=0.5+0.5*Math.sin(th*7+Math.sin(th*3.1+1.7)*1.8);
       const l2=0.5+0.5*Math.sin(th*15+1.1);
-      const inn=sstep(bandR-0.15,bandR-0.01,r);
-      const out=1-sstep(bandR+0.04,bandR+0.18,r);
-      const a=inn*out*(0.22+0.78*(0.68*l1*l1+0.32*l2));
+      // Fragment gate: sharpened 11-fold angular wave opens genuine gaps in
+      // the band — small pilings get broken arcs, not bullseye rings.
+      const fg0=0.5+0.5*Math.sin(th*11+2.6+Math.sin(th*2.3)*0.9);
+      const gate=sstep(0.30,0.55,fg0);
+      const crest=0.68*l1*l1+0.32*l2;
+      const inn=sstep(bandR-0.16,bandR-0.01,r);
+      const out=1-sstep(bandR+0.03,bandR+0.17,r);
+      const body=inn*out*gate;
+      // Crest pixels: near-white foam; recess pixels: low-alpha aqua film.
+      const cr=0.22+0.78*crest;
       const i=(py*256+px)*4;
-      d[i]=250;d[i+1]=253;d[i+2]=252;d[i+3]=Math.round(a*255);
+      const aq=body*(1-cr);
+      const fr=255-38*aq, fgc=253-24*aq, fb=252-18*aq;
+      d[i]=fr;d[i+1]=fgc;d[i+2]=fb;
+      d[i+3]=Math.round(body*(0.16+0.84*cr)*255);
     }
     x.putImageData(img,0,0);
   }
@@ -653,23 +688,40 @@ const TEX={};
     x.stroke();
   }
   TEX.spinStreak=toTex(c);
-  // soft hero drop shadow
+  // Pass 25 — round soft sprite for every point-particle system. The default
+  // THREE.Points square sprite rendered as crisp 2-6px white squares against
+  // three skies (the "AAA is the absence of artifacts" clause); a radial
+  // alpha map turns every pool into soft motes at zero extra draws.
+  c=mkCanvas(32);x=c.getContext('2d');
+  {
+    const dg=x.createRadialGradient(16,16,0,16,16,16);
+    dg.addColorStop(0,'rgba(255,255,255,1)');
+    dg.addColorStop(0.45,'rgba(255,255,255,0.85)');
+    dg.addColorStop(1,'rgba(255,255,255,0)');
+    x.fillStyle=dg;x.fillRect(0,0,32,32);
+  }
+  TEX.dot=toTex(c);
+  // soft hero drop shadow — Pass 25: the shadow family is COOL. The old
+  // green-black tints darkened warm sand into olive (the Gauntlet sampled
+  // rgb(95,102,77) under the hero); blue-black darkening reads as sky
+  // occlusion instead.
   c=mkCanvas(64);x=c.getContext('2d');
   const dsg=x.createRadialGradient(32,32,0,32,32,32);
-  dsg.addColorStop(0,'rgba(8,18,12,0.65)');
-  dsg.addColorStop(0.5,'rgba(10,22,14,0.35)');
+  dsg.addColorStop(0,'rgba(8,14,26,0.65)');
+  dsg.addColorStop(0.5,'rgba(10,18,30,0.35)');
   dsg.addColorStop(1,'rgba(0,0,0,0)');
   x.fillStyle=dsg;x.fillRect(0,0,64,64);
   TEX.dropShadow=toTex(c);
   // Pass 24 — the cat's contact shadow. The old soft blob (above, still used
   // by fruit/crates) measured Δ-0.04..-0.08 under the feet at 1x: invisible.
   // The Gauntlet named contact shadow under the hero a hard floor; this one
-  // has a dense core that survives a black cat on bright sand.
+  // has a dense core that survives a black cat on bright sand. Pass 25: the
+  // tint follows the re-authored ramp — blue-black, not green-black.
   c=mkCanvas(128);x=c.getContext('2d');
   const hsg=x.createRadialGradient(64,64,0,64,64,64);
-  hsg.addColorStop(0,'rgba(6,12,10,0.92)');
-  hsg.addColorStop(0.34,'rgba(8,15,12,0.72)');
-  hsg.addColorStop(0.66,'rgba(6,10,8,0.34)');
+  hsg.addColorStop(0,'rgba(8,13,26,0.92)');
+  hsg.addColorStop(0.34,'rgba(10,17,30,0.72)');
+  hsg.addColorStop(0.66,'rgba(7,12,22,0.34)');
   hsg.addColorStop(1,'rgba(0,0,0,0)');
   x.fillStyle=hsg;x.fillRect(0,0,128,128);
   TEX.heroShadow=toTex(c);
@@ -683,7 +735,7 @@ const TEX={};
     const dist=Math.hypot(dx,dy);
     const t=clamp(1.0-dist/22,0,1);
     const alpha=Math.pow(t,1.45)*0.88;
-    cD[idx]=10;cD[idx+1]=7;cD[idx+2]=4;cD[idx+3]=Math.round(alpha*255);
+    cD[idx]=8;cD[idx+1]=10;cD[idx+2]=20;cD[idx+3]=Math.round(alpha*255);
   }
   x.putImageData(cImg,0,0);
   TEX.crateShadow=toTex(c);
@@ -760,16 +812,25 @@ const TEX={};
  * game was desaturated: the quality bar's Pillar B test ("sample a shadowed
  * pixel; if saturation is near zero, lighting has failed") failed everywhere.
  *
- * Five steps now, running cool-to-warm: a lifted blue-violet core shadow
- * (never black, never grey), a cooler mid, a neutral turn, then two warm lit
+ * Five steps, running cool-to-warm: a lifted blue core shadow (never black,
+ * never grey), a cooler mid, a cyan-leaning neutral turn, then two warm lit
  * steps. Shadows read as sky-filled, lit faces read as sunlit, and the terminator
  * between them carries a hue shift rather than only a value shift.
+ *
+ * Pass 25 re-author: the pass-2 steps were blue-VIOLET, but the ramp multiplies
+ * the LIGHT contribution against warm albedos (sand #d5af68, wood, gold), and a
+ * warm albedo eats a violet shadow's red deficit — the pass-25 Gauntlet measured
+ * shadows warmer than light in 7/9 framings (the olive contact shadow was the
+ * tell). The shadow steps are now BLUE, not violet (r cut ~35%, b raised, blue
+ * luminance held), the turn leans cyan, and the sunlit step warms to hold the
+ * lit/shadow hue contrast. Luminance per step is preserved to within ~4%, so
+ * exposure and the AgX grade keep their balance.
  */
 const rampData=new Uint8Array([
-   44, 56, 92,   // core shadow — cool, lifted, saturated, but genuinely dark
-   84,102,140,   // shadow, opening toward sky fill
-  158,166,172,   // the turn
-  228,218,188,   // sunlit, warm
+   28, 62,116,   // core shadow — blue, lifted, saturated, but genuinely dark
+   58,108,164,   // shadow, opening toward sky fill
+  140,170,182,   // the turn — cyan-leaning neutral
+  232,214,172,   // sunlit, warm
   255,250,232    // hot
 ]);
 const toonRamp=new THREE.DataTexture(rampData,5,1,THREE.RGBFormat);
@@ -1548,6 +1609,7 @@ class PointPool{
     g.setAttribute('position',this.posAttr);
     g.setAttribute('color',this.colAttr);
     const m=new THREE.PointsMaterial({size:size,vertexColors:true,transparent:true,opacity:0.95,
+      map:TEX.dot,alphaTest:0.01,
       depthWrite:false,sizeAttenuation:true,
       blending:additive?THREE.AdditiveBlending:THREE.NormalBlending});
     this.points=new THREE.Points(g,m);
@@ -1611,7 +1673,7 @@ for(let i=0;i<FF_N;i++){
 }
 const ffAttr=new THREE.BufferAttribute(ffPos,3);ffAttr.setUsage(THREE.DynamicDrawUsage);
 ffGeo.setAttribute('position',ffAttr);
-const fireflies=new THREE.Points(ffGeo,new THREE.PointsMaterial({color:0xd8ff70,size:0.14,transparent:true,opacity:0.85,depthWrite:false,blending:THREE.AdditiveBlending,sizeAttenuation:true}));
+const fireflies=new THREE.Points(ffGeo,new THREE.PointsMaterial({color:0xd8ff70,size:0.14,transparent:true,opacity:0.85,depthWrite:false,blending:THREE.AdditiveBlending,sizeAttenuation:true,map:TEX.dot,alphaTest:0.01}));
 fireflies.frustumCulled=false;
 scene.add(fireflies);
 function updateFireflies(t){
@@ -1637,7 +1699,7 @@ const emberAttr=new THREE.BufferAttribute(emberPos,3);
 emberAttr.setUsage(THREE.DynamicDrawUsage);
 emberGeo.setAttribute('position',emberAttr);
 const torchEmbers=new THREE.Points(emberGeo,new THREE.PointsMaterial({
-  color:0xffb834,size:0.18,transparent:true,opacity:0.85,depthWrite:false,blending:THREE.AdditiveBlending,sizeAttenuation:true
+  color:0xffb834,size:0.18,transparent:true,opacity:0.85,depthWrite:false,blending:THREE.AdditiveBlending,sizeAttenuation:true,map:TEX.dot,alphaTest:0.01
 }));
 torchEmbers.frustumCulled=false;
 scene.add(torchEmbers);
@@ -3119,8 +3181,13 @@ class SecretGem{
 }
 
 /* builder helpers ------------------------------------------------------- */
+/* Pass 25 — MATS.stone takes an optional tint: temple/canyon stone reads
+ * blue-violet (the ramp's own shadow family) so shadowed stone carries
+ * chroma instead of sampling grey. Beach/jungle stone stays untinted. */
+const TEMPLE_STONE_TINT=0xa89cc4;
 const MATS={sand:()=>toonMat({map:TEX.sand}),moss:()=>toonMat({map:TEX.moss}),
-  stone:()=>toonMat({map:TEX.stone}),wood:()=>toonMat({map:TEX.wood}),
+  stone:tint=>toonMat(tint?{map:TEX.stone,color:tint}:{map:TEX.stone}),
+  wood:()=>toonMat({map:TEX.wood}),
   cliff:()=>toonMat({map:TEX.cliff})};
 
 /*
@@ -3220,7 +3287,13 @@ function finalizeStaticPlatforms(){
   };
   const cliffMat=MATS.cliff();
   for(const geos of staticCliffBuckets.values())emit(geos,cliffMat);
-  for(const [key,geos] of staticTopBuckets)emit(geos,MATS[key.split('|')[1]]());
+  for(const [key,geos] of staticTopBuckets){
+    const parts=key.split('|'),ci=+parts[0],mn=parts[1];
+    /* Pass 25 — canyon/temple stone tops (chunk z <= -108, ci <= 3) get the
+     * blue-violet cast; the pit pillars were the Gauntlet's grey-stone
+     * chroma-floor samples. */
+    emit(geos,MATS[mn](mn==='stone'&&ci<=3?TEMPLE_STONE_TINT:null));
+  }
 }
 function foundation(x,topY,z,w,d,th){
   const bottom=topY-th;
@@ -3521,7 +3594,7 @@ function slideArch(x,topY,z,w,clearance,lintelH,theme,withFruit){
   upCornice.translate(0,clearance+lintelH-0.11,0);
   stoneParts.push(upCornice);
 
-  const stoneMesh=new THREE.Mesh(mergeGeos(stoneParts),MATS.stone());
+  const stoneMesh=new THREE.Mesh(mergeGeos(stoneParts),MATS.stone(theme==='jungle'?null:TEMPLE_STONE_TINT));
   stoneMesh.castShadow=stoneMesh.receiveShadow=true;
   g.add(stoneMesh);
 
@@ -3577,7 +3650,7 @@ function buildGate(z){
   const cap=new THREE.BoxGeometry(4.2,1.8,3.0);cap.translate(0,py+12.4,z);gateParts.push(cap);
   const crest1=new THREE.BoxGeometry(3.0,1.1,2.6);crest1.translate(0,py+13.7,z);gateParts.push(crest1);
   const crest2=new THREE.BoxGeometry(1.6,0.9,2.0);crest2.translate(0,py+14.6,z);gateParts.push(crest2);
-  const gateMesh=new THREE.Mesh(mergeGeos(gateParts),MATS.stone());
+  const gateMesh=new THREE.Mesh(mergeGeos(gateParts),MATS.stone(TEMPLE_STONE_TINT));
   gateMesh.castShadow=gateMesh.receiveShadow=true;
   scene.add(gateMesh);
 
@@ -3589,12 +3662,24 @@ function buildGate(z){
   const vineParts=[];
   for(const vx of[-3.4,-2.5,-1.6,-0.7,0.7,1.6,2.5,3.4]){
     const vLen=1.1+Math.abs(Math.sin(vx*2.7))*1.4;
+    const twist=rand(-0.35,0.35);
     // Draped cascading curved ribbons
-    const ribbon=ribbonGeo(vLen,0.28,5,0.42,rand(-0.35,0.35));
+    const ribbon=ribbonGeo(vLen,0.28,5,0.42,twist);
     ribbon.rotateZ(Math.PI); // hang downward
-    ribbon.rotateX(rand(0.1,0.25)); // slight forward drape
+    const drapeX=rand(0.1,0.25);
+    ribbon.rotateX(drapeX); // slight forward drape
     ribbon.translate(vx,0,0);
     vineParts.push(ribbon);
+
+    // Pass 25 — stem runner: a narrow rod hugging the strand, so the leaf
+    // rosettes hang off something instead of floating as cards. Same transform
+    // as the strand; no new rand() calls (twist/drape reused) so the seed
+    // stream is untouched.
+    const stem=ribbonGeo(vLen,0.05,5,0.42,twist*0.6);
+    stem.rotateZ(Math.PI);
+    stem.rotateX(drapeX);
+    stem.translate(vx,0,0.05);
+    vineParts.push(stem);
 
     // Layered leaf rosettes along the vine strand
     const numLeaves=3+(Math.abs(Math.sin(vx*3.1))*3)|0;
@@ -4006,6 +4091,41 @@ function buildLevel(){
 buildLevel();
 finalizeStaticPlatforms();
 finalizeFoam();
+/* Pass 25 — temple-region rubble (Pillar C: nothing is bare). The Gauntlet's
+ * undressed-stone finding: the pit landing, temple landing and final yard
+ * carried a couple of tufts over half a frame of pale stone. A deterministic
+ * rubble pass dresses their edges — hash3 jitter, NO seeded-stream calls, so
+ * the world layout is byte-identical — and merges into ONE mesh (one draw in
+ * each pass). Rocks sink a little into the stone: contact, not float. */
+(function templeRubble(){
+  const parts=[];
+  const put=(geo,x,y,z)=>{geo.translate(x,y,z);parts.push(geo);};
+  const SITES=[
+    {x:0,y:3,z:-131,hw:4.0,hd:4.4,n:5},   // pit landing edges
+    {x:0,y:3,z:-163,hw:5.2,hd:4.4,n:6},   // temple landing edges
+    {x:0,y:6,z:-206,hw:4.6,hd:16,n:10}    // final yard, out to the gate
+  ];
+  let k=0;
+  for(const s of SITES){
+    for(let i=0;i<s.n;i++){
+      k++;
+      const x=s.x+(hash3(k*1.7,s.z,3.1)-0.5)*2*s.hw;
+      const z=s.z+(hash3(k*2.3,s.z,7.7)-0.5)*2*s.hd;
+      if(Math.abs(x)<2.2)continue;          // keep the play corridor open
+      if(hash3(k*3.9,x,z)<0.55){
+        const r=0.22+hash3(k*5.1,x,z)*0.30;
+        put(makeOrganicRockGeo(r,0.35),x,s.y+r*0.35,z);
+      }else{
+        const p=new THREE.SphereGeometry(0.09+hash3(k*6.3,x,z)*0.10,6,5);
+        p.scale(1.3,0.55,1.0);
+        put(p,x,s.y+0.05,z);
+      }
+    }
+  }
+  const m=new THREE.Mesh(mergeGeos(parts),MATS.stone(TEMPLE_STONE_TINT));
+  m.castShadow=m.receiveShadow=true;
+  scene.add(m);
+})();
 // crates each hold 2 fruit (created hidden, launched on break)
 for(const c of crates){
   for(let i=0;i<2;i++){
@@ -4099,7 +4219,13 @@ function buildWumpaGeo(){
     leaf.setAttribute('color',new THREE.BufferAttribute(lCols,3));
     parts.push(leaf);
   }
-  return mergeGeos(parts);
+  const g=mergeGeos(parts);
+  // Pass 25 — the pass-25 Gauntlet measured the wumpa at ~35-40% of the cat's
+  // height (the cat is the scale anchor since pass 23). -28% brings the fruit
+  // back to a readable pickup without shrinking the (unchanged, generous)
+  // pickup radius.
+  g.scale(0.72,0.72,0.72);
+  return g;
 }
 const fruitGeo=buildWumpaGeo();
 const fruitMat=new THREE.MeshToonMaterial({vertexColors:true,gradientMap:toonRamp,emissive:0x441100,emissiveIntensity:0.25});
@@ -4264,8 +4390,17 @@ function scatterInstanced(geo,mat,count,scaleMin,scaleMax,edgeBias,colorJitter){
  * double-sided by construction (both winding orders emitted) so a frond seen
  * from behind is not a hole. Doing it in geometry rather than with
  * side:DoubleSide keeps the material shared and the draw call single.
+ *
+ * Pass 25 — the fold. A flat two-column strip reads as a paper card up close
+ * (the pass-25 Gauntlet's "zero-thickness cards" finding): the strip now
+ * carries a centre ridge vertex lifted off the chord, so every blade is two
+ * faces meeting at a peak — one catches the key light, the other falls into
+ * the ramp's cool step, and the silhouette shows a crease instead of an edge.
+ * fold scales with each row's width, so narrow grass blades stay nearly flat
+ * while palm fronds fold hard.
  */
-function ribbonGeo(len,wid,segs,droop,twist){
+function ribbonGeo(len,wid,segs,droop,twist,foldAmt){
+  foldAmt=foldAmt===undefined?0.5:foldAmt;
   const vs=[],ns=[],uvs=[],ix=[];
   for(let i=0;i<=segs;i++){
     const t=i/segs;
@@ -4274,6 +4409,10 @@ function ribbonGeo(len,wid,segs,droop,twist){
     const w=wid*(1-t*t*0.92)*(0.55+0.45*Math.sin(t*3.14159));
     const tw=twist*t;
     const cx=Math.cos(tw),sy=Math.sin(tw);
+    // centre ridge — lifted along +Y by a fraction of the row width
+    vs.push(0,y+w*foldAmt,z+w*0.22);
+    ns.push(0,0.94,0.34);
+    uvs.push(0.5,t);
     for(let s=-1;s<=1;s+=2){
       vs.push(s*w*cx,y+s*w*sy*0.15,z);
       ns.push(0,Math.cos(tw*0.5),Math.sin(tw*0.5)*0.6+0.4);
@@ -4281,9 +4420,11 @@ function ribbonGeo(len,wid,segs,droop,twist){
     }
   }
   for(let i=0;i<segs;i++){
-    const a=i*2,b=a+1,c=a+2,d=a+3;
-    ix.push(a,b,c, b,d,c);   // front
-    ix.push(c,b,a, c,d,b);   // back, so the ribbon is solid from either side
+    const c=i*3,l=c+1,r=c+2,c2=c+3,l2=c+4,r2=c+5;
+    ix.push(l,c,c2, l,c2,l2);   // left panel, front + back
+    ix.push(c,l,l2, c,l2,c2);
+    ix.push(c,r,r2, c,r2,c2);   // right panel, front + back
+    ix.push(r,c,c2, r,c2,r2);
   }
   const g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.Float32BufferAttribute(vs,3));
@@ -4784,11 +4925,26 @@ const player={
           };
           model.traverse(o=>{if(o.isMesh||o.isSkinnedMesh)rimPatch(o.material);});
           const hullMat=new THREE.MeshBasicMaterial({color:0x0a0a10,side:THREE.BackSide});
+          /* Pass 25 — the ink is distance-aware. A constant 0.020 push thins
+           * below a pixel at money-shot range (gate-hero read the cat as
+           * tailless blob, delta 0.020), and near-black ink cannot separate
+           * dark fur from dark stone. uInkW now scales with camera distance
+           * and uInkLift rotates the ink toward the scene's cool blue-violet
+           * family with range — a lit edge, not a heavier black. */
+          this.catInkW={value:0.020};
+          this.catInkLift={value:0.0};
           hullMat.onBeforeCompile=sh=>{
-            sh.uniforms.uInkW={value:0.020};
+            sh.uniforms.uInkW=this.catInkW;
+            sh.uniforms.uInkLift=this.catInkLift;
+            sh.uniforms.uInkC={value:new THREE.Color(0x46639f)};
             sh.vertexShader=('uniform float uInkW;\n'+sh.vertexShader).replace(
               '#include <begin_vertex>',
               '#include <begin_vertex>\ntransformed+=normal*uInkW;');
+            sh.fragmentShader=sh.fragmentShader
+              .replace('#include <common>',
+                '#include <common>\nuniform float uInkLift;\nuniform vec3 uInkC;')
+              .replace('vec4 diffuseColor = vec4( diffuse, opacity );',
+                'vec4 diffuseColor = vec4( mix(diffuse,uInkC,uInkLift), opacity );');
           };
           hullMat.customProgramCacheKey=()=>'catHull';
           this.catHulls=[];
@@ -4915,6 +5071,14 @@ const player={
              * toy — the spine now rolls and the head tilts so weight moves */
             this.setCatBone('Chest',Math.sin(t*3.2)*0.03,Math.sin(t*0.7)*0.10,Math.sin(t*0.46)*0.06);
             this.setCatBone('Head',Math.sin(t*1.6)*0.05,Math.sin(t*0.6)*0.12,Math.sin(t*0.42+1.3)*0.08);
+            /* Pass 25 — the tail wraps around the flank at rest. Held straight
+             * back, it vanished behind the body and the money-shot silhouette
+             * read tailless; a curled tail is also what a resting cat does. */
+            for(let i=0;i<5;i++){
+              const n='Tail_'+i;
+              if(this.catBones[n])this.setCatBone(n,-0.10+Math.sin(t*3.1+i*0.7)*0.10,
+                Math.sin(t*2.6+i*0.55)*(0.14+0.05*i)+0.62-i*0.12,0);
+            }
             this.begTimer-=dt;
             if(this.begTimer<=0){
               if(this.playCatClip('CAT_Beg_Loop',false))this.begTimer=rand(9,17);
@@ -5558,6 +5722,14 @@ const player={
       tk=clamp(tk,0,1);
       this.catRimK.value=1.0+tk*1.25;
       this.catWarmK.value=tk;
+    }
+    /* Pass 25 — distance-driven ink: full strength at portrait range, wider
+     * and cool-lifted as the camera pulls away (floor: a visible outline in
+     * EVERY framing, including the money shot). */
+    if(this.catInkW){
+      const d=camera.position.distanceTo(this.pos);
+      this.catInkW.value=0.020*clamp(d/6.5,1.0,2.3);
+      this.catInkLift.value=clamp((d-6.0)/12.0,0.0,0.45);
     }
     if(P.eyes){
       this.blinkT-=dt;

@@ -701,6 +701,110 @@ hero absent from pillar-pit's aerial (#10 residue); fruit scale vs the cat
 (carrying from pass 23 — [UNCERTAIN: leg swing axis conventions may need sign
 flips if the run reads backwards/robotic]).
 
+### Pass 25 — the shadow learns its temperature; the foliage learns its folds (Gauntlet round)
+
+Fresh-context Gauntlet critique of `docs/shots/pass25/` against
+QUALITY-BAR.md (its own probes: pillarb ×9, washout ×9, contact-shadow strips,
+12 zoom crops). Scorecard: character fidelity 4, prop design 7, ground dressing
+4, vegetation 4, light transport 4, colour script 4, water 4, distance 4,
+motion 4 (unmeasured from stills), composition 4, performance 7. Its single
+biggest gap: **"the toon ramp's shadow temperature is inverted in the day
+biomes"** — 7/9 framings measured warmer-in-shadow-than-light on the dominant
+material. Ranked top findings: shadow chroma inverted, foam as smear decals +
+bullseye rings, zero-thickness foliage cards within 3 m, hero illegible in
+gate-hero (ink sub-pixel, shadow Δ 0.020, tailless read), fog washout ×3,
+grey stone under the chroma floor, square particle sprites in three skies,
+sand ripple periodicity, fruit ~35-40% of hero height, undressed temple stone
+fields.
+
+What changed in `index.html`:
+
+- **Toon ramp re-authored** (Gap 1, the lighting model): the pass-2 steps were
+  blue-VIOLET, but the ramp multiplies the light contribution against warm
+  albedos, and a warm albedo eats a violet shadow's red deficit — the shadow
+  steps are now BLUE (r cut ~35%, b raised, per-step luminance held within ~4%:
+  core 44/56/92→28/62/116, mid 84/102/140→58/108/164), the turn leans cyan,
+  and the sunlit step warms 228/218/188→232/214/172. The shadow DECAL family
+  went cool with it (heroShadow/dropShadow/crateShadow tints green-black→
+  blue-black — the Gauntlet's olive rgb(95,102,77) sample under the hero).
+  Measured A/B with a new sand-family instrument (`tools/probe_sandtemp.mjs`;
+  the Gauntlet's headline numbers were measured on the SEA family — hue 191°,
+  a MeshBasicMaterial whose dark fifth is fogged depth, not ramp shadow, i.e.
+  the pass-24 probe limitation, confirmed twice): sand cool-shift improved in
+  every framing — title +0.078→+0.119, beach +0.060→+0.089, closeup
+  +0.033→+0.048, pillar-pit +0.046→+0.079, water-gap held +0.17 — and
+  crate-cluster's dominant-material verdict FLIPPED fail→pass (−0.025→+0.161).
+  temple-torches +0.191→+0.218; gate-hero stays pass (+0.179).
+- **Foam rebuilt** (Gap 2): TEX.surf is no longer a filled annulus — 18-fold
+  scalloped inner edge, an 11-fold sharpened fragment gate that opens REAL
+  GAPS in the band (small pilings get broken arcs, not bullseye rings), and
+  recess pixels tinted aqua at low alpha so the water between fragments
+  carries the foam's own colour. Deterministic math only (no seeded-stream
+  calls).
+- **Foliage fold** (Gap 3): `ribbonGeo` carries a centre ridge vertex lifted
+  off the chord (fold scales with row width — grass blades stay near-flat,
+  palm fronds fold hard), so every blade/leaf/frond in the game is two faces
+  meeting at a peak: one catches the key light, one falls into the cool step,
+  and the silhouette shows a crease instead of an edge. The gate vines got a
+  narrow stem runner hugging each strand (twist/drape rand() values reused —
+  zero new seeded-stream calls, world layout byte-identical).
+- **gate-hero hero legibility** (Gap 4): the ink hull is distance-aware —
+  uInkW scales with camera distance (1.0-2.3×) and uInkLift rotates the ink
+  toward the scene's blue-violet family with range (0→0.45), so the outline
+  reads as a lit edge over dark stone instead of a heavier black; the idle
+  tail now wraps around the flank (the straight-back tail vanished behind the
+  body and the money shot read tailless); the cool blob tint lands with the
+  shadow family. probe_shadow: gate-hero still 0.022 (known ±58px penumbra
+  caveat — zoom crop shows the outline and shadow attached), all other
+  framings READABLE at 0.063-0.531.
+- **Stone chroma floor** (Gap 6): TEX.stone base #74746b→#7a7160 (warm), and
+  temple/canyon stone carries a blue-violet tint (0xa89cc4) — chunk-tinted in
+  `finalizeStaticPlatforms` (ci≤3, z≤−108: the pit pillars were the Gauntlet's
+  sat 0.021-0.105 samples) and at the gate/temple-wall/temple-arch call sites.
+  gate-hero shadow sat 0.219→0.267; pillar-pit sand-family shadow sat 0.221
+  (> 0.15 floor). Beach/jungle stone stays untinted.
+- **Round particle sprites** (Gap 7, artifact before effects): every
+  PointsMaterial (sparks/confetti pools, fireflies, torch embers) now maps a
+  radial soft dot (TEX.dot) — the crisp 2-6px white squares against three
+  skies are gone at zero extra draws.
+- **Sand ripple phase warp** (Gap 8): the finished sand canvas is row-shifted
+  by a smooth low-frequency sine pair (±8px, wrap-safe, pure math — no
+  seeded-stream calls) so the 8px ripple bands stop reading as one straight
+  weave; the pass-24 blotch layer keeps its macro job. Verified by eye on the
+  title-hero ground plane (bands wander, no seam).
+- **Rubble dressing** (Gap 10): a deterministic temple-region rubble pass
+  (hash3 jitter, no seeded-stream calls) dresses the pit landing, temple
+  landing and final-yard edges — 21 rocks/pebbles merged into ONE mesh (one
+  draw per pass), sunk into the stone (contact, not float), play corridor kept
+  clear.
+- **Fruit scale −28%** (Gap 9): buildWumpaGeo output scaled 0.72 — the wumpa
+  no longer reads at 40% of the cat's height; pickup radius unchanged.
+
+Not taken, with reasons: the Gauntlet's fog-washout flag ×3 is the recorded
+pass-20/24 dusk-sky residual — pillar-pit 0.229 / temple-torches 0.238 FAR sat
+are flat vs pass-24 (0.230/0.233), gate-hero 0.319 ≈ 0.307, and the sky wedge
+owns those bands; pushing fog further risks a settled loss for a heuristic.
+Whisker dashes: the whiskers are the supplied cat asset's own geometry —
+preserved per the cat-only boundary. pillar-pit hero absent: by design.
+
+Verification (all green): 9/9 frame gates PASS (draws 204-837 ≤900, tris
+739.5k-862.1k — floors hold; the fold added ~+90-160k tris of real geometry
+inside budget); controls suite clean; minfx boots (cat 17 bones, 6 hulls, zero
+page errors); VICTORY sanity: CAT_Celebrate_Loop playing, mixer time
+advancing, 6/6 hulls; contact-shadow and washout/pillarB/sandtemp tables
+above recorded. Artifact hunt on the fixed set: folds read dimensional with no
+normal artifacts, foam arcs broken, particles round, sand warp seam-free,
+rubble grounded — no new artifacts introduced.
+
+Ranked residuals for the next pass: gait bone-rotation signs still unjudged in
+live motion (carrying from pass 23 — [UNCERTAIN]); foam crests still
+white-dominant (recesses landed, brightness balance could go further);
+whiskers read as dashed scratches (asset geometry); pillar-pit/temple far-band
+sat is the dusk sky (settled); hero absent from pillar-pit's aerial (by
+design); sand ripple 8px autocorrelation period remains under the warp
+(phase wanders, period unchanged); QUALITY-BAR.md cites a
+`compare.mjs --sample` mode that no longer exists (doc stale).
+
 ---
 
 ## Closed
