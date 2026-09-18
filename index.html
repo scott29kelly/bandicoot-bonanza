@@ -160,6 +160,8 @@ function mergeGeos(geos){
   const pos=new Float32Array(vc*3),nrm=new Float32Array(vc*3),uv=new Float32Array(vc*2);
   const hasCol=geos.some(g=>g.attributes.color);
   const col=hasCol?new Float32Array(vc*3):null;
+  const hasAz=geos.some(g=>g.attributes.aAz);
+  const az=hasAz?new Float32Array(vc):null;
   const idx=new Uint16Array(ic);
   let vo=0,io=0;
   const out=new THREE.BufferGeometry();
@@ -172,6 +174,11 @@ function mergeGeos(geos){
     if(hasCol){
       if(c)col.set(c.array,vo*3);
       else for(let i=0;i<p.count*3;i++)col[vo*3+i]=1;
+    }
+    if(hasAz){
+      const a=g.attributes.aAz;
+      if(a)az.set(a.array,vo);
+      else for(let i=0;i<p.count;i++)az[vo+i]=0;
     }
     if(gi){
       for(let i=0;i<gi.count;i++)idx[io+i]=gi.array[i]+vo;
@@ -188,6 +195,7 @@ function mergeGeos(geos){
   out.setAttribute('normal',new THREE.BufferAttribute(nrm,3));
   out.setAttribute('uv',new THREE.BufferAttribute(uv,2));
   if(col)out.setAttribute('color',new THREE.BufferAttribute(col,3));
+  if(az)out.setAttribute('aAz',new THREE.BufferAttribute(az,1));
   out.setIndex(new THREE.BufferAttribute(idx,1));
   return out;
 }
@@ -473,6 +481,26 @@ const TEX={};
   x.fillStyle='#33661f';x.fillRect(0,0,256,256);
   speckle(x,700,['#417c28','#254c17','#528f36','#2a561b'],2,6,0.5);
   speckle(x,140,['#7fc75e','#245018'],1,3,0.5);
+  /* Pass 26 — macro blotch layer. The speckle field read as directional
+   * smears at gameplay distance (the Gauntlet's jungle-totem zoom); large
+   * soft green-on-green patches give the moss the two-scale breakup every
+   * repeating surface needs. Private LCG — zero seeded-stream calls, world
+   * layout byte-identical (same pattern as the sand blotch layer). */
+  {
+    let ts=246813579;
+    const trnd=()=>{ts=(ts*1103515245+12345)&0x7fffffff;return ts/0x7fffffff;};
+    for(let i=0;i<14;i++){
+      const bx=trnd()*256,by=trnd()*256,br=26+trnd()*58;
+      const light=trnd()<0.5;
+      for(const ox of[-256,0,256])for(const oy of[-256,0,256]){
+        const gr=x.createRadialGradient(bx+ox,by+oy,br*0.15,bx+ox,by+oy,br);
+        gr.addColorStop(0,light?'rgba(128,196,94,0.16)':'rgba(22,52,14,0.18)');
+        gr.addColorStop(1,'rgba(0,0,0,0)');
+        x.fillStyle=gr;
+        x.beginPath();x.arc(bx+ox,by+oy,br,0,7);x.fill();
+      }
+    }
+  }
   TEX.moss=toTex(c,true);TEX.moss.repeat.set(3,3);
   // mossy stone — Pass 25: the grey base carried almost no chroma, so shadowed
   // stone faces sampled sat 0.02-0.10 (under the 0.15 floor). The base is warm
@@ -701,6 +729,20 @@ const TEX={};
     x.fillStyle=dg;x.fillRect(0,0,32,32);
   }
   TEX.dot=toTex(c);
+  // Pass 26 — warm light-pool decal for standing torches. The PointLights sit
+  // 2.2m up with decay 2, so almost none of their energy reaches the ground
+  // (the Gauntlet probed torch-base ground DARKER than ambient); this radial
+  // carries the pool the physics can't. Deterministic canvas math only.
+  c=mkCanvas(128);x=c.getContext('2d');
+  {
+    const pg=x.createRadialGradient(64,64,0,64,64,64);
+    pg.addColorStop(0,'rgba(255,176,72,0.70)');
+    pg.addColorStop(0.38,'rgba(232,138,44,0.40)');
+    pg.addColorStop(0.72,'rgba(180,96,30,0.16)');
+    pg.addColorStop(1,'rgba(0,0,0,0)');
+    x.fillStyle=pg;x.fillRect(0,0,128,128);
+  }
+  TEX.glow=toTex(c);
   // soft hero drop shadow — Pass 25: the shadow family is COOL. The old
   // green-black tints darkened warm sand into olive (the Gauntlet sampled
   // rgb(95,102,77) under the hero); blue-black darkening reads as sky
@@ -837,6 +879,23 @@ const toonRamp=new THREE.DataTexture(rampData,5,1,THREE.RGBFormat);
 toonRamp.minFilter=toonRamp.magFilter=THREE.NearestFilter;
 toonRamp.generateMipmaps=false;
 toonRamp.needsUpdate=true;
+/* Pass 26 — trunk ramp. A tall leaning cylinder puts its upper faces deep in
+ * the core-shadow step, and warm wood albedo × the blue core reads near-black
+ * (the Gauntlet's "hard terminator / near-black upper face" on the palms).
+ * Same five-step hue choreography, dark steps lifted so a shadowed trunk face
+ * still carries wood tone. Only the trunks use it — the global ramp is the
+ * lighting model and is not touched. */
+const trunkRampData=new Uint8Array([
+    88,104,142,   // lifted core — wood stays readable in shadow
+   120,138,172,   // shadow, opening toward sky fill
+   168,188,198,   // the turn — cyan-leaning neutral
+   238,220,180,   // sunlit, warm
+   255,250,232    // hot
+]);
+const trunkRamp=new THREE.DataTexture(trunkRampData,5,1,THREE.RGBFormat);
+trunkRamp.minFilter=trunkRamp.magFilter=THREE.NearestFilter;
+trunkRamp.generateMipmaps=false;
+trunkRamp.needsUpdate=true;
 const _matCache={};
 function toonMat(o){
   o=o||{};
@@ -1716,6 +1775,51 @@ function updateTorchEmbers(t){
   }
   emberAttr.needsUpdate=true;
 }
+/* Pass 26 — warm pooled light under every torch. The 2.2m-up PointLights put
+ * almost no energy on the ground (the Gauntlet probed torch-base ground
+ * DARKER than ambient), so the pool is a deterministic TEX.glow decal: ONE
+ * InstancedMesh for all torches, per-instance flicker via the foam's aOp
+ * pattern — one draw call, additive, no extra lights. */
+let torchPoolIM=null;
+function buildTorchPools(){
+  if(!torches.length)return;
+  const g=new THREE.CircleGeometry(2.3,20);
+  g.rotateX(-Math.PI/2);
+  const ops=new Float32Array(torches.length).fill(0.72);
+  g.setAttribute('aOp',
+    new THREE.InstancedBufferAttribute(ops,1).setUsage(THREE.DynamicDrawUsage));
+  const pm=new THREE.MeshBasicMaterial({map:TEX.glow,transparent:true,opacity:1,
+    depthWrite:false,blending:THREE.AdditiveBlending});
+  pm.onBeforeCompile=function(shader){
+    shader.vertexShader='attribute float aOp;\nvarying float vOp;\n'+
+      shader.vertexShader.replace('#include <begin_vertex>',
+        '#include <begin_vertex>\n  vOp=aOp;');
+    shader.fragmentShader='varying float vOp;\n'+
+      shader.fragmentShader.replace('vec4 diffuseColor = vec4( diffuse, opacity );',
+        'vec4 diffuseColor = vec4( diffuse, opacity * vOp );');
+  };
+  pm.customProgramCacheKey=function(){return 'torchPool';};
+  torchPoolIM=new THREE.InstancedMesh(g,pm,torches.length);
+  torchPoolIM.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  torchPoolIM.frustumCulled=false;
+  torchPoolIM.renderOrder=1;
+  scene.add(torchPoolIM);
+}
+function updateTorchPools(t){
+  if(!torchPoolIM)return;
+  const ops=torchPoolIM.geometry.attributes.aOp.array;
+  for(let i=0;i<torches.length;i++){
+    const tc=torches[i];
+    _dummy.position.set(tc.px,tc.py+0.04,tc.pz);
+    _dummy.rotation.set(0,0,0);
+    _dummy.scale.set(1,1,1);
+    _dummy.updateMatrix();
+    torchPoolIM.setMatrixAt(i,_dummy.matrix);
+    ops[i]=0.85+Math.sin(t*7.3+tc.phase)*0.10+Math.cos(t*13.7+tc.phase*1.7)*0.06;
+  }
+  torchPoolIM.instanceMatrix.needsUpdate=true;
+  torchPoolIM.geometry.attributes.aOp.needsUpdate=true;
+}
 
 // plank debris pool (mesh-based)
 const debris={items:[],cursor:0};
@@ -1982,12 +2086,27 @@ function updateSlamVFX(dt){
 
 const waterVFX={ripples:[],droplets:[],rCur:0,dCur:0};
 const raftWakeVFX={ripples:[],foam:[],rCur:0,fCur:0};
+/* Pass 26 — soft swell texture for wake/splash ripples. The hard-edged
+ * RingGeometry read as crisp white DONUTS floating mid-water behind the raft
+ * (the Gauntlet's blocker, confirmed by toggle-diff: the rings own the
+ * donuts). A radial band that fades to zero at BOTH edges reads as a swell. */
+TEX.wake=(function(){
+  const c=mkCanvas(128),x=c.getContext('2d');
+  const wg=x.createRadialGradient(64,64,0,64,64,64);
+  wg.addColorStop(0,'rgba(255,255,255,0)');
+  wg.addColorStop(0.34,'rgba(255,255,255,0)');
+  wg.addColorStop(0.52,'rgba(235,252,255,0.55)');
+  wg.addColorStop(0.72,'rgba(220,248,255,0.28)');
+  wg.addColorStop(1,'rgba(210,245,255,0)');
+  x.fillStyle=wg;x.fillRect(0,0,128,128);
+  return toTex(c);
+})();
 (function(){
-  const ripGeo=new THREE.RingGeometry(0.25,0.65,32);
+  const ripGeo=new THREE.PlaneGeometry(1.3,1.3);
   ripGeo.rotateX(-Math.PI/2);
   for(let i=0;i<24;i++){
     const mat=new THREE.MeshBasicMaterial({
-      color:0x7be8ff,transparent:true,opacity:0.85,side:THREE.DoubleSide,
+      color:0x7be8ff,map:TEX.wake,transparent:true,opacity:0.85,side:THREE.DoubleSide,
       blending:THREE.AdditiveBlending,depthWrite:false
     });
     const m=new THREE.Mesh(ripGeo,mat);
@@ -2006,12 +2125,13 @@ const raftWakeVFX={ripples:[],foam:[],rCur:0,fCur:0};
     waterVFX.droplets.push({mesh:m,vel:new THREE.Vector3(),life:0,maxLife:0.7});
   }
 
-  // Pre-allocated wake ripple rings for moving water rafts
-  const wRipGeo=new THREE.RingGeometry(0.35,0.92,28);
+  // Pre-allocated wake ripple rings for moving water rafts — same soft swell
+  // texture (see TEX.wake above); the hard RingGeometry donuts are gone.
+  const wRipGeo=new THREE.PlaneGeometry(1.3,1.3);
   wRipGeo.rotateX(-Math.PI/2);
   for(let i=0;i<22;i++){
     const mat=new THREE.MeshBasicMaterial({
-      color:0x8ef0ff,transparent:true,opacity:0.80,side:THREE.DoubleSide,
+      color:0x8ef0ff,map:TEX.wake,transparent:true,opacity:0.80,side:THREE.DoubleSide,
       blending:THREE.AdditiveBlending,depthWrite:false
     });
     const m=new THREE.Mesh(wRipGeo,mat);
@@ -2097,21 +2217,25 @@ function spawnRaftWake(cx,cz,dx,w,d){
     raftWakeVFX.rCur=(raftWakeVFX.rCur+1)%raftWakeVFX.ripples.length;
     r.mesh.visible=true;
     r.mesh.position.set(cx-dirSign*w*0.36+rand(-0.12,0.12),ripY,cz+sz+rand(-0.12,0.12));
+    // Pass 26 — the wake rings expanded to ~2.6m and stacked at 0.78 additive
+    // opacity 10x/s: from the review camera the raft's wake read as the same
+    // floating donut family as the foam blocker. Wake-sized now: smaller,
+    // faster-fading rings that stay attached to the hull.
     r.startScale=rand(0.38,0.55);
-    r.maxScale=rand(2.2,2.9);
+    r.maxScale=rand(1.1,1.5);
     r.mesh.scale.setScalar(r.startScale);
-    r.life=r.maxLife=rand(0.85,1.2);
-    r.mesh.material.opacity=0.78;
+    r.life=r.maxLife=rand(0.5,0.7);
+    r.mesh.material.opacity=0.55;
   }
   // Bow displacement ripple
   const rBow=raftWakeVFX.ripples[raftWakeVFX.rCur];
   raftWakeVFX.rCur=(raftWakeVFX.rCur+1)%raftWakeVFX.ripples.length;
   rBow.mesh.visible=true;
   rBow.mesh.position.set(cx+dirSign*w*0.42,ripY,cz+rand(-0.25,0.25));
-  rBow.startScale=0.45;rBow.maxScale=2.1;
+  rBow.startScale=0.45;rBow.maxScale=1.2;
   rBow.mesh.scale.setScalar(rBow.startScale);
-  rBow.life=rBow.maxLife=0.75;
-  rBow.mesh.material.opacity=0.72;
+  rBow.life=rBow.maxLife=0.5;
+  rBow.mesh.material.opacity=0.5;
 
   // Trailing wake foam quads
   for(let i=0;i<2;i++){
@@ -2123,9 +2247,9 @@ function spawnRaftWake(cx,cz,dx,w,d){
     f.mesh.rotation.y=rand(0,Math.PI*2);
     f.vel.set(-dirSign*rand(0.3,0.85),0,rand(-0.2,0.2));
     f.rVel=rand(-0.7,0.7);
-    f.life=f.maxLife=rand(0.75,1.05);
-    f.mesh.scale.setScalar(rand(0.75,1.25));
-    f.mesh.material.opacity=0.78;
+    f.life=f.maxLife=rand(0.55,0.8);
+    f.mesh.scale.setScalar(rand(0.6,0.95));
+    f.mesh.material.opacity=0.6;
   }
 }
 function updateWaterVFX(dt){
@@ -2155,7 +2279,7 @@ function updateWaterVFX(dt){
     if(r.life<=0){r.mesh.visible=false;continue;}
     const p=1-(r.life/r.maxLife);
     r.mesh.scale.setScalar(r.startScale+p*(r.maxScale-r.startScale));
-    r.mesh.material.opacity=(1-p)*(1-p)*0.78;
+    r.mesh.material.opacity=(1-p)*(1-p)*0.5;
   }
   for(const f of raftWakeVFX.foam){
     if(f.life<=0)continue;
@@ -2165,8 +2289,8 @@ function updateWaterVFX(dt){
     f.mesh.position.z+=f.vel.z*dt;
     f.mesh.rotation.y+=f.rVel*dt;
     const p=1-(f.life/f.maxLife);
-    f.mesh.scale.multiplyScalar(1+0.35*dt);
-    f.mesh.material.opacity=(1-p)*(1-p)*0.78;
+    f.mesh.scale.multiplyScalar(1+0.25*dt);
+    f.mesh.material.opacity=(1-p)*(1-p)*0.6;
   }
 }
 function isNearWater(x,z){
@@ -2471,6 +2595,28 @@ class BouncePad{
     this.cap=new THREE.Mesh(new THREE.SphereGeometry(0.62,14,10,0,Math.PI*2,0,Math.PI/2),
       toonMat({color:0xe83a4e,emissive:0x5c0812,emissiveIntensity:0.4,noCache:true}));
     this.cap.position.y=0.26;this.cap.scale.y=0.55;this.cap.castShadow=true;
+    /* Pass 26 — the pad was a bare pink hemisphere (prop-design floor: no
+     * untrimmed primitives). A walnut rim band wraps the dome base and a
+     * cream star medal caps it; both sized to clear the dome surface (the
+     * first rim sat inside the hemisphere and vanished). The star rides as a
+     * cap child so the squish squash carries it. */
+    const rimGeo=new THREE.TorusGeometry(0.66,0.07,8,22);
+    rimGeo.rotateX(Math.PI/2);
+    const padRim=new THREE.Mesh(rimGeo,toonMat({color:0x4a2a10}));
+    padRim.position.y=0.28;
+    this.group.add(padRim);
+    const starShape=new THREE.Shape();
+    for(let si=0;si<10;si++){
+      const sr=si%2?0.14:0.31,sa=si*Math.PI/5-Math.PI/2;
+      const sx=Math.cos(sa)*sr,sy=Math.sin(sa)*sr;
+      if(si===0)starShape.moveTo(sx,sy);else starShape.lineTo(sx,sy);
+    }
+    starShape.closePath();
+    const starGeo=new THREE.ExtrudeGeometry(starShape,{depth:0.032,bevelEnabled:false});
+    starGeo.rotateX(-Math.PI/2);
+    starGeo.translate(0,0.635,0);
+    const padStar=new THREE.Mesh(starGeo,toonMat({color:0xffe9c8}));
+    this.cap.add(padStar);
     this.group.add(base);this.group.add(this.cap);
     scene.add(this.group);
     addSolid(x,baseY+0.29,z,1.5,0.58,1.5,{type:'pad',obj:this});
@@ -2652,6 +2798,21 @@ class MovingPlatform{
     let slab;
     if(opts.mat==='wood'){
       slab=new THREE.Mesh(slabGeo,MATS.wood());
+      /* Pass 26 — the pontoon dressed the hull but the DECK was one bare
+       * slab face (the Gauntlet's water-gap "raft top"). Plank strips with
+       * hash3 jitter ride the top; merged, so +1 draw per wood mover. */
+      const deckParts=[];
+      const nDP=Math.max(4,Math.round(w/0.52)),dpw=w/nDP;
+      for(let pi=0;pi<nDP;pi++){
+        const px=-w/2+dpw*(pi+0.5);
+        const pg=new THREE.BoxGeometry(dpw*0.88,0.07,d*0.985);
+        pg.translate(px+(hash3(pi*3.1,w,1.7)-0.5)*0.02,
+          0.045+(hash3(pi*7.7,3.3,9.1)-0.5)*0.018,0);
+        deckParts.push(pg);
+      }
+      const deck=new THREE.Mesh(mergeGeos(deckParts),MATS.wood());
+      deck.castShadow=deck.receiveShadow=true;
+      this.group.add(deck);
     }else{
       /* Pass 24 — the Gauntlet named the stone mover a "bare slab sandwich":
        * pale untextured box sides over flat dark corbels (underside sat 0.103
@@ -2753,9 +2914,12 @@ class MovingPlatform{
       ropeMesh.castShadow=true;
       this.group.add(ropeMesh);
 
-      // Dynamic wake foam plane that travels with the moving raft
-      const raftFoam=new THREE.Mesh(new THREE.PlaneGeometry((w+1.2)*1.35,(d+1.2)*1.35),
-        new THREE.MeshBasicMaterial({map:TEX.foam,transparent:true,opacity:0.75,depthWrite:false}));
+      // Dynamic wake foam plane that travels with the moving raft.
+      // Pass 26 — the 1.35x hull-margin disc at 0.75 opacity read as its own
+      // pancake ring in open water (toggle-diff confirmed); it is hull
+      // wetting now, not a foam halo.
+      const raftFoam=new THREE.Mesh(new THREE.PlaneGeometry((w+1.2)*1.12,(d+1.2)*1.12),
+        new THREE.MeshBasicMaterial({map:TEX.foam,transparent:true,opacity:0.45,depthWrite:false}));
       raftFoam.rotation.x=-Math.PI/2;
       raftFoam.position.y=logY+0.05;
       this.group.add(raftFoam);
@@ -2809,7 +2973,7 @@ class MovingPlatform{
     // Dynamic water wake ripples and foam particles for moving raft
     if(this.opts&&this.opts.mat==='wood'&&Math.abs(this.delta.x)>0.001){
       this.wakeTimer=(this.wakeTimer||0)+dt;
-      if(this.wakeTimer>0.10){
+      if(this.wakeTimer>0.22){
         this.wakeTimer=0;
         spawnRaftWake(nx,nz,this.delta.x,this.w,this.d);
       }
@@ -2825,6 +2989,19 @@ class MovingPlatform{
     this.solid.y0=cy-this.h/2;this.solid.y1=cy+this.h/2;
     this.solid.z0=this.basePos.z-this.d/2;this.solid.z1=this.basePos.z+this.d/2;
   }
+}
+/* Tapered cylinder from point a to point b (local space) — the crab's leg
+ * segments are built with this so a two-segment leg is still ONE merged mesh. */
+function limbSeg(rA,rB,ax,ay,az,bx,by,bz){
+  const a=new THREE.Vector3(ax,ay,az),b=new THREE.Vector3(bx,by,bz);
+  const dir=new THREE.Vector3().subVectors(b,a);
+  const g=new THREE.CylinderGeometry(rB,rA,dir.length(),5);
+  g.translate(0,dir.length()/2,0);
+  const q=new THREE.Quaternion().setFromUnitVectors(
+    new THREE.Vector3(0,1,0),dir.normalize());
+  g.applyMatrix4(new THREE.Matrix4().makeRotationFromQuaternion(q));
+  g.translate(a.x,a.y,a.z);
+  return g;
 }
 class CrabEnemy{
   constructor(x,y,z,rx,rz,sp){
@@ -2874,21 +3051,39 @@ class CrabEnemy{
       const cArm=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.09,0.3,6),shellMat);
       cArm.position.set(0,0,0.12);cArm.rotation.x=Math.PI/3;
       cg.add(cArm);
-      const pincer1=new THREE.Mesh(new THREE.ConeGeometry(0.14,0.42,6),clawMat);
-      pincer1.position.set(sx*0.09,0,0.32);pincer1.rotation.z=sx*0.5;pincer1.rotation.x=Math.PI/2;
-      const pincer2=new THREE.Mesh(new THREE.ConeGeometry(0.11,0.34,6),clawMat);
-      pincer2.position.set(-sx*0.09,0,0.30);pincer2.rotation.z=-sx*0.6;pincer2.rotation.x=Math.PI/2;
-      cg.add(pincer1);cg.add(pincer2);
+      /* Pass 26 — the pincers were two raw cones (a banned-outcome tell).
+       * Now: a fixed jaw cone opposing a thumb (short cone + joint sphere)
+       * with a real gap between them, so the claw reads as a claw. */
+      const jaw=new THREE.Mesh(new THREE.ConeGeometry(0.13,0.42,7),clawMat);
+      jaw.position.set(sx*0.07,0,0.30);jaw.rotation.x=Math.PI/2;
+      cg.add(jaw);
+      const thumbParts=[];
+      const tCone=new THREE.ConeGeometry(0.075,0.24,6);
+      tCone.rotateX(Math.PI/2+0.62);
+      tCone.translate(-sx*0.04,-0.06,0.32);
+      thumbParts.push(tCone);
+      const tJoint=new THREE.SphereGeometry(0.07,6,5);
+      tJoint.translate(-sx*0.04,0.0,0.18);
+      thumbParts.push(tJoint);
+      cg.add(new THREE.Mesh(mergeGeos(thumbParts),clawMat));
       this.group.add(cg);
       this.claws.push({g:cg,sx:sx});
     }
 
+    /* Pass 26 — two-segment legs pivoted at the hip. The old single cylinders
+     * ended ~6-13px above the sand (a hover the Gauntlet read as a bug); the
+     * new geometry reaches y=0 at the foot, and the merged upper/lower
+     * segments keep one mesh (and one draw) per leg. */
     this.legs=[];
     for(let i=0;i<4;i++){
       const side=(i%2===0)?-1:1;
       const fwd=i<2?0.18:-0.18;
-      const lg=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.035,0.4,5),shellMat);
-      lg.position.set(side*0.55,0.2,fwd);lg.rotation.z=side*0.8;
+      const legGeo=mergeGeos([
+        limbSeg(0.05,0.04, 0,0,0, side*0.13,-0.14,0.02),
+        limbSeg(0.038,0.024, side*0.13,-0.14,0.02, side*0.22,-0.32,0.05)
+      ]);
+      const lg=new THREE.Mesh(legGeo,shellMat);
+      lg.position.set(side*0.5,0.32,fwd);
       this.group.add(lg);
       this.legs.push({mesh:lg,phase:i*Math.PI/2});
     }
@@ -3385,7 +3580,12 @@ function palm(x,baseY,z,h){
     trunkParts.push(cGeo);
     curX+=leanX*segH;curZ+=leanZ*segH;curY+=segH;
   }
-  const trunkMesh=new THREE.Mesh(mergeGeos(trunkParts),toonMat({map:TEX.wood}));
+  if(!palm.trunkMat){
+    palm.trunkMat=toonMat({map:TEX.wood,noCache:true});
+    palm.trunkMat.gradientMap=trunkRamp;
+    palm.trunkMat.needsUpdate=true;
+  }
+  const trunkMesh=new THREE.Mesh(mergeGeos(trunkParts),palm.trunkMat);
   trunkMesh.castShadow=trunkMesh.receiveShadow=true;
   g.add(trunkMesh);
 
@@ -3445,7 +3645,8 @@ function torch(x,baseY,z,withLight){
     light.position.set(0,2.2,0);
     g.add(light);
   }
-  torches.push({flame:flame,light:light,phase:rnd()*7,x:x,y:baseY+2.1,z:z});
+  // px/py/pz: where the pooled light decal lands (Pass 26 torch pools)
+  torches.push({flame:flame,light:light,phase:rnd()*7,x:x,y:baseY+2.1,z:z,px:x,py:baseY,pz:z});
 }
 function templeWallSconce(x,baseY,z,facingDir){
   facingDir=facingDir||1; // +1 facing +X (mounted on left pier), -1 facing -X (mounted on right pier)
@@ -3534,10 +3735,26 @@ function templeWallSconce(x,baseY,z,facingDir){
   g.add(light);
 
   scene.add(g);
-  torches.push({flame:flame,light:light,phase:rnd()*7,x:x+bowlX,y:baseY+2.02,z:z});
+  torches.push({flame:flame,light:light,phase:rnd()*7,x:x+bowlX,y:baseY+2.02,z:z,px:x+bowlX*0.7,py:baseY,pz:z});
 }
 function bridge(x,topY,z,w,d){
-  const m=new THREE.Mesh(new THREE.BoxGeometry(w,0.5,d),MATS.wood());
+  /* Pass 26 — the "plank bridge" was one bare box (the prop floor bans the
+   * untrimmed slab). Individual planks with hash3 height jitter over two
+   * stringers, merged into ONE mesh — same draw count, real relief. */
+  const deckParts=[];
+  const pitch=0.62,nP=Math.max(3,Math.round(d/pitch));
+  for(let i=0;i<nP;i++){
+    const pz=-d/2+(i+0.5)*(d/nP);
+    const pg=new THREE.BoxGeometry(w*0.98,0.09,(d/nP)*0.86);
+    pg.translate(0,-0.045+(hash3(i*5.3,1.1,z*0.37)-0.5)*0.024,pz);
+    deckParts.push(pg);
+  }
+  for(const sx of[-1,1]){
+    const sg=new THREE.BoxGeometry(0.22,0.30,d*0.98);
+    sg.translate(sx*(w/2-0.16),-0.25,0);
+    deckParts.push(sg);
+  }
+  const m=new THREE.Mesh(mergeGeos(deckParts),MATS.wood());
   m.position.set(x,topY-0.25,z);
   m.castShadow=m.receiveShadow=true;
   scene.add(m);
@@ -3865,12 +4082,36 @@ function finalizeFoam(){
     new THREE.InstancedBufferAttribute(ops,1).setUsage(THREE.DynamicDrawUsage));
   const fm=new THREE.MeshBasicMaterial({map:TEX.surf,transparent:true,opacity:1,depthWrite:false});
   fm.onBeforeCompile=function(shader){
-    shader.vertexShader='attribute float aOp;\nvarying float vOp;\n'+
+    shader.uniforms.uShore={value:shoreU};
+    shader.uniforms.uShoreN={value:Math.min(shoreRects.length,WATER_SHORE_MAX)};
+    shader.vertexShader='attribute float aOp;\nvarying float vOp;\nvarying vec3 vWPos;\n'+
       shader.vertexShader.replace('#include <begin_vertex>',
-        '#include <begin_vertex>\n  vOp=aOp;');
-    shader.fragmentShader='varying float vOp;\n'+
-      shader.fragmentShader.replace('vec4 diffuseColor = vec4( diffuse, opacity );',
-        'vec4 diffuseColor = vec4( diffuse, opacity * vOp );');
+        ['#include <begin_vertex>',
+         '  vOp=aOp;',
+         '  #ifdef USE_INSTANCING',
+         '    vWPos=(modelMatrix*instanceMatrix*vec4(transformed,1.0)).xyz;',
+         '  #else',
+         '    vWPos=(modelMatrix*vec4(transformed,1.0)).xyz;',
+         '  #endif'
+        ].join('\n'));
+    /* Pass 26 — the shore gate (the Gauntlet's #1: foam rings and ribbons
+     * floating in OPEN water as detached decals). Every fragment now measures
+     * the same rounded-rect SDF to the island footprints the water grade
+     * uses, and the ring body is masked to a 2m band hugging the contact
+     * line: foam exists only AT the shoreline, never mid-channel. One draw
+     * call, still one instanced mesh. */
+    shader.fragmentShader='uniform vec4 uShore['+WATER_SHORE_MAX+'];\nuniform int uShoreN;\nvarying float vOp;\nvarying vec3 vWPos;\n'+
+      shader.fragmentShader.replace('vec4 diffuseColor = vec4( diffuse, opacity );',[
+        '  float sd=1e9;',
+        '  for(int i=0;i<'+WATER_SHORE_MAX+';i++){',
+        '    if(i>=uShoreN)break;',
+        '    vec4 s=uShore[i];',
+        '    vec2 q=abs(vWPos.xz-s.xy)-max(s.zw-0.7,vec2(0.0));',
+        '    sd=min(sd,length(max(q,vec2(0.0)))+min(max(q.x,q.y),0.0)-0.7);',
+        '  }',
+        '  float shoreGate=smoothstep(-0.35,-0.05,sd)*(1.0-smoothstep(0.30,0.62,sd));',
+        'vec4 diffuseColor = vec4( diffuse, opacity * vOp * shoreGate );'
+      ].join('\n'));
   };
   fm.customProgramCacheKey=function(){return 'foamOp';};
   foamIM=new THREE.InstancedMesh(g,fm,foamRings.length);
@@ -3893,12 +4134,17 @@ function updateFoam(t){
     _dummy.rotation.set(0,f.phase,0);
     // PlaneGeometry(1,1) spans +/-0.5, so the extent must be 2x the ring
     // radius: the annulus band then lands at 0.74*rw, tight on the shoreline.
-    _dummy.scale.set(f.rw*2*s,1,f.rd*2*s);
+    // Pass 26 — small mid-channel rings HUG: the 0.62w+1.15 radius put their
+    // band ~0.7m off a 3m pillar, which read as detached donuts in open water
+    // (the Gauntlet's blocker). Shrinking the small-ring extent drops the band
+    // to ~0.2-0.3m off the rock — contact foam, not a floating pancake.
+    const small=f.rw<5;
+    const hug=small?0.78:1.0;
+    _dummy.scale.set(f.rw*2*s*hug,1,f.rd*2*s*hug);
     _dummy.updateMatrix();
     foamIM.setMatrixAt(i,_dummy.matrix);
     // Small mid-channel rock rings run calmer than shoreline surf — a full
     // -strength annulus on a 3m rock reads as a decal, not as foam.
-    const small=f.rw<5;
     ops[i]=(small?0.72:0.88)+Math.sin(t*1.9+f.phase)*(small?0.16:0.18);
   }
   foamIM.instanceMatrix.needsUpdate=true;
@@ -4091,6 +4337,7 @@ function buildLevel(){
 buildLevel();
 finalizeStaticPlatforms();
 finalizeFoam();
+buildTorchPools();
 /* Pass 25 — temple-region rubble (Pillar C: nothing is bare). The Gauntlet's
  * undressed-stone finding: the pit landing, temple landing and final yard
  * carried a couple of tufts over half a frame of pale stone. A deterministic
@@ -4434,7 +4681,12 @@ function ribbonGeo(len,wid,segs,droop,twist,foldAmt){
   return g;
 }
 
-/** A fern: fronds fanned around the base, each with its own droop and length. */
+/** A fern: fronds fanned around the base, each with its own droop and length.
+ * Pass 26 — the frond yaw is NOT baked: it travels in the aAz attribute and
+ * the vertex shader rotates each frond by (aAz + a per-instance hash), so the
+ * 170 instances stop sharing one 7-fold silhouette (the Gauntlet's "agave
+ * cloned 5-8x per frame"). Geometry, draw count and the scatter stream are
+ * all unchanged. */
 function fernGeoBuild(){
   const parts=[];
   const n=7;
@@ -4443,7 +4695,8 @@ function fernGeoBuild(){
     const len=rand(0.78,1.25),wid=rand(0.11,0.17);
     const g=ribbonGeo(len,wid,5,rand(0.30,0.52),rand(-0.5,0.5));
     g.rotateX(rand(0.18,0.42));
-    g.rotateY(a);
+    const az=new Float32Array(g.attributes.position.count).fill(a);
+    g.setAttribute('aAz',new THREE.BufferAttribute(az,1));
     parts.push(g);
   }
   // A short inner crown stops the fan reading as hollow from directly above.
@@ -4525,8 +4778,48 @@ function windify(mat,height){
 }
 
 const fernGeo=fernGeoBuild();
-const fernMesh=scatterInstanced(fernGeo,windify(toonMat({color:0xffffff,noCache:true}),1.2),170,0.62,1.5,true,true);
+/* Pass 26 — windify plus per-frond azimuth: every instance fans its fronds at
+ * its own angles (aJit is a per-instance hash, not a stream draw), so the
+ * clone tell dies without touching geometry count, draw count or layout. */
+function swayMat(mat,height){
+  mat.onBeforeCompile=function(shader){
+    shader.uniforms.uWindTime=WIND.time;
+    shader.uniforms.uWindAmt=WIND.strength;
+    shader.uniforms.uWindH={value:height};
+    shader.vertexShader='uniform float uWindTime;\nuniform float uWindAmt;\nuniform float uWindH;\nattribute float aAz;\nattribute float aJit;\n'+
+      shader.vertexShader
+        .replace('#include <beginnormal_vertex>',[
+          '#include <beginnormal_vertex>',
+          '  float azR=aAz+aJit+(fract(sin((aAz+aJit)*91.7)*43758.55)-0.5)*1.15;',
+          '  float azC=cos(azR),azS=sin(azR);',
+          '  objectNormal.xz=mat2(azC,-azS,azS,azC)*objectNormal.xz;'
+        ].join('\n'))
+        .replace('#include <begin_vertex>',[
+          '#include <begin_vertex>',
+          '  #ifdef USE_INSTANCING',
+          '    vec3 wInst=instanceMatrix[3].xyz;',
+          '  #else',
+          '    vec3 wInst=vec3(0.0);',
+          '  #endif',
+          '  transformed.xz=mat2(azC,-azS,azS,azC)*transformed.xz;',
+          '  float wH=clamp(transformed.y/uWindH,0.0,1.0);',
+          '  float wPh=dot(wInst.xz,vec2(0.21,0.14))+uWindTime*1.7;',
+          '  float wA=uWindAmt*wH*wH*(0.75+0.25*sin(wPh*2.7));',
+          '  transformed.x+=sin(wPh)*wA;',
+          '  transformed.z+=cos(wPh*0.83)*wA*0.65;'
+        ].join('\n'));
+  };
+  mat.customProgramCacheKey=function(){return 'sway'+height;};
+  return mat;
+}
+const fernMesh=scatterInstanced(fernGeo,swayMat(toonMat({color:0xffffff,noCache:true}),1.2),170,0.62,1.5,true,true);
 fernMesh.castShadow=true;
+{
+  const jit=new Float32Array(170);
+  for(let i=0;i<jit.length;i++)jit[i]=hash3(i*7.31,3.7,11.17)*6.28318;
+  fernMesh.geometry.setAttribute('aJit',
+    new THREE.InstancedBufferAttribute(jit,1));
+}
 const grassGeo=grassGeoBuild();
 const grassMesh=scatterInstanced(grassGeo,windify(toonMat({color:0x4aa32c,noCache:true}),0.7),260,0.7,1.6,false,true);
 const flowerGeo=flowerGeoBuild();
@@ -5184,8 +5477,13 @@ const player={
     this.dropShadow.position.set(this.pos.x,gy+0.03,this.pos.z);
     // rises/softens with real height above the surface it lands on — a jump
     // on a 6 m ledge no longer fades the blob just because the ledge is high
+    // Pass 26 — dusk floor: in the temple biomes the sun is low and the stone
+    // is dark, so the same blob measures a much smaller delta (the Gauntlet's
+    // faint gate-hero/temple-torches contact). The same tDusk curve the fog
+    // uses lifts the opacity up to +0.22 there.
+    const tDusk=clamp((-115-this.pos.z)/65,0,1);
     this.dropShadow.scale.setScalar(clamp(1.06+h*0.22,1.0,1.9));
-    this.dropShadow.material.opacity=clamp(0.80-h*0.14,0.10,0.80);
+    this.dropShadow.material.opacity=clamp(0.80+tDusk*0.22-h*0.14,0.10,1.0);
   },
   trySpin(){
     if(game.state!=='PLAYING'||this.dead||this.spinCdT>0)return;
@@ -6326,6 +6624,7 @@ function frameBody(){
   // layers, Pass 19) — no CPU texture offset to animate.
   for(const p of palms)p.head.rotation.z=Math.sin(t*1.1+p.phase)*0.07;
   updateTorchEmbers(t);
+  updateTorchPools(t);
   for(const tc of torches){
     const flicker=Math.sin(t*19+tc.phase)*0.07+Math.cos(t*31+tc.phase)*0.04;
     tc.flame.scale.set(1+flicker*1.5+Math.sin(t*11+tc.phase)*0.10,1+flicker*2.0+Math.sin(t*13+tc.phase)*0.18,1+flicker*1.5+Math.sin(t*12+tc.phase)*0.10);

@@ -701,6 +701,108 @@ hero absent from pillar-pit's aerial (#10 residue); fruit scale vs the cat
 (carrying from pass 23 — [UNCERTAIN: leg swing axis conventions may need sign
 flips if the run reads backwards/robotic]).
 
+### Pass 26 — the foam learns where the shore is (Gauntlet round)
+
+Fresh-context Gauntlet critique of `docs/shots/pass26/` (9 fresh captures, all
+gates PASS) against QUALITY-BAR.md (read every framing full-size + 17 zoom
+crops; own probes: pillarb, washout, probe_shadow, probe_sandtemp). Scorecard:
+character 5, props 6, dressing 6, vegetation 5, light 6, colour 6, water 5,
+distance 7, motion 5 (stills-only), composition 7, performance 8 — **6.0/10
+overall, up from ~4.5**. Single biggest gap: **"open-water foam reads as
+detached decals, not contact foam"** — white ellipse rings floating mid-water,
+one with a hard donut hole, a shore ribbon offset with a triangular flare.
+Ranked findings: (1) BLOCKER foam rings in open water, (2) bounce pad = bare
+pink hemisphere, (3) crab raw cone claws + legs hovering above the sand,
+(4) raft/bridge top face one bare slab, (5) agave-shaped fern silhouette
+cloned 5-8× per frame, (6) cat contact shadow faint at the two dusk framings,
+(7) tail tip renders pale slate, (8) torch light does not pool on the ground
+(torch-base val 0.548 vs ambient 0.600 — DARKER), (9) palm trunk hard
+terminator / near-black upper face, (10) moss macro reads as directional
+smears.
+
+What changed in `index.html`:
+
+- **Foam shore gate + wake re-author** (Gap 1, the blocker — fixed by
+  toggle-diff, not by guesswork): every surf fragment now computes the SAME
+  rounded-rect SDF to the island footprints the water grade uses, and the
+  ring body is masked to a tight contact band `sd ∈ [-0.35, +0.62]` — foam
+  exists only AT the shoreline, never mid-channel. Small mid-channel rings
+  hug (extent ×0.78, band ~0.2-0.3 m off the rock instead of ~0.7 m). The
+  first gate (outer 1.85 m) changed nothing — probe law lesson: the ring
+  bands all sat inside it. Sequential hide-tests then proved the remaining
+  donuts were NOT the instanced surf at all: they were the raft wake's hard
+  RingGeometry ripples (additive cyan-white, 10 spawns/s, expanding to
+  ~2.6 m, alive 1.2 s — stacked pancake zoo) and the 1.35× hull foam halo.
+  The wake is re-authored to wake scale: soft-edged TEX.wake swell texture
+  (radial band, zero at both edges) instead of hard rings, spawn cadence
+  0.10→0.22 s, max scale 1.0-1.5, life 0.5-0.7 s, opacities 0.5-0.6, hull
+  plane 1.12× at 0.45. Verified by hide-the-family toggle-diffs: foam IM owns
+  39k shoreline px; the donut families are gone; beach-corridor's shore
+  ribbon now reads as a lapping line hugging the sand.
+- **Bounce pad dressed** (Gap 2): walnut rim torus wrapping the dome base +
+  cream star medal on the apex (star rides as a cap child so the squish
+  squash carries it; the first rim sat INSIDE the hemisphere and vanished —
+  zoom-crop caught it, radius re-cut to clear the dome surface).
+- **Crab rebuilt** (Gap 3): two-segment legs built from the hip (merged
+  cylinders via a new limbSeg helper — still ONE mesh per leg), feet land on
+  y=0 instead of hovering ~6-13 px; pincers are now a fixed jaw cone
+  opposing a thumb (short cone + joint sphere) with a real claw gap — no
+  more raw cones.
+- **Bridge + raft deck planked** (Gap 4): the "plank bridge" was one bare
+  box and the wood mover's deck one bare slab face. Individual planks with
+  hash3 height jitter over stringers (bridge: ~36 planks; deck: strips over
+  the hull), each merged into ONE mesh — zero draw delta on the bridge,
+  +1 per wood mover.
+- **Fern de-cloning** (Gap 5): the 7-frond fan yaw is no longer baked — it
+  travels in a per-vertex `aAz` attribute (mergeGeos extended to carry it)
+  and the vertex shader rotates each frond by `aAz + aJit + a per-frond
+  hash spread`, where `aJit` is a per-instance InstancedBufferAttribute of
+  hash3 values. 170 distinct silhouettes; geometry count, draw count and the
+  seeded scatter stream untouched (windify folded into a swayMat that does
+  wind + azimuth in one onBeforeCompile).
+- **Dusk contact shadow floor** (Gap 6): updateDropShadow computes the same
+  tDusk curve the fog uses and lifts blob opacity up to +0.22 in the temple
+  biomes. probe_shadow: gate-hero 0.022 → **0.133 READABLE** (5×, and past
+  the ±58px penumbra caveat at last), temple-torches 0.066 → 0.122, every
+  measured framing now READABLE (0.088-0.537).
+- **Torch light pools** (Gap 8): deterministic TEX.glow radial decal under
+  every standing torch and wall sconce — ONE InstancedMesh (14 instances,
+  one draw) with per-instance flicker via the foam aOp pattern. Measured
+  toggle-diff at temple-torches: 106k px warmed (93% of changed px), pool
+  cores up to +0.243 lum vs adjacent ground — torch bases now read LIGHTER
+  than ambient, not darker.
+- **Palm trunk ramp** (Gap 9): a lifted five-step trunkRamp (same hue
+  choreography, dark steps raised) on the shared trunk material — shadowed
+  trunk faces carry wood tone instead of near-black; the global ramp (the
+  lighting model) is untouched.
+- **Moss macro blotches** (Gap 10): 14 soft green-on-green patches on the
+  private LCG (same pattern as the sand blotch layer — zero seeded-stream
+  calls, world layout byte-identical), killing the directional-smear read.
+
+Not taken, with reasons: tail tip pale slate (Gap 7) is the pass-24 fresnel
+rim catching the supplied asset's thin tail geometry — tuning it risks the
+hero-separation read and crosses the preserve-the-cat-materials boundary;
+wall leaf cards read as cutouts (artifact note, unranked) — deferred;
+dusk-sky washout ×3 re-measured flat (pillar-pit FAR 0.233, temple 0.247,
+gate 0.320 vs pass-25's 0.229/0.238/0.319) — settled residual; whisker
+dashes are supplied asset geometry.
+
+Verification (all green): 9/9 frame gates PASS (draws 204-820 ≤900, tris
+738.9k-867.0k — floors hold); controls suite clean; minfx boots (cat 17
+bones, 6 hulls, zero page errors); VICTORY sanity green (CAT_Celebrate_Loop
+playing, mixer advancing); sandtemp cool-shift positive in all 9 framings
+(+0.072..+0.199); artifact hunt on the fixed set: planks read as planks, the
+pad rim/star clear the dome, crab feet touch sand, wake reads as wake, moss
+blotches read, no new seams or z-fighting — a pad rim radius and the wake
+families were re-cut after the first crops before shipping.
+
+Ranked residuals for the next pass: gait bone-rotation signs still unjudged
+in live motion (carrying from pass 23 — [UNCERTAIN]); wall leaf cards on
+temple walls (paper cutout with hard shadows); foam crest brightness balance;
+toy-saturated grass green (colour note); tail tip rim catch; sand ripple 8px
+autocorrelation period (carrying); QUALITY-BAR.md's stale `compare.mjs
+--sample` mention (doc).
+
 ### Pass 25 — the shadow learns its temperature; the foliage learns its folds (Gauntlet round)
 
 Fresh-context Gauntlet critique of `docs/shots/pass25/` against
