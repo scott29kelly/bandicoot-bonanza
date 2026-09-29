@@ -89,6 +89,20 @@ carries every tell; `shots/roundN` includes `play-camera`.
 - Git: commit each slice; never push without Scott's in-session
   go-ahead; never force-push; `origin/main` belongs to the other device.
 - Budget: one builder, one milestone, one critic review, then handoff.
+  Inside a milestone the builder may run the dream loop (below); its
+  judge subagents do not count as the critic review.
+
+## INNER LOOP (dream loop, adopted 2026-09-29 at the M2/M3 boundary)
+
+Binding: `DREAM-LOOP.md`. Inside a milestone, the builder may close the
+gap between one framing and one locked target image in small rounds,
+scored by a fresh non-blind judge. It is builder evidence only:
+
+- It never enters a packet, the critic prompt or `NOTE.md`.
+- It never promotes a baseline or closes a work order.
+- The constraints above win over any target image.
+- A stalled dream loop counts as one attempt on its tactic.
+- `CRITIC-PROMPT-v1.md` is unchanged.
 
 ## Acceptance ledger
 

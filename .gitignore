@@ -9,6 +9,10 @@ node_modules/
 # Review artifacts — regenerable via `node tools/shots.mjs`
 /shots/
 
+# Dream loop working files (targets, captures, judge verdicts) — builder
+# evidence only, never committed, never in a critic packet
+/.dream-loop/
+
 # Scratch analysis scripts and crops from review agents
 /_*.mjs
 /_crops/

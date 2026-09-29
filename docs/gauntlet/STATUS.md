@@ -117,6 +117,18 @@ Captures: `node tools/shots.mjs --dir shots/X`. Scripted run:
 `node tools/playtest.mjs [--shot shots/X/hud.png]`. Blind packet:
 `node tools/packet.mjs --base shots/round28 --cand shots/X --out shots/_packets/pNN --seed N`.
 
+## Method change — dream loop adopted (2026-09-29)
+
+Scott's decision: run the dream loop inside the Gauntlet Loop for small,
+granular visual passes. Set up, NOT yet run. See `DREAM-LOOP.md` and the
+INNER LOOP section of `CONTRACT.md`. Skill (bespoke, hand-written):
+`~/.claude/skills/dream-loop/SKILL.md`. `.dream-loop/` is gitignored.
+
+Open before the first round: which image tool makes the targets. No
+tool is approved. Making a target sends our still to an outside
+service, so Scott approves the tool and the first call each session. He
+can also supply a target image himself.
+
 ## Next milestone proposal (M3)
 
 WO-V06 + WO-R01 (form step on ground/props/hero and the shadow-edge
@@ -128,6 +140,7 @@ positions), WO-F12 (camera snap on respawn).
 
 ## Manual actions needed from Scott
 
+0. Dream loop: name the image tool for targets, or supply targets.
 1. Push go-ahead for 793b081..HEAD on `claude/gauntlet-v2` (not done).
 2. Real-input playtest (G7/G8): run the corridor, collect the fruit row,
    stomp and spin the first crates, arm the TNT and run clear, cross
