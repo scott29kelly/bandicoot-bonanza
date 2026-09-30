@@ -67,8 +67,14 @@ Rules:
   Overrides). A target that needs photoreal textures or a new hero model
   is a bad target; regenerate it before the loop starts.
 - Image generation sends our still to an outside service. Scott
-  approves the tool and the first call each session. No tool is approved
-  yet.
+  approved on 2026-09-30 that Claude makes the targets with the image
+  tools connected to the session. Use the image-EDIT path with the
+  baseline as the reference (upload the still, then edit it), one
+  variation, and run the cost estimate first when the tool offers one.
+  Prefer a model built for editing an existing image
+  (gemini-3-pro-image or gpt-image-2 on the creative-flow connector;
+  Canva generate-image with imageReferences is the fallback). Record the
+  tool, model and prompt in target.md.
 
 ## Round
 
