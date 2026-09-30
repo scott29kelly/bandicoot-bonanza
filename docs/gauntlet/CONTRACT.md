@@ -87,7 +87,10 @@ carries every tell; `shots/roundN` includes `play-camera`.
 - Captures are SwiftShader/headless: correctness evidence, never
   performance evidence. Performance verdicts need a real GPU run.
 - Git: commit each slice; never push without Scott's in-session
-  go-ahead; never force-push; `origin/main` belongs to the other device.
+  go-ahead; never force-push. Since 2026-09-30 `main` IS this line:
+  push `claude/gauntlet-v2` and `main` together
+  (`git push origin claude/gauntlet-v2 claude/gauntlet-v2:main`). The
+  old Blender-asset main is archived at `origin/archive/blender-line`.
 - Budget: one builder, one milestone, one critic review, then handoff.
   Inside a milestone the builder may run the dream loop (below); its
   judge subagents do not count as the critic review.

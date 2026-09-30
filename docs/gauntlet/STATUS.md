@@ -7,11 +7,13 @@ see `CONTRACT.md` for the acceptance ledger.
 
 - Branch `claude/gauntlet-v2` in worktree
   `.claude/worktrees/elevenlabs-local-setup-dd4b2e`. Pushed through
-  3e10c8c on 2026-09-08 (Scott approved). Commits since are LOCAL ONLY
-  and need an in-session go-ahead: 793b081 (M2 opened), 1a8e534 (M2
-  rules), plus this handoff commit.
-- `origin/main` (ac912bf on 2026-09-10) is the other device's line and
-  shares no history with this branch. Never merge, never push there.
+  9b9f2d9 on 2026-09-30 (Scott approved). Also pushed as `main`.
+- 2026-09-30: `main` was REPLACED by this line (Scott's decision). The
+  old Blender-asset main (e7db21f, 26 "Pass" render commits, hero.glb)
+  is archived at `origin/archive/blender-line`; a stray commit from an
+  OpenCode session is at `origin/feature/gameplay-systems` (1b3e71a).
+  Push both branches together from now on. No other checkout had
+  unpushed work (Scott checked every device).
 - Accepted baseline for A/B comparison: still **round 28 stills**
   (`shots/round28`, code `d8ce837`). Candidate reviewed this milestone:
   round 36 (`shots/round36`, code `1a8e534`).
@@ -139,11 +141,11 @@ positions), WO-F12 (camera snap on respawn).
 
 ## Manual actions needed from Scott
 
-1. Push go-ahead for 793b081..HEAD on `claude/gauntlet-v2` (not done).
+1. Push: done 2026-09-30 through 9b9f2d9. Further pushes need a go-ahead.
 2. Real-input playtest (G7/G8): run the corridor, collect the fruit row,
    stomp and spin the first crates, arm the TNT and run clear, cross
    the totem, fall in the water once. Report anything that does not
    match CONTRACT §M2.
 3. `?perf` run on a real GPU for G9 (p95 frame time).
-4. Still open: adopt the Blender `hero.glb` from `origin/main` or not
+4. Still open: adopt the Blender `hero.glb` from `origin/archive/blender-line` or not
    (WO-V03's geometry tactic).
