@@ -1,0 +1,7 @@
+[boot] ready in 1.2s  file:///C:/Users/scott/.codex/visualizations/2026/09/29/01a0ef07-70d9-7850-baa4-9a3ce54831a0/bandicoot-comprehensive-20261018/snapshot/index.html?minfx=1&fixeddt=0.016666666666666666
+[onboarding] PASS Tab stays within pause actions
+[onboarding] PASS Shift+Tab wraps to Restart
+[onboarding] PASS fall explains recovery and remaining lives
+[onboarding] PASS zero lives explains the new run
+[onboarding] PASS help identifies prototype endpoint
+[onboarding] PASS no runtime errors

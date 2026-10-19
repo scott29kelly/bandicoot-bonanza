@@ -1,0 +1,1063 @@
+{
+  "url": "file:///C:/Users/scott/.codex/visualizations/2026/09/29/01a0ef07-70d9-7850-baa4-9a3ce54831a0/bandicoot-comprehensive-20261018/snapshot/index.html?fixeddt=0.016666666666666666",
+  "method": "Native Playwright keyboard input, BB.settle fixed 1/60 dt and read-only BB.game; no place/review/setPose/state mutation.",
+  "log": [
+    {
+      "name": "boot-and-fruit-row",
+      "before": {
+        "game": {
+          "fruit": 0,
+          "fruitTotal": 12,
+          "crates": 0,
+          "crateTotal": 10,
+          "lives": 3,
+          "checkpoint": 0,
+          "deaths": 0,
+          "explosions": 0,
+          "respawn": [
+            0,
+            0,
+            -5
+          ],
+          "hero": [
+            0,
+            0,
+            -5
+          ],
+          "tnt": [
+            {
+              "armed": false,
+              "fuse": 0,
+              "exploded": false
+            }
+          ],
+          "fruitAlive": 12,
+          "cratesLeft": 9
+        },
+        "frame": 906,
+        "error": null,
+        "status": "",
+        "paused": false
+      },
+      "actions": [
+        {
+          "shot": "01-start"
+        },
+        {
+          "press": "KeyP"
+        },
+        {
+          "shot": "02-help"
+        },
+        {
+          "press": "KeyP"
+        },
+        {
+          "down": "ArrowLeft"
+        },
+        {
+          "frames": 14
+        },
+        {
+          "up": "ArrowLeft"
+        },
+        {
+          "frames": 20
+        },
+        {
+          "down": "ArrowUp"
+        },
+        {
+          "frames": 45
+        },
+        {
+          "up": "ArrowUp"
+        },
+        {
+          "frames": 20
+        },
+        {
+          "shot": "03-fruit-row"
+        }
+      ],
+      "after": {
+        "game": {
+          "fruit": 5,
+          "fruitTotal": 12,
+          "crates": 0,
+          "crateTotal": 10,
+          "lives": 3,
+          "checkpoint": 0,
+          "deaths": 0,
+          "explosions": 0,
+          "respawn": [
+            0,
+            0,
+            -5
+          ],
+          "hero": [
+            -1.9901840072601589,
+            0,
+            -11.166777135681096
+          ],
+          "tnt": [
+            {
+              "armed": false,
+              "fuse": 0,
+              "exploded": false
+            }
+          ],
+          "fruitAlive": 7,
+          "cratesLeft": 9
+        },
+        "frame": 1035,
+        "error": null,
+        "status": "",
+        "paused": false
+      }
+    },
+    {
+      "name": "first-crates-and-gap-approach",
+      "before": {
+        "game": {
+          "fruit": 5,
+          "fruitTotal": 12,
+          "crates": 0,
+          "crateTotal": 10,
+          "lives": 3,
+          "checkpoint": 0,
+          "deaths": 0,
+          "explosions": 0,
+          "respawn": [
+            0,
+            0,
+            -5
+          ],
+          "hero": [
+            -1.9901869203016562,
+            0,
+            -11.169176044045148
+          ],
+          "tnt": [
+            {
+              "armed": false,
+              "fuse": 0,
+              "exploded": false
+            }
+          ],
+          "fruitAlive": 7,
+          "cratesLeft": 9
+        },
+        "frame": 2289,
+        "error": null,
+        "status": "",
+        "paused": false
+      },
+      "actions": [
+        {
+          "down": "ArrowUp"
+        },
+        {
+          "frames": 9
+        },
+        {
+          "up": "ArrowUp"
+        },
+        {
+          "press": "KeyK"
+        },
+        {
+          "frames": 25
+        },
+        {
+          "shot": "04-spin-left-crates"
+        },
+        {
+          "down": "ArrowRight"
+        },
+        {
+          "frames": 21
+        },
+        {
+          "up": "ArrowRight"
+        },
+        {
+          "frames": 15
+        },
+        {
+          "press": "KeyK"
+        },
+        {
+          "frames": 30
+        },
+        {
+          "shot": "05-crate-clear"
+        },
+        {
+          "down": "ArrowUp"
+        },
+        {
+          "frames": 100
+        },
+        {
+          "up": "ArrowUp"
+        },
+        {
+          "frames": 20
+        },
+        {
+          "shot": "06-gap-approach"
+        }
+      ],
+      "after": {
+        "game": {
+          "fruit": 5,
+          "fruitTotal": 12,
+          "crates": 3,
+          "crateTotal": 10,
+          "lives": 3,
+          "checkpoint": 0,
+          "deaths": 0,
+          "explosions": 0,
+          "respawn": [
+            0,
+            0,
+            -5
+          ],
+          "hero": [
+            0.8993257483443884,
+            0,
+            -26.005195327721612
+          ],
+          "tnt": [
+            {
+              "armed": false,
+              "fuse": 0,
+              "exploded": false
+            }
+          ],
+          "fruitAlive": 7,
+          "cratesLeft": 6
+        },
+        "frame": 2546,
+        "error": null,
+        "status": "",
+        "paused": false
+      }
+    },
+    {
+      "name": "gap-one",
+      "before": {
+        "game": {
+          "fruit": 5,
+          "fruitTotal": 12,
+          "crates": 3,
+          "crateTotal": 10,
+          "lives": 3,
+          "checkpoint": 0,
+          "deaths": 0,
+          "explosions": 0,
+          "respawn": [
+            0,
+            0,
+            -5
+          ],
+          "hero": [
+            0.8993257483653092,
+            0,
+            -26.007194419498894
+          ],
+          "tnt": [
+            {
+              "armed": false,
+              "fuse": 0,
+              "exploded": false
+            }
+          ],
+          "fruitAlive": 7,
+          "cratesLeft": 6
+        },
+        "frame": 3265,
+        "error": null,
+        "status": "",
+        "paused": false
+      },
+      "actions": [
+        {
+          "down": "ArrowLeft"
+        },
+        {
+          "frames": 7
+        },
+        {
+          "up": "ArrowLeft"
+        },
+        {
+          "frames": 20
+        },
+        {
+          "down": "ArrowUp"
+        },
+        {
+          "frames": 18
+        },
+        {
+          "up": "ArrowUp"
+        },
+        {
+          "frames": 20
+        },
+        {
+          "shot": "07-first-takeoff"
+        },
+        {
+          "down": "ArrowUp"
+        },
+        {
+          "press": "Space"
+        },
+        {
+          "frames": 23
+        },
+        {
+          "shot": "08-first-gap-airborne"
+        },
+        {
+          "frames": 15
+        },
+        {
+          "up": "ArrowUp"
+        },
+        {
+          "frames": 30
+        },
+        {
+          "shot": "09-first-gap-landed"
+        }
+      ],
+      "after": {
+        "game": {
+          "fruit": 6,
+          "fruitTotal": 12,
+          "crates": 3,
+          "crateTotal": 10,
+          "lives": 3,
+          "checkpoint": 0,
+          "deaths": 0,
+          "explosions": 0,
+          "respawn": [
+            0,
+            0,
+            -5
+          ],
+          "hero": [
+            0.06290914782018432,
+            0,
+            -34.658964811194245
+          ],
+          "tnt": [
+            {
+              "armed": false,
+              "fuse": 0,
+              "exploded": false
+            }
+          ],
+          "fruitAlive": 6,
+          "cratesLeft": 6
+        },
+        "frame": 3431,
+        "error": null,
+        "status": "",
+        "paused": false
+      }
+    },
+    {
+      "name": "gap-two",
+      "before": {
+        "game": {
+          "fruit": 6,
+          "fruitTotal": 12,
+          "crates": 3,
+          "crateTotal": 10,
+          "lives": 3,
+          "checkpoint": 0,
+          "deaths": 0,
+          "explosions": 0,
+          "respawn": [
+            0,
+            0,
+            -5
+          ],
+          "hero": [
+            0.062909144856581,
+            0,
+            -34.65935224857353
+          ],
+          "tnt": [
+            {
+              "armed": false,
+              "fuse": 0,
+              "exploded": false
+            }
+          ],
+          "fruitAlive": 6,
+          "cratesLeft": 6
+        },
+        "frame": 4976,
+        "error": null,
+        "status": "",
+        "paused": false
+      },
+      "actions": [
+        {
+          "down": "ArrowUp"
+        },
+        {
+          "frames": 11
+        },
+        {
+          "press": "Space"
+        },
+        {
+          "frames": 23
+        },
+        {
+          "shot": "10-second-gap-airborne"
+        },
+        {
+          "frames": 23
+        },
+        {
+          "up": "ArrowUp"
+        },
+        {
+          "frames": 22
+        },
+        {
+          "shot": "11-second-gap-landed"
+        }
+      ],
+      "after": {
+        "game": {
+          "fruit": 7,
+          "fruitTotal": 12,
+          "crates": 3,
+          "crateTotal": 10,
+          "lives": 3,
+          "checkpoint": 0,
+          "deaths": 0,
+          "explosions": 0,
+          "respawn": [
+            0,
+            0,
+            -5
+          ],
+          "hero": [
+            0.062909144856581,
+            0,
+            -43.970464116536725
+          ],
+          "tnt": [
+            {
+              "armed": false,
+              "fuse": 0,
+              "exploded": false
+            }
+          ],
+          "fruitAlive": 5,
+          "cratesLeft": 6
+        },
+        "frame": 5077,
+        "error": null,
+        "status": "",
+        "paused": false
+      }
+    },
+    {
+      "name": "yard-entry-checkpoint",
+      "before": {
+        "game": {
+          "fruit": 7,
+          "fruitTotal": 12,
+          "crates": 3,
+          "crateTotal": 10,
+          "lives": 3,
+          "checkpoint": 0,
+          "deaths": 0,
+          "explosions": 0,
+          "respawn": [
+            0,
+            0,
+            -5
+          ],
+          "hero": [
+            0.062909144856581,
+            0,
+            -43.97213002635113
+          ],
+          "tnt": [
+            {
+              "armed": false,
+              "fuse": 0,
+              "exploded": false
+            }
+          ],
+          "fruitAlive": 5,
+          "cratesLeft": 6
+        },
+        "frame": 6113,
+        "error": null,
+        "status": "",
+        "paused": false
+      },
+      "actions": [
+        {
+          "down": "ArrowUp"
+        },
+        {
+          "press": "Space"
+        },
+        {
+          "frames": 32
+        },
+        {
+          "up": "ArrowUp"
+        },
+        {
+          "frames": 28
+        },
+        {
+          "shot": "12-checkpoint-yard"
+        }
+      ],
+      "after": {
+        "game": {
+          "fruit": 8,
+          "fruitTotal": 12,
+          "crates": 3,
+          "crateTotal": 10,
+          "lives": 3,
+          "checkpoint": 1,
+          "deaths": 0,
+          "explosions": 0,
+          "respawn": [
+            0,
+            0.1,
+            -47.3
+          ],
+          "hero": [
+            0.062909144856581,
+            0,
+            -50.12792626298792
+          ],
+          "tnt": [
+            {
+              "armed": false,
+              "fuse": 0,
+              "exploded": false
+            }
+          ],
+          "fruitAlive": 4,
+          "cratesLeft": 6
+        },
+        "frame": 6185,
+        "error": null,
+        "status": "",
+        "paused": false
+      }
+    },
+    {
+      "name": "tnt-arm-and-escape",
+      "before": {
+        "game": {
+          "fruit": 8,
+          "fruitTotal": 12,
+          "crates": 3,
+          "crateTotal": 10,
+          "lives": 3,
+          "checkpoint": 1,
+          "deaths": 0,
+          "explosions": 0,
+          "respawn": [
+            0,
+            0.1,
+            -47.3
+          ],
+          "hero": [
+            0.062909144856581,
+            0,
+            -50.13824113746215
+          ],
+          "tnt": [
+            {
+              "armed": false,
+              "fuse": 0,
+              "exploded": false
+            }
+          ],
+          "fruitAlive": 4,
+          "cratesLeft": 6
+        },
+        "frame": 7525,
+        "error": null,
+        "status": "",
+        "paused": false
+      },
+      "actions": [
+        {
+          "press": "KeyK"
+        },
+        {
+          "frames": 3
+        },
+        {
+          "shot": "13-tnt-armed"
+        },
+        {
+          "down": "ArrowRight"
+        },
+        {
+          "frames": 30
+        },
+        {
+          "up": "ArrowRight"
+        },
+        {
+          "frames": 20
+        },
+        {
+          "shot": "14-tnt-escape"
+        },
+        {
+          "frames": 135
+        },
+        {
+          "shot": "15-tnt-cleared"
+        },
+        {
+          "down": "ArrowUp"
+        },
+        {
+          "frames": 33
+        },
+        {
+          "up": "ArrowUp"
+        },
+        {
+          "frames": 20
+        },
+        {
+          "shot": "16-all-collectibles"
+        }
+      ],
+      "after": {
+        "game": {
+          "fruit": 10,
+          "fruitTotal": 12,
+          "crates": 10,
+          "crateTotal": 10,
+          "lives": 2,
+          "checkpoint": 1,
+          "deaths": 1,
+          "explosions": 1,
+          "respawn": [
+            0,
+            0.1,
+            -47.3
+          ],
+          "hero": [
+            0,
+            0,
+            -51.827045534311644
+          ],
+          "tnt": [
+            {
+              "armed": false,
+              "fuse": -0.016666666666663676,
+              "exploded": true
+            }
+          ],
+          "fruitAlive": 2,
+          "cratesLeft": 0
+        },
+        "frame": 7812,
+        "error": null,
+        "status": "Caught in a TNT blast. Returned to the checkpoint. 2 lives left.",
+        "paused": false
+      }
+    },
+    {
+      "name": "complete-collection-after-tnt-death",
+      "before": {
+        "game": {
+          "fruit": 10,
+          "fruitTotal": 12,
+          "crates": 10,
+          "crateTotal": 10,
+          "lives": 2,
+          "checkpoint": 1,
+          "deaths": 1,
+          "explosions": 1,
+          "respawn": [
+            0,
+            0.1,
+            -47.3
+          ],
+          "hero": [
+            0,
+            0,
+            -51.829444444444384
+          ],
+          "tnt": [
+            {
+              "armed": false,
+              "fuse": -0.016666666666663676,
+              "exploded": true
+            }
+          ],
+          "fruitAlive": 2,
+          "cratesLeft": 0
+        },
+        "frame": 8543,
+        "error": null,
+        "status": "Caught in a TNT blast. Returned to the checkpoint. 2 lives left.",
+        "paused": false
+      },
+      "actions": [
+        {
+          "shot": "17-tnt-death-recovery"
+        },
+        {
+          "down": "ArrowRight"
+        },
+        {
+          "frames": 30
+        },
+        {
+          "up": "ArrowRight"
+        },
+        {
+          "frames": 20
+        },
+        {
+          "down": "ArrowUp"
+        },
+        {
+          "frames": 23
+        },
+        {
+          "up": "ArrowUp"
+        },
+        {
+          "frames": 20
+        },
+        {
+          "shot": "18-complete-collection"
+        },
+        {
+          "down": "ArrowLeft"
+        },
+        {
+          "frames": 30
+        },
+        {
+          "up": "ArrowLeft"
+        },
+        {
+          "frames": 20
+        },
+        {
+          "down": "ArrowUp"
+        },
+        {
+          "frames": 32
+        },
+        {
+          "up": "ArrowUp"
+        },
+        {
+          "frames": 20
+        },
+        {
+          "shot": "19-endpoint"
+        },
+        {
+          "frames": 180
+        },
+        {
+          "shot": "20-endpoint-no-completion"
+        }
+      ],
+      "after": {
+        "game": {
+          "fruit": 12,
+          "fruitTotal": 12,
+          "crates": 10,
+          "crateTotal": 10,
+          "lives": 2,
+          "checkpoint": 1,
+          "deaths": 1,
+          "explosions": 1,
+          "respawn": [
+            0,
+            0.1,
+            -47.3
+          ],
+          "hero": [
+            -0.0037059868910867323,
+            0,
+            -59.39184359327024
+          ],
+          "tnt": [
+            {
+              "armed": false,
+              "fuse": -0.016666666666663676,
+              "exploded": true
+            }
+          ],
+          "fruitAlive": 0,
+          "cratesLeft": 0
+        },
+        "frame": 8964,
+        "error": null,
+        "status": "Caught in a TNT blast. Returned to the checkpoint. 2 lives left.",
+        "paused": false
+      }
+    },
+    {
+      "name": "endpoint-fall-and-checkpoint-recovery",
+      "before": {
+        "game": {
+          "fruit": 12,
+          "fruitTotal": 12,
+          "crates": 10,
+          "crateTotal": 10,
+          "lives": 2,
+          "checkpoint": 1,
+          "deaths": 1,
+          "explosions": 1,
+          "respawn": [
+            0,
+            0.1,
+            -47.3
+          ],
+          "hero": [
+            -0.0037059868910867323,
+            0,
+            -59.39184359327024
+          ],
+          "tnt": [
+            {
+              "armed": false,
+              "fuse": -0.016666666666663676,
+              "exploded": true
+            }
+          ],
+          "fruitAlive": 0,
+          "cratesLeft": 0
+        },
+        "frame": 11253,
+        "error": null,
+        "status": "Caught in a TNT blast. Returned to the checkpoint. 2 lives left.",
+        "paused": false
+      },
+      "actions": [
+        {
+          "down": "ArrowUp"
+        },
+        {
+          "frames": 17
+        },
+        {
+          "up": "ArrowUp"
+        },
+        {
+          "frames": 20
+        },
+        {
+          "shot": "21-far-end-no-goal"
+        },
+        {
+          "down": "ArrowUp"
+        },
+        {
+          "frames": 20
+        },
+        {
+          "up": "ArrowUp"
+        },
+        {
+          "shot": "22-end-edge-fall"
+        },
+        {
+          "frames": 65
+        },
+        {
+          "shot": "23-fall-checkpoint-recovery"
+        }
+      ],
+      "after": {
+        "game": {
+          "fruit": 12,
+          "fruitTotal": 12,
+          "crates": 10,
+          "crateTotal": 10,
+          "lives": 1,
+          "checkpoint": 1,
+          "deaths": 2,
+          "explosions": 1,
+          "respawn": [
+            0,
+            0.1,
+            -47.3
+          ],
+          "hero": [
+            0,
+            0,
+            -47.3
+          ],
+          "tnt": [
+            {
+              "armed": false,
+              "fuse": -0.016666666666663676,
+              "exploded": true
+            }
+          ],
+          "fruitAlive": 0,
+          "cratesLeft": 0
+        },
+        "frame": 11409,
+        "error": null,
+        "status": "Fell into the water. Returned to the checkpoint. 1 life left.",
+        "paused": false
+      }
+    },
+    {
+      "name": "reverse-traverse-and-last-life-reset",
+      "before": {
+        "game": {
+          "fruit": 12,
+          "fruitTotal": 12,
+          "crates": 10,
+          "crateTotal": 10,
+          "lives": 1,
+          "checkpoint": 1,
+          "deaths": 2,
+          "explosions": 1,
+          "respawn": [
+            0,
+            0.1,
+            -47.3
+          ],
+          "hero": [
+            0,
+            0,
+            -47.3
+          ],
+          "tnt": [
+            {
+              "armed": false,
+              "fuse": -0.016666666666663676,
+              "exploded": true
+            }
+          ],
+          "fruitAlive": 0,
+          "cratesLeft": 0
+        },
+        "frame": 13139,
+        "error": null,
+        "status": "Fell into the water. Returned to the checkpoint. 1 life left.",
+        "paused": false
+      },
+      "actions": [
+        {
+          "down": "ArrowDown"
+        },
+        {
+          "press": "Space"
+        },
+        {
+          "frames": 26
+        },
+        {
+          "up": "ArrowDown"
+        },
+        {
+          "shot": "24-reverse-jump-visibility"
+        },
+        {
+          "down": "ArrowUp"
+        },
+        {
+          "frames": 15
+        },
+        {
+          "up": "ArrowUp"
+        },
+        {
+          "frames": 25
+        },
+        {
+          "shot": "25-reverse-landing"
+        },
+        {
+          "down": "ArrowDown"
+        },
+        {
+          "frames": 50
+        },
+        {
+          "up": "ArrowDown"
+        },
+        {
+          "frames": 55
+        },
+        {
+          "shot": "26-final-life-reset"
+        },
+        {
+          "press": "KeyP"
+        },
+        {
+          "shot": "27-paused-after-reset"
+        }
+      ],
+      "after": {
+        "game": {
+          "fruit": 0,
+          "fruitTotal": 12,
+          "crates": 0,
+          "crateTotal": 10,
+          "lives": 3,
+          "checkpoint": 0,
+          "deaths": 3,
+          "explosions": 1,
+          "respawn": [
+            0,
+            0,
+            -5
+          ],
+          "hero": [
+            0,
+            0,
+            1.8527743933198426
+          ],
+          "tnt": [
+            {
+              "armed": false,
+              "fuse": 0,
+              "exploded": false
+            }
+          ],
+          "fruitAlive": 12,
+          "cratesLeft": 9
+        },
+        "frame": 13359,
+        "error": null,
+        "status": "Out of lives. A new run has started with 3 lives.",
+        "paused": true
+      }
+    }
+  ],
+  "errors": []
+}

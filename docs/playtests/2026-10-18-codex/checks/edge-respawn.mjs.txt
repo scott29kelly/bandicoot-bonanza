@@ -1,0 +1,19 @@
+import {chromium} from '../snapshot/node_modules/playwright/index.mjs';
+import {writeFileSync} from 'node:fs';
+import {pathToFileURL,fileURLToPath} from 'node:url';
+import path from 'node:path';
+const D=path.dirname(fileURLToPath(import.meta.url));
+const browser=await chromium.launch({channel:'msedge',headless:true,args:['--mute-audio','--force-color-profile=srgb']});
+const p=await browser.newPage({viewport:{width:960,height:600}}),results=[];
+try{
+ const u=new URL(pathToFileURL(path.resolve(D,'../snapshot/index.html')));u.searchParams.set('fixeddt','0.016666666666666666');await p.goto(u.href);await p.waitForFunction(()=>BB?.ready,{},{timeout:120000});
+ await p.evaluate(()=>{BB.setPose({p:[12,4,-1],lookAt:[6.5,0,-8],fov:55});BB.place([6.8,0,-8]);return BB.settle(60)});results.push({name:'inner_control',state:await p.evaluate(()=>BB.game())});await p.screenshot({path:D+'/07-lip-inner-control.png'});
+ for(let i=1;i<=2;i++){
+  const mid=await p.evaluate(async()=>{BB.place([7.35,0,-8]);await BB.settle(13);window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyP',bubbles:true}));document.querySelector('#pause-panel').classList.add('hidden');return BB.game();});
+  await p.screenshot({path:D+'/08-lip-fall-repeat'+i+'.png'});
+  await p.keyboard.press('KeyP');await p.evaluate(()=>BB.settle(60));const after=await p.evaluate(()=>BB.game());results.push({name:'outer_lip_repeat'+i,mid,after});
+ }
+ await p.evaluate(()=>{BB.clearPose();BB.place([20,-3,-5]);window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyW',bubbles:true}));return BB.settle(20)});const reset=await p.evaluate(()=>BB.game());await p.evaluate(()=>BB.settle(60));const held=await p.evaluate(()=>BB.game());await p.keyboard.up('KeyW');results.push({name:'held_input_fullreset_design_observation',reset,held});
+ await p.screenshot({path:D+'/09-held-input-after-fullreset.png'});
+ console.log(JSON.stringify(results));
+}finally{await browser.close();writeFileSync(D+'/edge-respawn.json',JSON.stringify({method:'BB.place fixture establishes stationary inner6.8 or outer7.35 beach coordinates,z-8; physics and damage unchanged. Fixed camera diagnostic. Pause freezes frame13 for capture; overlay hidden only. Fullreset heldW observation explicitly fixture based.',results},null,2));}

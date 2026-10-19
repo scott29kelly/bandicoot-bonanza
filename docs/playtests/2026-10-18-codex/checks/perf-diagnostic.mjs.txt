@@ -1,0 +1,16 @@
+import {chromium} from '../snapshot/node_modules/playwright/index.mjs';
+import {writeFileSync} from 'node:fs';
+import {pathToFileURL,fileURLToPath} from 'node:url';
+import path from 'node:path';
+const D=path.dirname(fileURLToPath(import.meta.url));
+const browser=await chromium.launch({channel:'msedge',headless:true,args:['--mute-audio']});
+const results=[];
+try{
+ for(const fixed of [false,true]){
+  const p=await browser.newPage({viewport:{width:800,height:500}});
+  await p.addInitScript(()=>{const original=requestAnimationFrame.bind(window);window.__qaWallFrames=[];window.requestAnimationFrame=callback=>original(t=>{const until=performance.now()+100;while(performance.now()<until){};window.__qaWallFrames.push(performance.now());callback(t);});});
+  const u=new URL(pathToFileURL(path.resolve(D,'../snapshot/index.html')));u.searchParams.set('minfx','1');u.searchParams.set('perf','1');if(fixed)u.searchParams.set('fixeddt','0.016666666666666666');
+  await p.goto(u.href);await p.waitForFunction(()=>window.BB?.ready,{},{timeout:120000});await p.evaluate(()=>BB.settle(45));
+  const r=await p.evaluate(()=>{const a=window.__qaWallFrames.slice(-30);return{reported:BB.stats,wallMeanMs:(a.at(-1)-a[0])/(a.length-1),samples:a.length,error:BB.error,text:document.getElementById('perf').textContent};});r.fixed=fixed;r.wallFPS=1000/r.wallMeanMs;results.push(r);await p.screenshot({path:D+'/06-perf-'+(fixed?'fixed':'real')+'.png'});await p.close();console.log(JSON.stringify(r));
+ }
+}finally{await browser.close();writeFileSync(D+'/perf-diagnostic.json',JSON.stringify({method:'Intentional 100ms busy wait before each rAF callback, injected in test page only. Measures simulation-clock overlay defect, NOT hardware/game performance.',results},null,2));}

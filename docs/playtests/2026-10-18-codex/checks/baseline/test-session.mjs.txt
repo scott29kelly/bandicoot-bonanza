@@ -1,0 +1,28 @@
+import {launch,gameUrl,boot,parseArgs} from './_harness.mjs';
+const args=parseArgs(process.argv.slice(2));
+const browser=await launch(args);
+const page=await browser.newPage({viewport:{width:800,height:500}});
+let failures=0;
+const check=(name,pass)=>{console.log(`[session] ${pass?'PASS':'FAIL'} ${name}`);if(!pass)failures++;};
+try{
+  await boot(page,gameUrl({minfx:true,fixeddt:1/60}));
+  await page.evaluate(()=>BB.settle(5));
+  await page.evaluate(()=>{BB.place([0,0,-5]);window.dispatchEvent(new KeyboardEvent('keydown',{code:'Space',bubbles:true}));window.dispatchEvent(new Event('blur'));});
+  await page.evaluate(()=>BB.settle(8));
+  check('focus loss cancels a queued jump',Math.abs((await page.evaluate(()=>BB.game())).hero[1])<0.01);
+  await page.getByRole('button',{name:'Resume',exact:true}).click();
+  await page.evaluate(()=>BB.settle(10));
+  check('resume does not replay queued actions',Math.abs((await page.evaluate(()=>BB.game())).hero[1])<0.01);
+  await page.evaluate(()=>{BB.place([0,0,-5]);window.dispatchEvent(new KeyboardEvent('keydown',{code:'Space',repeat:true,bubbles:true}));});
+  await page.evaluate(()=>BB.settle(8));
+  check('keyboard auto-repeat does not jump',Math.abs((await page.evaluate(()=>BB.game())).hero[1])<0.01);
+  await page.evaluate(()=>BB.place([0,3.2,-52]));
+  await page.evaluate(()=>BB.settle(30));
+  const before=await page.evaluate(()=>BB.game());
+  await page.evaluate(()=>window.dispatchEvent(new Event('blur')));
+  await page.evaluate(()=>BB.settle(150));
+  const after=await page.evaluate(()=>BB.game());
+  check('offscreen TNT cannot consume a life',before.tnt[0].armed&&after.tnt[0].fuse===before.tnt[0].fuse&&after.lives===before.lives);
+  if(await page.evaluate(()=>BB.error))throw Error('Game runtime error');
+}finally{await browser.close();}
+process.exitCode=failures?1:0;

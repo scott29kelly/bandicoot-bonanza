@@ -1,0 +1,21 @@
+[boot] ready in 1.2s  file:///C:/Users/scott/.codex/visualizations/2026/09/29/01a0ef07-70d9-7850-baa4-9a3ce54831a0/bandicoot-comprehensive-20261018/snapshot/index.html?fixeddt=0.016666666666666666
+[playtest] PASS  boot: counters at zero  {"fruit":0,"crates":0,"lives":3}
+[playtest] PASS  boot: totals from the world  fruit 12/12 crates+tnt 10/10
+[playtest] PASS  fruit: row of 5 collected on contact  fruit 5 alive 7
+[playtest] PASS  fruit: HUD shows count / total  hud fruit "5"
+[playtest] PASS  stomp: landing on a crate breaks it  crates 1
+[playtest] PASS  stomp: crate bounce lifts the hero  hero y 1.80 after 30 frames
+[playtest] PASS  stomp: crate solid removed, hero back on sand  hero y 0.00
+[playtest] PASS  spin: crate within spinRadius breaks  crates 2
+[playtest] PASS  checkpoint: totem activates when crossed  checkpoint 1 hero z -51.1
+[playtest] PASS  checkpoint: HUD label  hud "TOTEM 1"
+[playtest] PASS  tnt: stomp arms the fuse  armed true fuse 2.08
+[playtest] PASS  tnt: explodes after tntFuse  exploded true
+[playtest] PASS  tnt: clears the 6 crates within tntRadius  crates 2 -> 9 (6 crates + the TNT)
+[playtest] PASS  tnt: hero clear of the blast keeps its lives  lives 3 hero z -59.5
+[playtest] PASS  fall: life lost  lives 2 deaths 1
+[playtest] PASS  fall: respawn at the checkpoint  hero 0.0,0.0,-47.5 respawn 0.0,0.1,-47.3
+[playtest] PASS  fall: fruit count kept  fruit 6 -> 6
+[playtest] PASS  fall: HUD lives  hud lives "2"
+[playtest] PASS  lives: zero lives resets the run  lives 3 fruit 0 cp 0 crates left 9
+[playtest] 19/19 PASS

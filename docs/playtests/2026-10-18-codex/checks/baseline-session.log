@@ -1,0 +1,5 @@
+[boot] ready in 1.2s  file:///C:/Users/scott/.codex/visualizations/2026/09/29/01a0ef07-70d9-7850-baa4-9a3ce54831a0/bandicoot-comprehensive-20261018/snapshot/index.html?minfx=1&fixeddt=0.016666666666666666
+[session] PASS focus loss cancels a queued jump
+[session] PASS resume does not replay queued actions
+[session] PASS keyboard auto-repeat does not jump
+[session] PASS offscreen TNT cannot consume a life

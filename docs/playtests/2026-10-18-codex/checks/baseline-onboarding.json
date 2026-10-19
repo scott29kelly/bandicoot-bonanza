@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Tab stays within pause actions",
+    "pass": true,
+    "detail": [
+      "resume-game",
+      "restart-game",
+      "resume-game",
+      "restart-game",
+      "resume-game",
+      "restart-game"
+    ]
+  },
+  {
+    "name": "Shift+Tab wraps to Restart",
+    "pass": true
+  },
+  {
+    "name": "fall explains recovery and remaining lives",
+    "pass": true,
+    "detail": "Fell into the water. Returned to the start. 2 lives left."
+  },
+  {
+    "name": "zero lives explains the new run",
+    "pass": true,
+    "detail": "Out of lives. A new run has started with 3 lives."
+  },
+  {
+    "name": "help identifies prototype endpoint",
+    "pass": true
+  },
+  {
+    "name": "no runtime errors",
+    "pass": true,
+    "detail": []
+  }
+]

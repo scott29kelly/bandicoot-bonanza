@@ -1,0 +1,37 @@
+{
+  "name": "reverse-traverse-and-last-life-reset",
+  "game": {
+    "fruit": 0,
+    "fruitTotal": 12,
+    "crates": 0,
+    "crateTotal": 10,
+    "lives": 3,
+    "checkpoint": 0,
+    "deaths": 3,
+    "explosions": 1,
+    "respawn": [
+      0,
+      0,
+      -5
+    ],
+    "hero": [
+      0,
+      0,
+      1.8527743933198426
+    ],
+    "tnt": [
+      {
+        "armed": false,
+        "fuse": 0,
+        "exploded": false
+      }
+    ],
+    "fruitAlive": 12,
+    "cratesLeft": 9
+  },
+  "frame": 13359,
+  "error": null,
+  "status": "Out of lives. A new run has started with 3 lives.",
+  "paused": true,
+  "errors": []
+}

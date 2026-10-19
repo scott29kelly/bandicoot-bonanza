@@ -1,0 +1,30 @@
+import {launch,gameUrl,boot,parseArgs} from './_harness.mjs';
+import {writeFileSync} from 'node:fs';
+const args=parseArgs(process.argv.slice(2)),browser=await launch(args);
+const page=await browser.newPage({viewport:{width:640,height:360}});
+const checks=[],errors=[];
+const check=(name,pass,detail)=>{checks.push({name,pass:!!pass,detail});console.log(`[onboarding] ${pass?'PASS':'FAIL'} ${name}`);};
+page.on('pageerror',e=>errors.push(e.message));
+try{
+ await boot(page,gameUrl({minfx:true,fixeddt:1/60}));
+ await page.evaluate(()=>BB.settle(5));
+ await page.keyboard.press('KeyP');
+ const ids=[];
+ for(let i=0;i<6;i++){ids.push(await page.evaluate(()=>document.activeElement.id));await page.keyboard.press('Tab');}
+ check('Tab stays within pause actions',ids.every(id=>['resume-game','restart-game'].includes(id)),ids);
+ await page.locator('#resume-game').focus();await page.keyboard.press('Shift+Tab');
+ check('Shift+Tab wraps to Restart',await page.evaluate(()=>document.activeElement.id==='restart-game'));
+ await page.locator('#resume-game').click();
+ await page.evaluate(()=>{BB.place([20,-5,-5]);return BB.settle(3)});
+ let notice=await page.locator('#game-status').textContent({timeout:1000});
+ check('fall explains recovery and remaining lives',/fell|water/i.test(notice)&&/2 lives/i.test(notice),notice);
+ for(let i=0;i<2;i++)await page.evaluate(()=>{BB.place([20,-5,-5]);return BB.settle(3)});
+ notice=await page.locator('#game-status').textContent({timeout:1000});
+ check('zero lives explains the new run',/out of lives/i.test(notice)&&/new run/i.test(notice),notice);
+ await page.keyboard.press('KeyP');
+ const help=await page.locator('#pause-panel').innerText();
+ check('help identifies prototype endpoint',/crate yard/i.test(help)&&/prototype/i.test(help));
+ check('no runtime errors',errors.length===0&&!await page.evaluate(()=>BB.error),errors);
+}catch(e){check('test completed',false,e.message);}finally{await browser.close();}
+if(args.out)writeFileSync(args.out,JSON.stringify(checks,null,2));
+process.exitCode=checks.some(c=>!c.pass)?1:0;
