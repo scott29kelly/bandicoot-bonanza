@@ -37,7 +37,11 @@
   a canopy texture on the ridges.
 - r47: canopy texture on the ridge skin (WO-V18 tactic 3) — the flat
   green hills read as jungle; measured std up 1.4–14×.
-- Next: r48 BLIND PACKET with critic v2 (refs/cat),
+- r48 BLIND PACKET p05 (r43 vs r47, critic v2): candidate 6 / 0; the
+  canopy texture wins every frame. Regression WO-A20: the cat reads
+  olive-brown (r45 lift + warm tint) — blocks promotion; r47 becomes the
+  baseline once it closes. Top pick: neutral cool-black fur (WO-A20/A21).
+- Next: r49 WO-A20 + A21 (neutral black cat, silhouette rim),
   r47 perf LOD (WO-A06, variants staged in assets-raw/*/lod1.glb).
 - DECISION OWED BY SCOTT: WO-X02 — other Crash-like trade dress (title,
   X-crates, TNT, spin-fruit). Keep, or restyle and rename?

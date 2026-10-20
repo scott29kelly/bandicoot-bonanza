@@ -139,6 +139,25 @@ Verdict: baseline 5 / candidate 1. Baseline (bandicoot hero): beach-corridor low
 | WO-L22 | r44 | critic | Path material: sand std 0.017–0.050 with hard sand/grass borders; refs worn earth blending into grass | ground blend mask at the corridor edges (ties WO-V14) | P3 | OPEN | 0 |
 | WO-T03 | r44 | builder | Critic prompt v1 judges the hero against Crash references (refs/proposed form-1..6) and carries a stale calibration fact ("sea stacks are flat-shaded by design", false since r37) | v2: add `refs/cat/` as the character reference, judge character as "a stylized mascot of the cat in refs/cat", drop the stale fact; recorded at the r44 boundary | P1 | CLOSED (r44: CRITIC-PROMPT-v2.md + packet.mjs copies refs/cat) | 1 |
 
+## Packet p05 (r48: baseline r43 vs candidate r47), critic v2 (character vs refs/cat), seed 48
+
+Verdict: candidate 6 / baseline 0 (beach-corridor high, play-camera high, crate-cluster med-high, water-gap med-high, title-hero med, hero-closeup low-med). Two regions differ: the jungle backdrop (r47 canopy texture wins every frame) and the hero fur (r45 lift). Character row: baseline 5 / candidate 4 — REGRESSION (olive cast) blocks promotion; r47 becomes the baseline once WO-A20 closes. Baseline r43 chosen over r39 so the A/B does not re-judge Scott's hero decision.
+
+| ID | Round | Source | Problem / impact | Hypothesis / intervention | Pri | Status | Attempts |
+|---|---|---|---|---|---|---|---|
+| WO-A20 | r48 | critic A/B (top pick) | REGRESSION: the cat reads olive-brown, not black — body median L 0.15–0.19, mean rgb(58,53,32), hue 49–55°, chroma 0.37–0.45 vs refs/cat body ≈rgb(41,38,40), chroma ≈0.09 | drop the warm albedo counter-tint (1.22,1,0.74) and lift toward NEUTRAL; target body median L 0.10–0.13, chroma ≤0.15, cool sheen 0.30–0.35 on forehead/shoulders, p10 above 0.041 with a gradient; push the cool cast out of the hero by lighting (hemi share) not by warm paint | P1 | OPEN | 0 |
+| WO-A21 | r48 | critic A/B | Hero rim under-strength on the lifted body (teal shoulder 0.321 vs body 0.187 = 1.7×) and lands as a teal blotch on FRONT faces (hc 660–760×400–470, rgb 28,80,66) — environment, not silhouette | rim ≥2.5× body on the silhouette only (higher power, view-space edge mask); cut the hemi sky term on the hero | P2 | OPEN | 0 |
+| WO-A22 | r48 | critic | Baseline side: hero shadow side clamped at the post black floor rgb(6,11,17), L 0.041 — p10 sits on it in all three portrait framings (2.31% of hero-closeup) | resolved by WO-A20's gradient target; check the floor curve in post.js | P2 | OPEN | 0 |
+| WO-A13 | — | critic | (confirms) whiskers 4–6 px tan ropes + dark outline (8–10 px total) vs fine white strands | as WO-A13: no hull on whiskers; whiter, thinner | P2 | OPEN | — |
+| WO-A14 | — | critic | (confirms, both sides) dark-maroon panel with a white border behind the left arm in title-hero (930–990×540–600) + a small dark-red chip lower on the torso | as WO-A14: mesh inspection | P2 | OPEN | — |
+| WO-A19 | — | critic | (confirms) leaf texture in a softer, near-photographic language behind crisp faceted foliage; dark (≈0.16 mean) | as WO-A19: regenerate the tile in the cards' style | P3 | OPEN | — |
+| WO-V21 | — | critic | (confirms) canopies are "shard soup": flat triangles, no designed leaf shapes | as WO-V21 | P2 | OPEN | — |
+| WO-L23 | r48 | critic | Airborne lime-green zigzag cards mid-frame (hc 270–380×210–270; wg 90–140×160–250) — read as stray shards | find the source (leafShell fans or wind leaves); cull or redesign | P3 | OPEN | 0 |
+| WO-L24 | r48 | critic | Faint vertical seam in the sand at x≈638–640, y 600–680 (play-camera), 0.02–0.026 L step | check the beach texture wrap / two-mesh join at x=0 | P3 | OPEN | 0 |
+| WO-L25 | r48 | critic | Three near-identical sea stacks in play-camera (490–580, 720–800, 870–930) | as WO-A02 (variants) | P3 | OPEN (merge WO-A02) | — |
+| WO-R01 | — | critic | (re-observed) near-black stacked shadow where the palm shadow crosses the platform lip (water-gap 75–120×545–580, V 0.067) | as WO-R01 | P2 | OPEN | — |
+| WO-V14 | — | critic | (re-measured) foreground sand sd 0.012 vs ref path 0.227; sand 52–62% of the bottom half vs 30% | as WO-V14 / V20 | P2 | OPEN | — |
+
 ## Engine limits (logged, not scheduled)
 
 - Shadow-map texel staircase on crate faces at portrait range (4096 map).
