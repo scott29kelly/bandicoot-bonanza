@@ -46,8 +46,9 @@
 - r50: whiskers lose the outline (A13); the stride plate is a generator
   membrane — culling sandwiched faces shrank it; STALLED, next tactic is a
   cat concept with arms clear of the body.
-- Next: r51 hero shoulder sheen (A21) or the cat re-concept (A14), then
-  r52 BLIND PACKET (critic v2),
+- r51: cat re-concept with the arms clear of the body (`cat4-s88`): the
+  stride plate is gone; soften blur and sheet culling off (seam lines).
+- Next: r52 BLIND PACKET (critic v2, base r47 vs cand r51), then
   r47 perf LOD (WO-A06, variants staged in assets-raw/*/lod1.glb).
 - DECISION OWED BY SCOTT: WO-X02 — other Crash-like trade dress (title,
   X-crates, TNT, spin-fruit). Keep, or restyle and rename?
