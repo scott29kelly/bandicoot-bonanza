@@ -35,7 +35,9 @@
 - r46: big-leaf shore plants + distance LOD kept; two instanced-fill
   tactics for the bare hill skin reverted (shards, haze). Next tactic:
   a canopy texture on the ridges.
-- Next: r47 WO-V18 tactic 3 (canopy texture),
+- r47: canopy texture on the ridge skin (WO-V18 tactic 3) — the flat
+  green hills read as jungle; measured std up 1.4–14×.
+- Next: r48 BLIND PACKET with critic v2 (refs/cat),
   r47 perf LOD (WO-A06, variants staged in assets-raw/*/lod1.glb).
 - DECISION OWED BY SCOTT: WO-X02 — other Crash-like trade dress (title,
   X-crates, TNT, spin-fruit). Keep, or restyle and rename?

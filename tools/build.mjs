@@ -26,7 +26,7 @@ const opts={
   external:['three','three/addons/*'],
   write:false,
   // Authored GLBs ride inside the one file as data URLs (src/art/assets.js).
-  loader:{'.glb':'dataurl'},
+  loader:{'.glb':'dataurl','.webp':'dataurl'},
   legalComments:'none',
   minify:!args.dev
 };

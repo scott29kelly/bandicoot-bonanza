@@ -11,6 +11,51 @@ import {toonMat,dappleTexture,foamTexture} from '../art/materials.js';
 import {mergeGeoms,xform,fbm3,vcolor,hash3} from './geo.js';
 import {WATER_Y} from './masses.js';
 import {hasAsset,placeAsset,instanceAsset,assetSize} from '../art/assets.js';
+import {ablated} from '../core/config.js';
+import canopyUrl from '../../assets/textures/canopy.webp';
+
+/**
+ * Canopy texture on the ridge skin (round 47, WO-V18 tactic 3): the bare
+ * slopes between clumps were the p04 critic's "flat green" (local std
+ * 0.004-0.04 vs refs 0.06-0.07). Triplanar in world space at 7 m and 19 m,
+ * mostly LUMINANCE, so the painted hue drift and the depth dark stay.
+ * Generated tile, mean luma normalised to 0.5 (docs/gauntlet/ASSETS.md).
+ */
+function addCanopyTexture(mat){
+  if(ablated('assets'))return;
+  const tex=new THREE.TextureLoader().load(canopyUrl);
+  tex.wrapS=tex.wrapT=THREE.RepeatWrapping;
+  tex.colorSpace=THREE.SRGBColorSpace;
+  tex.anisotropy=8;
+  mat.onBeforeCompile=(sh)=>{
+    sh.uniforms.uCanopy={value:tex};
+    sh.vertexShader=sh.vertexShader
+      .replace('#include <common>',`#include <common>
+varying vec3 vCWPos;
+varying vec3 vCWNrm;`)
+      .replace('#include <worldpos_vertex>',`#include <worldpos_vertex>
+vCWPos=(modelMatrix*vec4(transformed,1.0)).xyz;
+vCWNrm=normalize(mat3(modelMatrix)*objectNormal);`);
+    sh.fragmentShader=sh.fragmentShader
+      .replace('#include <common>',`#include <common>
+uniform sampler2D uCanopy;
+varying vec3 vCWPos;
+varying vec3 vCWNrm;
+vec3 canopyTri(vec3 p,vec3 w,float s,float r){
+  vec2 a=p.zy/s,b=p.xz/s,c=p.xy/s;
+  mat2 R=mat2(cos(r),-sin(r),sin(r),cos(r));
+  return texture2D(uCanopy,R*a).rgb*w.x+texture2D(uCanopy,R*b).rgb*w.y+texture2D(uCanopy,R*c).rgb*w.z;
+}`)
+      .replace('#include <color_fragment>',`#include <color_fragment>
+{
+  vec3 w=pow(abs(normalize(vCWNrm)),vec3(4.0));w/=(w.x+w.y+w.z);
+  vec3 t=canopyTri(vCWPos,w,7.0,0.0)*canopyTri(vCWPos,w,19.0,0.9)*4.0;
+  float l=dot(t,vec3(0.2126,0.7152,0.0722));
+  vec3 m=mix(vec3(l),t,0.3);
+  diffuseColor.rgb*=mix(vec3(1.0),m,0.9);
+}`);
+  };
+}
 
 const _c=new THREE.Color();
 
@@ -542,6 +587,7 @@ export function createBackdrop(){
     }
     authored.push(instanceAsset('jungle-tree',mats,cols));
   }
+  addCanopyTexture(mat);
   const mesh=new THREE.Mesh(mergeGeoms(parts),mat);
   mesh.castShadow=false;   // far out of the cascade; shadows would just crawl
   mesh.receiveShadow=false;
