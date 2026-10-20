@@ -19,3 +19,8 @@ node_modules/
 
 # Reference imagery — art-direction only, never redistributed, never committed
 /refs/
+
+# Authored-asset pipeline: raw generations are large; assets/models/ holds the prepared GLBs
+/assets-raw/
+/pipeline/object_info.json
+/pipeline/__pycache__/

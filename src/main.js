@@ -15,13 +15,15 @@ import {buildBeach} from './world/beach.js';
 import {createHero} from './player/hero.js';
 import {createRules} from './game/rules.js';
 import {createHud} from './game/hud.js';
+import {loadAssets} from './art/assets.js';
 
 const errEl=document.getElementById('error');
 const uiEl=document.getElementById('ui');
 const perfEl=document.getElementById('perf');
 
-try{
+(async()=>{try{
 
+await loadAssets();
 const {renderer,scene,focusSun,draw,resize}=createPipeline();
 document.body.appendChild(renderer.domElement);
 scene.fog.near=CFG.fogNear;
@@ -126,4 +128,4 @@ frame();
   errEl.textContent='The game failed to start: '+err.message;
   errEl.classList.remove('hidden');
   throw err;
-}
+}})();

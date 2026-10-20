@@ -25,6 +25,8 @@ const opts={
   target:'es2020',
   external:['three','three/addons/*'],
   write:false,
+  // Authored GLBs ride inside the one file as data URLs (src/art/assets.js).
+  loader:{'.glb':'dataurl'},
   legalComments:'none',
   minify:!args.dev
 };
@@ -34,7 +36,7 @@ async function emit(){
   const js=res.outputFiles[0].text;
   const shell=readFileSync(SHELL,'utf8');
   if(!shell.includes('/*__BUNDLE__*/'))throw new Error('shell.html lost its /*__BUNDLE__*/ marker');
-  writeFileSync(OUT,shell.replace('/*__BUNDLE__*/',js));
+  writeFileSync(OUT,shell.replace('/*__BUNDLE__*/',()=>js)); // a function: a string replacement would expand $& and friends
   const kb=(Buffer.byteLength(js)/1024).toFixed(1);
   console.log(`[build] ${kb} KB of bundle -> ${path.relative(ROOT,OUT)}`);
 }

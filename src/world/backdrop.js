@@ -10,6 +10,7 @@ import {rand} from '../core/rng.js';
 import {toonMat,dappleTexture,foamTexture} from '../art/materials.js';
 import {mergeGeoms,xform,fbm3,vcolor,hash3} from './geo.js';
 import {WATER_Y} from './masses.js';
+import {hasAsset,placeAsset} from '../art/assets.js';
 
 const _c=new THREE.Color();
 
@@ -413,7 +414,7 @@ function makeClouds(){
 
 export function createBackdrop(){
   const mat=toonMat({vertexColors:true,side:THREE.DoubleSide});
-  const parts=[];
+  const parts=[],stacks=[];
   ridgeSamples=[];ridgeShores=[];
 
   // Mid layer: jungle flanks RUNNING ALONG the corridor (a ridge's long
@@ -460,8 +461,16 @@ export function createBackdrop(){
                           // Close enough to keep body through the fog: at
                           // z≈-160 they rendered as translucent ghost slabs
                           // (round-7 gap 3, "fog as the reason").
-                          [-14,-128,20,6],[18,-140,25,7]])
-    parts.push(seaStack(x,z,h,r));
+                          [-14,-128,20,6],[18,-140,25,7]]){
+    if(hasAsset('sea-stack')){
+      // Authored stack (round 37). Two draws, as seaStack() takes, so the
+      // scatter after this line stays where it was.
+      rand(0.55,0.75);
+      const k=rand(1.0,1.25);
+      stacks.push(placeAsset('sea-stack',{p:[x,WATER_Y-1.5,z],h:h*1.05,w:2.1*r*k,
+        yaw:hash3(x,0,z)*Math.PI*2}));
+    }else parts.push(seaStack(x,z,h,r));
+  }
 
   // Far layer: a haze ridge band across the horizon of the corridor, tall
   // enough to read OVER the mid flanks, still inside the fog range so it
@@ -474,6 +483,6 @@ export function createBackdrop(){
   mesh.receiveShadow=false;
   const group=new THREE.Group();
   const shellMat=toonMat({color:0xffffff,side:THREE.DoubleSide}); // white: instance colour IS the colour
-  group.add(mesh,leafShell(nearSamples,shellMat),ridgeFoam(),dappleCasters(),makeClouds());
+  group.add(mesh,leafShell(nearSamples,shellMat),ridgeFoam(),dappleCasters(),makeClouds(),...stacks);
   return group;
 }

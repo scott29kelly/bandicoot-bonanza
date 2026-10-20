@@ -78,8 +78,15 @@ carries every tell; `shots/roundN` includes `play-camera`.
 
 ## CONSTRAINTS
 
-- One file output (`index.html`, built by `tools/build.mjs`), zero
-  external assets, three r0.184 via CDN import map (`src/shell.html`).
+- One file output (`index.html`, built by `tools/build.mjs`), three
+  r0.184 via CDN import map (`src/shell.html`).
+- Assets (decision 2026-10-20, Scott): the zero-asset rule is LIFTED.
+  Authored GLBs are allowed: made locally by `pipeline/gen.py` (concept
+  image -> cutout -> TRELLIS.2 mesh on ComfyUI) and `pipeline/prep.py`
+  (Blender 5.2), committed in `assets/models/`, bundled into `index.html`
+  as data URLs. Provenance and licence per asset in `ASSETS.md`. An asset
+  stays only if it beats its procedural twin in a blind A/B
+  (`?ablate=assets` renders the procedural twin from the same build).
 - Physics `CFG` verbatim from the old game (`src/game/cfg.js`).
 - `render/` + `art/` are one owner; sequential passes only.
 - Determinism gate (`npm run det`) and shot gate must stay green; never
@@ -94,6 +101,23 @@ carries every tell; `shots/roundN` includes `play-camera`.
 - Budget: one builder, one milestone, one critic review, then handoff.
   Inside a milestone the builder may run the dream loop (below); its
   judge subagents do not count as the critic review.
+
+## OUTER CADENCE (self-paced /loop, adopted 2026-10-20)
+
+Scott's decision: run the work as self-paced `/loop` rounds until he stops
+it. Focus: visuals first (the "low-poly amateur" read: hero, jungle,
+islands, light), then gameplay (WO-F08, F10, F11, F04, F06). One round:
+
+1. Pick the top open work order (P1 > P2 > P3; whole-frame over local).
+2. One bounded intervention (an authored asset, a shader pass, a rule).
+3. Gates: build, det, shots (and `npm run play` when rules change).
+4. Self-check the stills against the previous round (labelled
+   self-review). Keep or revert. Commit the round (`Round NN: ...`).
+5. Update `WORK-ORDERS.md` and `STATUS.md`.
+
+Every 4 rounds, or when a milestone's orders close: one blind packet
+(`tools/packet.mjs`) and one fresh critic (prompt v1). That review, not
+self-review, moves the baseline. No push without Scott's go-ahead.
 
 ## INNER LOOP (dream loop, adopted 2026-09-29 at the M2/M3 boundary)
 

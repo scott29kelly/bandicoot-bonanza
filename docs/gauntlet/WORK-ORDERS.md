@@ -49,7 +49,7 @@ Status: OPEN · IN PROGRESS · CLOSED (evidence) · STALLED (tactic ended)
 
 | ID | Round | Source | Problem / impact | Hypothesis / intervention | Pri | Status | Attempts |
 |---|---|---|---|---|---|---|---|
-| WO-L01 | r28, r33 | critic | Sea stacks: two-tone paint, no strata/moss; shade went grey then inverted | Painted after flat normals (r29), lifted bands (r34), saturated (r35): shade sat 0.075→0.38. Remaining: strata do not read at 60 m, waterline band | P3 | IN PROGRESS | 3 (tactic "vertex paint") — at limit |
+| WO-L01 | r28, r33 | critic | Sea stacks: two-tone paint, no strata/moss; shade went grey then inverted | Painted after flat normals (r29), lifted bands (r34), saturated (r35). r37 NEW TACTIC: authored GLB (`assets/models/sea-stack.glb`) — carved blocks, moss drips, fern crown | P3 | IN PROGRESS (r37 self-review: kept; blind A/B owed) | 3 vertex paint (ENDED) · 1 authored asset |
 | WO-L02 | r28–r31 | critic | Foam a milky sheet over ~35% of water-gap; no wet-sand band; hard platform/water line | Halo alpha 0.6→0.5 (r29) barely moved. Next: narrow lace band at contact + wet-sand ring | P3 | OPEN | 1 |
 | WO-L03 | r35 | critic | No shoreline band on beach edges (≤6 px transition) | Wet-sand darkening ring in the sand vcolor at the rim + shallow lightening | P3 | OPEN | 0 |
 | WO-L04 | r28–r31 | critic | Platform skirt a flat brown face | Strata relief 0.18/paint 0.13 (r30) — "present but faint" | P3 | IN PROGRESS | 1 |
@@ -80,6 +80,13 @@ Status: OPEN · IN PROGRESS · CLOSED (evidence) · STALLED (tactic ended)
 | WO-R05 | M2 | critic A/B | hero-closeup: a grass tuft crosses the hero's shins and boots (400–560, 520–800); the feet and contact shadow are hidden. Present since the r31 grass density rise (110/gap island), first named at p02 | grass avoid disc at every framing's player position (same fix as WO-L18) | P3 | OPEN | 0 |
 | WO-R06 | M2 | critic A/B | title-hero (candidate): crate shade side luma 0.278 vs baseline 0.173 — less form contrast on the crates after the r27 emissiveMap lift | this is WO-V06's face-turn ratio; measure with it | P3 | OPEN | 0 |
 | WO-T01 | M1 | observation | `tools/packet.mjs` printed "?" for tri/draw counts | read `stats.triangles` / `stats.drawCalls` | P3 | CLOSED (M1, NOTE.md now lists counts) | 1 |
+
+## Authored-asset rounds (r37+)
+
+| ID | Round | Source | Problem / impact | Hypothesis / intervention | Pri | Status | Attempts |
+|---|---|---|---|---|---|---|---|
+| WO-A01 | r37 | self-review | play-camera: the two horizon stacks read as floating — the narrow neck and dark base vanish into the haze, the bright top block hangs over the sea | wider footprint at the base, or a rock skirt at the waterline; check under `?ablate=assets` for the old read | P3 | OPEN | 0 |
+| WO-A02 | r37 | self-review | All ten stacks are one mesh under a yaw and a stretch; at title-hero two are in frame together | a second and third stack variant (new seeds) | P3 | OPEN | 0 |
 
 ## Engine limits (logged, not scheduled)
 
