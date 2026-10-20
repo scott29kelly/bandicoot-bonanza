@@ -159,6 +159,24 @@ Verdict: candidate 6 / baseline 0 (beach-corridor high, play-camera high, crate-
 | WO-R01 | — | critic | (re-observed) near-black stacked shadow where the palm shadow crosses the platform lip (water-gap 75–120×545–580, V 0.067) | as WO-R01 | P2 | OPEN | — |
 | WO-V14 | — | critic | (re-measured) foreground sand sd 0.012 vs ref path 0.227; sand 52–62% of the bottom half vs 30% | as WO-V14 / V20 | P2 | OPEN | — |
 
+## Packet p06 (r52: baseline r47 vs candidate r51), critic v2, seed 52
+
+Verdict: candidate 5 / baseline 0 / tie 1 (play-camera pixel-identical; the hero is off-frame). Only the hero differs. hero-closeup high, crate-cluster high, title-hero high, beach-corridor med, water-gap med. Character row: candidate 5 / baseline 3. PROMOTED: r51 (`c356def`) is the accepted baseline — deviation from G5's "no regression" recorded: one local regression (pupil visibility, WO-R08) the critic weighed as outweighed in every pair; it is filed P1 below.
+
+| ID | Round | Source | Problem / impact | Hypothesis / intervention | Pri | Status | Attempts |
+|---|---|---|---|---|---|---|---|
+| WO-R08 | r52 | critic A/B | Regression (local): pupils near-invisible — closeup eye p50 L 0.725, sat 0.33, the slit a faint smudge; no catchlight (ref cat 10: p50 0.49–0.56, crisp black slit + catchlight). The baseline's slit read better | the critic's top pick, with WO-A24 | P1 | OPEN | 0 |
+| WO-A24 | r52 | critic (top pick) | Hero face does not read: pupils, iris rim, catchlight | eye pass: darken the slit and the iris rim in the texture (eye mask from the hull mask's bright set + hue), add an emissive catchlight sprite or a spec term on the eye region | P1 | OPEN | 0 |
+| WO-A25 | r52 | critic | Inner ears have no warm colour: sat 0.07 hue 34 vs ref sat 0.23 hue 7 (pink-brown) — the fur desaturation caught them | exclude pink hues (330–20°) from `--fur-desat`, or a hue-masked warm boost at the ears | P2 | OPEN | 0 |
+| WO-A26 | r52 | critic | Shaded fur takes the environment's yellow-green (hue 49–95) and sits under the ≥0.15 shadow-saturation rule; the real cat's dark fur is violet-red (hue 297–353, sat p50 0.10–0.17) | a cool-violet bias in the hero's neutral light (diffuseDesat target colour) to sat ≈0.15, hue 280–330 | P2 | OPEN | 0 |
+| WO-A27 | r52 | critic | Tail too thick (~85 px in the closeup, equal to the hind leg) and hooks up like a question mark; the real tail is slim and tapers (cat 06–09) | scale the tail's vertices toward the tail bone in rig.py (taper 0.55 → 0.35), or a tail-specific concept tweak | P2 | OPEN | 0 |
+| WO-A23 | — | critic | (confirms) dark-red hip crease line and white flecks (title 893–953×605–630, 955–963×640–652); a pinched star notch mid-chest (closeup 680–700×440–480) — not holes | as WO-A23 | P3 | OPEN | — |
+| WO-A28 | r52 | critic | Plastic gloss: no fur breakup — no chest tuft, cheek fluff, ear tufts (ref 10, 12) | silhouette fur cards at cheeks/chest, or a fur-strand normal-ish shading term | P3 | OPEN | 0 |
+| WO-A19 | — | critic | (re-measured) the jungle mass is "dark confetti": title canopy L 0.188 / Laplacian 0.061 / block std 0.080 vs ref form-1 foliage 0.305 / 0.043 / 0.114 — darker, noisier, less large-shape structure | lighter tile, bigger leaf scale (7 m → 11 m), lower high-frequency contrast | P2 | OPEN | — |
+| WO-V14 | — | critic | (re-measured) sand block16 std 0.047–0.069 vs ref path 0.135; sand 59–64% of the lower frame vs 42–52% | as WO-V14 | P2 | OPEN | — |
+| WO-V19 | — | critic | (re-measured) weak contact occlusion at crate bases, pebbles, grass on sand | as WO-V19 / V11 | P2 | OPEN | — |
+| WO-V22 | r52 | critic | Platform foundations thin: water-gap slabs with thin brown lips over water, small root/rock nubs only (pillar D; refs form-2/6: plinths, roots, rubble skirts) | the island-skirt round (already queued): authored rock/root skirt GLBs | P2 | OPEN | 0 |
+
 ## Engine limits (logged, not scheduled)
 
 - Shadow-map texel staircase on crate faces at portrait range (4096 map).

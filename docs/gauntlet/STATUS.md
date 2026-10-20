@@ -48,7 +48,11 @@
   cat concept with arms clear of the body.
 - r51: cat re-concept with the arms clear of the body (`cat4-s88`): the
   stride plate is gone; soften blur and sheet culling off (seam lines).
-- Next: r52 BLIND PACKET (critic v2, base r47 vs cand r51), then
+- r52 BLIND PACKET p06 (r47 vs r51, critic v2): candidate 5 / 0 / tie 1.
+  PROMOTED: r51 `c356def` is the ACCEPTED BASELINE (first promotion since
+  r28). Deviation: one local regression (pupils, WO-R08) filed P1.
+- Next: r53 eye pass (WO-R08 + A24) + warm inner ears (A25), r54 tail
+  taper + violet fur shade (A27, A26), r55 island skirts (V22), then
   r47 perf LOD (WO-A06, variants staged in assets-raw/*/lod1.glb).
 - DECISION OWED BY SCOTT: WO-X02 — other Crash-like trade dress (title,
   X-crates, TNT, spin-fruit). Keep, or restyle and rename?
