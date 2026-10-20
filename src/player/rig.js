@@ -69,8 +69,10 @@ export function createRiggedHero(gltfScene){
   // full-strength band washed the silhouette white (round 38 crop).
   // Narrower too (power 5.5): the tail top ran +0.4 L and desaturated (p03, WO-A10).
   // 0.22x / 6.5 for the black cat: on a dark albedo the rim lifted ~7x over
-  // 4 px and cut the figure out like a sticker (p04, WO-A17).
-  skinned.material=toonMat({map:src.map??null,rim:{...RIM,strength:RIM.strength*0.22,power:6.5,mapBias:1.6,tint:[1.22,1.0,0.74]}});
+  // 4 px and cut the figure out like a sticker (p04, WO-A17). Then 0.45x at
+  // power 8: the silhouette edge only, >=2.5x the body (p05, WO-A21); the
+  // front-face teal was sky fill, now neutralised by diffuseDesat.
+  skinned.material=toonMat({map:src.map??null,rim:{...RIM,strength:RIM.strength*0.45,power:8.0,mapBias:1.6,diffuseDesat:0.8,tint:[1.10,1.0,0.84]}});
   src.dispose();
   skinned.castShadow=true;
   skinned.frustumCulled=false; // skinned bounds do not follow the pose

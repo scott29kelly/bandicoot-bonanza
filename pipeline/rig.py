@@ -229,7 +229,7 @@ if a.soften < 1 or a.fur_desat > 0 or a.fur_lift > 0:
                 # read as a hole; form showed only where specular landed.
                 v = out[..., :3].max(axis=2, keepdims=True)
                 w = np.clip((0.40 - v) / 0.40, 0, 1)
-                out[..., :3] += w * a.fur_lift * np.array([0.82, 0.88, 1.0])
+                out[..., :3] += w * a.fur_lift * np.array([0.95, 0.97, 1.0])  # near-neutral: refs/cat chroma ~0.09
             out[..., 3] = px[..., 3]
             img.pixels[:] = np.clip(out, 0, 1).ravel()
             img.update()

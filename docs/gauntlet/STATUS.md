@@ -41,7 +41,9 @@
   canopy texture wins every frame. Regression WO-A20: the cat reads
   olive-brown (r45 lift + warm tint) — blocks promotion; r47 becomes the
   baseline once it closes. Top pick: neutral cool-black fur (WO-A20/A21).
-- Next: r49 WO-A20 + A21 (neutral black cat, silhouette rim),
+- r49: neutral black cat (WO-A20: chroma 0.41 → 0.01, eyes keep hue),
+  edge-only rim (A21). If it holds, r47+r49 becomes the baseline.
+- Next: r50 whiskers + hip plate (WO-A13, A14),
   r47 perf LOD (WO-A06, variants staged in assets-raw/*/lod1.glb).
 - DECISION OWED BY SCOTT: WO-X02 — other Crash-like trade dress (title,
   X-crates, TNT, spin-fruit). Keep, or restyle and rename?
