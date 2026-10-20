@@ -254,8 +254,11 @@ function jungleRidge(x,z,len,w,h,dir,near=true){
     if(near&&hasAsset('jungle-bush'))for(let i=0;i<rp2.count;i++){
       const ly=rp2.getY(i);
       if(ly<0.2||ly>=1.8||rn.getY(i)<0.05||hash3(rp2.getX(i),ly,rp2.getZ(i)+x)>0.3)continue;
-      canopy.push({x,z,dir,lx:rp2.getX(i),ly:ly-0.4,lz:rp2.getZ(i),
-        R:1.5+hash3(i,ly,z)*1.2,depth:0.25,yaw:hash3(z,ly,i)*6.283});
+      // Round 46 (WO-V18): two in five shore slots are big-leaf plants at
+      // 2-3x — the large leaf shapes that anchor the refs' foliage walls.
+      const big=hasAsset('bigleaf')&&hash3(ly,i,x)<0.4;
+      canopy.push({x,z,dir,lx:rp2.getX(i),ly:ly-(big?0.2:0.4),lz:rp2.getZ(i),
+        R:(1.5+hash3(i,ly,z)*1.2)*(big?1.6:1),depth:0.25,yaw:hash3(z,ly,i)*6.283,big});
     }
   }
   ridgeSamples.push(...samples);
@@ -505,22 +508,27 @@ export function createBackdrop(){
   const authored=[];
   if(canopy.length){
     const m=new THREE.Matrix4(),q=new THREE.Quaternion(),sc=new THREE.Vector3(),p=new THREE.Vector3();
-    const up=new THREE.Vector3(0,1,0),size=assetSize('jungle-bush');
-    const mats=[],cols=[];
+    const up=new THREE.Vector3(0,1,0);
+    // Three instanced sets. Past 34 m from the corridor a clump never
+    // reads closer than ~25 m, so it takes the 1.1k-face bush (WO-A06).
+    const sets={'jungle-bush':{mats:[],cols:[]},'jungle-bush-lo':{mats:[],cols:[]},'bigleaf':{mats:[],cols:[]}};
     for(const c of canopy){
       const cd=Math.cos(c.dir),sd=Math.sin(c.dir);
       p.set(c.lx*cd+c.lz*sd+c.x,c.ly+WATER_Y,-c.lx*sd+c.lz*cd+c.z);
+      const name=c.big?'bigleaf':(c.lo||Math.abs(p.x)>34)&&hasAsset('jungle-bush-lo')?'jungle-bush-lo':'jungle-bush';
+      const size=assetSize(name);
       q.setFromAxisAngle(up,c.yaw);
       const k=2.2*c.R/Math.max(size.x,size.z);
-      sc.set(k,k*0.9,k);
-      mats.push(m.compose(p,q,sc).clone());
+      sc.set(k,k*(c.big?1.1:0.9),k);
+      sets[name].mats.push(m.compose(p,q,sc).clone());
       // Interior dark: low on the flank sits under the canopy above it.
       // 0.30 floor (was 0.45): the canopy interior must reach the refs'
       // dark quarter, not hover at mid-key (round 42, WO-V13).
       const v=0.30+0.62*c.depth*c.depth;
-      cols.push(new THREE.Color(v,v*(0.96+hash3(c.lx,c.lz,3)*0.08),v));
+      sets[name].cols.push(new THREE.Color(v,v*(0.96+hash3(c.lx,c.lz,3)*0.08),v));
     }
-    authored.push(instanceAsset('jungle-bush',mats,cols));
+    for(const [name,{mats,cols}] of Object.entries(sets))
+      if(mats.length)authored.push(instanceAsset(name,mats,cols));
   }
   if(trees.length){
     const m=new THREE.Matrix4(),q=new THREE.Quaternion(),sc=new THREE.Vector3(),p=new THREE.Vector3();

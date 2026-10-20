@@ -19,12 +19,16 @@ import seaStackUrl from '../../assets/models/sea-stack.glb';
 import heroUrl from '../../assets/models/hero.glb';
 import jungleBushUrl from '../../assets/models/jungle-bush.glb';
 import jungleTreeUrl from '../../assets/models/jungle-tree.glb';
+import jungleBushLoUrl from '../../assets/models/jungle-bush-lo.glb';
+import bigleafUrl from '../../assets/models/bigleaf.glb';
 
 const SOURCES={
   'sea-stack':seaStackUrl,
   'hero':heroUrl,
   'jungle-bush':jungleBushUrl,
-  'jungle-tree':jungleTreeUrl
+  'jungle-tree':jungleTreeUrl,
+  'jungle-bush-lo':jungleBushLoUrl,
+  'bigleaf':bigleafUrl
 };
 
 const loaded=new Map();

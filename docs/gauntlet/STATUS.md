@@ -32,7 +32,10 @@
   dropped. packet.mjs copies refs/cat. Use v2 from r48 on.
 - r45: cat charcoal lift (A16, body L p50 0.12→0.18), rim 0.22× (A17),
   smooth arm-weight ramp; hip plate (A14) is an internal sheet, open.
-- Next: r46 WO-V18 jungle dressing,
+- r46: big-leaf shore plants + distance LOD kept; two instanced-fill
+  tactics for the bare hill skin reverted (shards, haze). Next tactic:
+  a canopy texture on the ridges.
+- Next: r47 WO-V18 tactic 3 (canopy texture),
   r47 perf LOD (WO-A06, variants staged in assets-raw/*/lod1.glb).
 - DECISION OWED BY SCOTT: WO-X02 — other Crash-like trade dress (title,
   X-crates, TNT, spin-fruit). Keep, or restyle and rename?
