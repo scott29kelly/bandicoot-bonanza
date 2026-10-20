@@ -31,6 +31,26 @@ const HIPS_Y=0.42;
 
 const _q=new THREE.Quaternion(),_e=new THREE.Euler(),_v=new THREE.Vector3();
 
+/** The outline hull with a per-vertex width from the colour attribute
+ * (rig.py: 0 on whiskers and eye whites, 1 elsewhere). WO-A13. */
+function maskedHullMaterial(px){
+  const m=new THREE.MeshBasicMaterial({color:0x2a1408,side:THREE.BackSide,toneMapped:false});
+  m.onBeforeCompile=(sh)=>{
+    sh.uniforms.uPx={value:px};
+    sh.vertexShader=sh.vertexShader
+      .replace('#include <common>',`#include <common>
+uniform float uPx;
+attribute vec4 color;`)
+      .replace('#include <begin_vertex>',`#include <begin_vertex>
+        {
+          vec4 olMv=modelViewMatrix*vec4(position,1.0);
+          float olD=clamp(length(olMv.xyz)/4.0,1.0,2.2);
+          transformed+=normal*uPx*olD*color.r;
+        }`);
+  };
+  return m;
+}
+
 /** A copy of geo whose normals are averaged over every vertex sharing a position. */
 function smoothedNormals(geo){
   const g=geo.clone(),p=g.getAttribute('position'),n=g.getAttribute('normal');
@@ -79,7 +99,8 @@ export function createRiggedHero(gltfScene){
   // The hull needs ONE normal per position: the mesh splits its normals at
   // 60° creases, and a hull pushed along split normals tears open at every
   // crease — at range the tears read as a speckled pale fringe (p03, WO-R07).
-  const hull=new THREE.SkinnedMesh(smoothedNormals(skinned.geometry),outlineMaterial(0.007));
+  const hullGeo=smoothedNormals(skinned.geometry);
+  const hull=new THREE.SkinnedMesh(hullGeo,hullGeo.getAttribute('color')?maskedHullMaterial(0.007):outlineMaterial(0.007));
   hull.bind(skinned.skeleton,skinned.bindMatrix);
   hull.frustumCulled=false;
   skinned.parent.add(hull);

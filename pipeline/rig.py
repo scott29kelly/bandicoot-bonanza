@@ -19,6 +19,8 @@ ap = argparse.ArgumentParser()
 ap.add_argument('src'); ap.add_argument('dst')
 ap.add_argument('--height', type=float, default=1.45)
 ap.add_argument('--debug')
+ap.add_argument('--cull-sheets', type=float, default=0.0,
+                help='delete faces with other surface within this distance on BOTH sides (generator membranes)')
 ap.add_argument('--fur-desat', type=float, default=0.0,
                 help='saturation share removed from dark pixels (V < 0.4); eyes stay vivid')
 ap.add_argument('--fur-lift', type=float, default=0.0,
@@ -31,6 +33,30 @@ bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.import_scene.gltf(filepath=a.src)
 body = next(o for o in bpy.context.scene.objects if o.type == 'MESH')
 body.name = 'hero'
+if a.cull_sheets > 0:
+    # Thin membranes: where the concept's arm touched the body, the generator
+    # joined them with a sheet; the stride swing exposed it as the "plate"
+    # (WO-A14). A face with another surface within d on BOTH sides is
+    # sandwiched inside the volume — delete it.
+    import bmesh
+    from mathutils.bvhtree import BVHTree
+    bm = bmesh.new(); bm.from_mesh(body.data)
+    bm.faces.ensure_lookup_table()
+    tree = BVHTree.FromBMesh(bm)
+    d = a.cull_sheets
+    kill = []
+    for f in bm.faces:
+        c = f.calc_center_median(); n = f.normal
+        if n.length < 0.5:
+            continue
+        o1 = c + n * 1e-4; o2 = c - n * 1e-4
+        h1 = tree.ray_cast(o1, n, d); h2 = tree.ray_cast(o2, -n, d)
+        if h1[0] is not None and h2[0] is not None and h1[2] != f.index and h2[2] != f.index:
+            kill.append(f)
+    bmesh.ops.delete(bm, geom=kill, context='FACES')
+    bm.to_mesh(body.data); bm.free()
+    print(f'[rig] culled {len(kill)} sandwiched faces (d={d})')
+
 V = [body.matrix_world @ v.co for v in body.data.vertices]
 # Recentre X on the head band: a long tail widens the bounding box prep.py
 # centred on, and the cat's body sat 0.08 m off the origin (round 43).
@@ -153,7 +179,10 @@ def allowed(v):
     out = ['hips', 'spine', 'head']
     if v.z > 0.76 and abs(v.x) > 0.09:
         out.append('ear_' + side)
-    if 0.22 < v.z < 0.58 and abs(v.x) > abs(J['arm_' + side].x) * 0.75 and v.y < cy + 0.06:
+    # Nothing above the shoulder top follows the arm: the cat's whisker sheet
+    # hangs to chin height beside the shoulder, and the stride swing tore it
+    # out as a cream plate (p03-p05 WO-A14, found by a hull-off capture, r50).
+    if 0.22 < v.z < J['arm_' + side].z + 0.01 and abs(v.x) > abs(J['arm_' + side].x) * 0.75 and v.y < cy + 0.06:
         out += ['arm_' + side, 'fore_' + side]
     if v.z < J['hips'].z + 0.03 and v.y < cy + 0.07:
         out += ['leg_' + side, 'shin_' + side]
@@ -246,6 +275,35 @@ for mat in body.data.materials:
         for name in ('Normal', 'Metallic', 'Roughness'):
             for l in list(bsdf.inputs[name].links):
                 nt.links.remove(l)
+
+# Hull mask (WO-A13): the outline hull wrapped every whisker in a dark
+# 2 px line, so they read as tan ropes. Per vertex, sample the final albedo;
+# bright pixels (whiskers, eye whites) get hull width 0. Stored as the colour
+# attribute, which the game's hull reads and the toon body ignores.
+import numpy as np
+_img = None
+for mat in body.data.materials:
+    for n in (mat.node_tree.nodes if mat and mat.use_nodes else []):
+        if n.type == 'TEX_IMAGE' and n.image and any(l.to_socket.name == 'Base Color' for l in n.outputs[0].links):
+            _img = n.image
+if _img is not None:
+    iw, ih = _img.size
+    px = np.array(_img.pixels[:], dtype=np.float32).reshape(ih, iw, 4)
+    me = body.data
+    uv = me.uv_layers.active.data
+    lum = np.zeros(len(me.vertices)); cnt = np.zeros(len(me.vertices))
+    for loop in me.loops:
+        u, v = uv[loop.index].uv
+        x = min(iw - 1, max(0, int((u % 1.0) * iw))); y = min(ih - 1, max(0, int((v % 1.0) * ih)))
+        r, g, b, _ = px[y, x]
+        lum[loop.vertex_index] += 0.2126 * r + 0.7152 * g + 0.0722 * b; cnt[loop.vertex_index] += 1
+    lum /= np.maximum(cnt, 1)
+    ca = me.color_attributes.new('Col', 'FLOAT_COLOR', 'POINT')
+    for i, l in enumerate(lum):
+        w = 0.0 if l > 0.45 else 1.0
+        ca.data[i].color = (w, w, w, 1.0)
+    me.color_attributes.active_color = ca
+    print(f'[rig] hull mask: {int((lum > 0.45).sum())} bright verts get no outline')
 
 # Scale the whole rig to game height.
 rig.scale = (a.height,) * 3
