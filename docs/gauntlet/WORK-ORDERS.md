@@ -119,6 +119,25 @@ Verdict: candidate 6 / baseline 0 (title-hero high, hero-closeup high, crate-clu
 | WO-A06 | — | critic | (r40 confirms) performance row 5 vs 7: 3.85–3.95M tris, ~17× the floor | as WO-A06 | P2 | (see WO-A06) | — |
 | WO-X01 | r40 | critic | IP: the authored hero "very closely matches the trademarked Crash design" (orange bandicoot, brows, green eyes, blue shorts, red sneakers, gloves). Fine for a private study; a problem if the game is published | DECIDED 2026-10-20 (Scott): avoid any trademark/copyright conflict — the hero becomes Scott's own black cat, the character from yard-warz (ground truth: `refs/cat/` copied from `yard-warz/main/reference/cat/`, notes in `yard-warz/main/docs/CAT_NOTES.md`). r43 builds it | P1 | CLOSED (r43: the cat replaces the bandicoot in every framing; the bandicoot GLB is gone from assets/models) | 1 |
 
+## Packet p04 (r44: baseline r39 vs candidate r43), critic v1, seed 44
+
+Verdict: baseline 5 / candidate 1. Baseline (bandicoot hero): beach-corridor low, crate-cluster med-high, hero-closeup high, title-hero low, water-gap med. Candidate: play-camera low (vignette only). The pixels differ in TWO things only: the hero model and the r42 edge grade. The loss is the cat hero judged against Crash references; the hero change is Scott's IP decision (WO-X01) and is NOT reverted. The r42 grade is retained (critic: "a small, real gain"). Critic prompt v2 follows (character row judged against Scott's cat, not Crash) — see STATUS.
+
+| ID | Round | Source | Problem / impact | Hypothesis / intervention | Pri | Status | Attempts |
+|---|---|---|---|---|---|---|---|
+| WO-A16 | r44 | critic A/B | Cat legibility: body near-black (dark-pixel L p50 0.06–0.14, p5 0.041); form reads only where teal specular lands; in crate shade it is a black mass; at distance a dark notch with yellow eyes (water-gap) | mascot interpretation: charcoal base (L ≈0.15–0.20) with a soft blue-gray sheen gradient, not pure black; keep the eyes the brightest accent | P1 | OPEN | 0 |
+| WO-A17 | r44 | critic A/B | Rim halo over-strength on the dark albedo: hero-closeup y=420 interior 25 → 173 (≈7×) over ~4 px — a sticker/cutout edge | rim strength scaled down for dark albedo (rim × albedo-luma term), warm and thin per CAT_NOTES | P2 | OPEN | 0 |
+| WO-A14 | r44 | critic A/B | (confirms r43) dark rectangular plate with a light rim at the cat's right hip (title 925–965×535–595; beach 620–640×490–515) — detached geometry or a back-face | rig debug: find the shell; weight gate or delete loose islands in prep (Blender: separate by loose parts, drop the small ones) | P2 | OPEN | 0 |
+| WO-A13 | r44 | critic A/B | (confirms r43) whiskers thick tan strokes that alias (closeup 480–650×340–440) | as WO-A13 | P3 | OPEN | 0 |
+| WO-A18 | r44 | critic | Cat reads "as an animal, not a mascot": no brow, no markings, no costume | expression through eye shape and lids, a brow ridge in the sculpt; Scott decides any accessory (CAT_NOTES: no clothes) | P2 | OPEN (design question for Scott) | 0 |
+| WO-V18 | r44 | critic (top pick) | Flat untextured green hill masses: local 16-px std 0.0045 (crate-cluster TL), 0.029–0.043 elsewhere vs ref foliage 0.062–0.070; in 4 of 6 framings | layered broadleaf jungle dressing at 2–3 scales (big-leaf tropicals + ferns) with occlusion at their bases, covering the ridge skin; merges WO-A07 + WO-A11 | P1 | OPEN | 0 |
+| WO-V19 | r44 | critic | Darks shallow: frame p5 0.12–0.20 vs refs 0.03–0.09; refs pack dark crevices at plant bases and under ferns | contact-occlusion cards under every plant cluster; deeper canopy undersides (ties WO-V13) | P2 | OPEN | 0 |
+| WO-V20 | r44 | critic | Corridor enclosure: refs wall the path with dense layered plants; ours opens onto broad sand (~40% of play-camera/beach) | dense plant walls along both banks of the corridor (ties WO-V14) | P2 | OPEN | 0 |
+| WO-V21 | r44 | critic | Canopy cards read as crumpled facets at every edge (1:1) | higher-face bush for near ridges (LOD inverse), or alpha-card leaves | P3 | OPEN | 0 |
+| WO-L21 | r44 | critic | Crates: clean plank lines, flat colour; refs show worn paint, metal straps, decals | ties WO-X02 (Scott's restyle decision) and the staged crate GLB | P3 | OPEN (after WO-X02) | 0 |
+| WO-L22 | r44 | critic | Path material: sand std 0.017–0.050 with hard sand/grass borders; refs worn earth blending into grass | ground blend mask at the corridor edges (ties WO-V14) | P3 | OPEN | 0 |
+| WO-T03 | r44 | builder | Critic prompt v1 judges the hero against Crash references (refs/proposed form-1..6) and carries a stale calibration fact ("sea stacks are flat-shaded by design", false since r37) | v2: add `refs/cat/` as the character reference, judge character as "a stylized mascot of the cat in refs/cat", drop the stale fact; recorded at the r44 boundary | P1 | CLOSED (r44: CRITIC-PROMPT-v2.md + packet.mjs copies refs/cat) | 1 |
+
 ## Engine limits (logged, not scheduled)
 
 - Shadow-map texel staircase on crate faces at portrait range (4096 map).

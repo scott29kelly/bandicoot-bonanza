@@ -21,6 +21,17 @@
   notes `yard-warz/main/docs/CAT_NOTES.md`). r43 built it: the cat is
   the hero; the bandicoot GLB is removed.
 - r42: value hierarchy (grade edge falloff, deeper canopy) WO-V13 partial.
+- r44 BLIND PACKET p04 (r39 vs r43, critic v1): baseline 5 / candidate 1.
+  Only the hero and the r42 edge grade differ. The cat lost on character
+  fidelity judged against Crash frames; the hero change is Scott's IP
+  decision and stays. The grade is a "small, real gain" and stays. Real
+  cat defects filed: WO-A16 legibility (near-black), A17 rim halo, A14
+  hip plate, A13 whiskers. Top pick: WO-V18 layered jungle dressing.
+- METHOD CHANGE at the r44 boundary: CRITIC-PROMPT-v2.md — character is
+  judged against `refs/cat/` (Scott's photos); stale sea-stack fact
+  dropped. packet.mjs copies refs/cat. Use v2 from r48 on.
+- Next: r45 cat legibility (A16 + A17 + A14), r46 WO-V18 jungle dressing,
+  r47 perf LOD (WO-A06, variants staged in assets-raw/*/lod1.glb).
 - DECISION OWED BY SCOTT: WO-X02 — other Crash-like trade dress (title,
   X-crates, TNT, spin-fruit). Keep, or restyle and rename?
 - r41: hero outline from smoothed normals (WO-R07), fur softened in

@@ -8,7 +8,7 @@
  * <framing>-A.png / <framing>-B.png with A/B identity randomized per pair.
  * Strips PNG metadata by re-encoding through sharp. Writes the mapping to
  * <out>.mapping.json BESIDE the packet directory (never inside it), copies
- * refs/proposed into <out>/refs, and generates NOTE.md from the sheets'
+ * refs/proposed into <out>/refs (and refs/cat into <out>/refs/cat), and generates NOTE.md from the sheets'
  * capture settings. Reveal the mapping only after the verdict is recorded.
  */
 import fs from 'node:fs';
@@ -42,6 +42,12 @@ const refs=path.join(ROOT,'refs','proposed');
 if(fs.existsSync(refs)){
   fs.mkdirSync(path.join(OUT,'refs'),{recursive:true});
   for(const f of fs.readdirSync(refs))fs.copyFileSync(path.join(refs,f),path.join(OUT,'refs',f));
+}
+// Critic v2: the hero is a mascot of Scott's cat; its photos go in refs/cat.
+const catRefs=path.join(ROOT,'refs','cat');
+if(fs.existsSync(catRefs)){
+  fs.mkdirSync(path.join(OUT,'refs','cat'),{recursive:true});
+  for(const f of fs.readdirSync(catRefs))fs.copyFileSync(path.join(catRefs,f),path.join(OUT,'refs','cat',f));
 }
 const sheet=(d)=>{try{return JSON.parse(fs.readFileSync(path.join(d,'sheet.json'),'utf8'));}catch{return null;}};
 const sb=sheet(BASE),sc=sheet(CAND);
