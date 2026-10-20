@@ -21,6 +21,8 @@ ap.add_argument('--height', type=float, default=1.45)
 ap.add_argument('--debug')
 ap.add_argument('--fur-desat', type=float, default=0.0,
                 help='saturation share removed from dark pixels (V < 0.4); eyes stay vivid')
+ap.add_argument('--fur-lift', type=float, default=0.0,
+                help='lift dark pixels toward a blue-gray charcoal by this much (mascot read)')
 ap.add_argument('--soften', type=float, default=0.5,
                 help='keep this share of the albedo detail above a 3 px blur (1 = untouched)')
 a = ap.parse_args(argv)
@@ -151,18 +153,32 @@ def allowed(v):
     out = ['hips', 'spine', 'head']
     if v.z > 0.76 and abs(v.x) > 0.09:
         out.append('ear_' + side)
-    if 0.22 < v.z < 0.58 and abs(v.x) > abs(J['arm_' + side].x) * 0.92 and v.y < cy + 0.06:
+    if 0.22 < v.z < 0.58 and abs(v.x) > abs(J['arm_' + side].x) * 0.75 and v.y < cy + 0.06:
         out += ['arm_' + side, 'fore_' + side]
     if v.z < J['hips'].z + 0.03 and v.y < cy + 0.07:
         out += ['leg_' + side, 'shin_' + side]
     if v.y > cy + 0.07 and v.z < 0.45:
-        out.append('tail')
+        # Only past the tail's root: rump vertices near the base followed the
+        # tail sway and tore a plate off the hip (p04, WO-A14).
+        t0, t1 = J['tail'], J['tailtip']
+        d = t1 - t0
+        if (v - t0).dot(d) / max(d.length_squared, 1e-9) > 0.18:
+            out.append('tail')
     return out
 
 
 groups = {n: body.vertex_groups.new(name=n) for n in deform}
 for i, v in enumerate(V):
-    ws = sorted(((1.0 / (seg_dist(v, *segs[n]) ** 4 + 1e-7), n) for n in allowed(v)), reverse=True)[:3]
+    # Arm influence ramps in across the shoulder (0.75x -> 1.05x its width):
+    # a hard gate split the skin between spine and arm, and the stride swing
+    # opened a hole at the inner elbow (round 45).
+    sh = abs(J['arm_' + ('L' if v.x < 0 else 'R')].x)
+    ramp = max(0.0, min(1.0, (abs(v.x) - 0.75 * sh) / (0.30 * sh)))
+    ramp = ramp * ramp * (3 - 2 * ramp)
+    ws = sorted(((1.0 / (seg_dist(v, *segs[n]) ** 4 + 1e-7) * (ramp if n[:4] in ('arm_', 'fore') else 1.0), n)
+                 for n in allowed(v)), reverse=True)[:3]
+    if not ws or sum(w for w, _ in ws) <= 0:
+        continue
     tot = sum(w for w, _ in ws)
     for w, n in ws:
         if w / tot > 0.02:
@@ -176,7 +192,7 @@ for n in deform:
 # Soften the baked fur strokes: out = blur + (src - blur) * soften. At full
 # detail they read as ink hatching, 1.8x the references' micro-contrast
 # (p03, WO-A08). A 3 px radius at 2048 stays inside the UV islands.
-if a.soften < 1 or a.fur_desat > 0:
+if a.soften < 1 or a.fur_desat > 0 or a.fur_lift > 0:
     import numpy as np
     for mat in body.data.materials:
         for n in (mat.node_tree.nodes if mat and mat.use_nodes else []):
@@ -208,6 +224,12 @@ if a.soften < 1 or a.fur_desat > 0:
                 dark = np.clip((0.45 - v) / 0.15, 0, 1)
                 k = a.fur_desat * np.maximum(blue, dark)
                 out[..., :3] = rgb * (1 - k) + lum * k
+            if a.fur_lift > 0:
+                # Charcoal, not void (p04, WO-A16): in shade the near-black body
+                # read as a hole; form showed only where specular landed.
+                v = out[..., :3].max(axis=2, keepdims=True)
+                w = np.clip((0.40 - v) / 0.40, 0, 1)
+                out[..., :3] += w * a.fur_lift * np.array([0.82, 0.88, 1.0])
             out[..., 3] = px[..., 3]
             img.pixels[:] = np.clip(out, 0, 1).ravel()
             img.update()

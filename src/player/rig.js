@@ -68,7 +68,9 @@ export function createRiggedHero(gltfScene){
   // Half the old rim: the baked albedo already carries form light, and the
   // full-strength band washed the silhouette white (round 38 crop).
   // Narrower too (power 5.5): the tail top ran +0.4 L and desaturated (p03, WO-A10).
-  skinned.material=toonMat({map:src.map??null,rim:{...RIM,strength:RIM.strength*0.5,power:5.5,mapBias:1.6,tint:[1.22,1.0,0.74]}});
+  // 0.22x / 6.5 for the black cat: on a dark albedo the rim lifted ~7x over
+  // 4 px and cut the figure out like a sticker (p04, WO-A17).
+  skinned.material=toonMat({map:src.map??null,rim:{...RIM,strength:RIM.strength*0.22,power:6.5,mapBias:1.6,tint:[1.22,1.0,0.74]}});
   src.dispose();
   skinned.castShadow=true;
   skinned.frustumCulled=false; // skinned bounds do not follow the pose

@@ -30,7 +30,9 @@
 - METHOD CHANGE at the r44 boundary: CRITIC-PROMPT-v2.md — character is
   judged against `refs/cat/` (Scott's photos); stale sea-stack fact
   dropped. packet.mjs copies refs/cat. Use v2 from r48 on.
-- Next: r45 cat legibility (A16 + A17 + A14), r46 WO-V18 jungle dressing,
+- r45: cat charcoal lift (A16, body L p50 0.12→0.18), rim 0.22× (A17),
+  smooth arm-weight ramp; hip plate (A14) is an internal sheet, open.
+- Next: r46 WO-V18 jungle dressing,
   r47 perf LOD (WO-A06, variants staged in assets-raw/*/lod1.glb).
 - DECISION OWED BY SCOTT: WO-X02 — other Crash-like trade dress (title,
   X-crates, TNT, spin-fruit). Keep, or restyle and rename?
