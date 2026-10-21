@@ -124,10 +124,9 @@ export function createRiggedHero(gltfScene){
   // up-facing fur, a slightly warmer base.
   // r73 (WO-A33): near-black fur tint. r75 (p11 WO-R15): the face keeps the
   // old tint (tintFace), so iris, whiskers and inner ear stay bright.
-  // r87 (p14 WO-A43): the grazing pixel spiked to V 0.86, a sticker edge;
-  // capped (cap 0.32) at power 8 and 0.63x the edge peaks ~0.57. Sheen +15%
-  // keeps the head off dark foliage at range.
-  skinned.material=toonMat({map:src.map??null,rim:{...RIM,strength:RIM.strength*0.63,power:8.0,cap:0.32,mapBias:1.6,diffuseDesat:0.8,tint:[0.64,0.46,0.32],tintFace:[1.16,1.0,0.82],sheen:[0.115,0.132,0.15]}});
+  // r87 capped this rim (p14 WO-A43, a 1-2 px "sticker" spike); p15 (r90)
+  // preferred the stronger rim 6/0, so r91 reverted it (WO-R18).
+  skinned.material=toonMat({map:src.map??null,rim:{...RIM,strength:RIM.strength*0.8,power:7.0,mapBias:1.6,diffuseDesat:0.8,tint:[0.64,0.46,0.32],tintFace:[1.16,1.0,0.82],sheen:[0.10,0.115,0.13]}});
   src.dispose();
   skinned.castShadow=true;
   skinned.frustumCulled=false; // skinned bounds do not follow the pose

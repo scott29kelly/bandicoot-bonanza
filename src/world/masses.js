@@ -209,7 +209,9 @@ export function islandMass({x,z,w,d,topY=0}){
       // r88 (p14 WO-V40): a sunlit pool down the lane. L>0.7 covered
       // 0.4-4% of each frame against the refs' ~3.5% median; form-1's path
       // is the brightest thing in the shot, framed by dark walls.
-      _c.multiplyScalar(1+0.60*onPath);
+      // Warm, not grey (r91, p15): a neutral lift read pale at sat 0.47-0.54
+      // against the ref path's 0.65; blue held back keeps the lane golden.
+      {const k=1+0.60*onPath;_c.setRGB(_c.r*k,_c.g*k*(1-0.10*onPath),_c.b*k*(1-0.65*onPath));}
       _c.multiplyScalar(1-0.18*Math.exp(-Math.pow((pd-2.15)/0.45,2)));
       // Wet-sand band where the top meets the rim — the tide got here.
       const rim=Math.max(Math.abs(px)/halfW,Math.abs(pz)/halfD);
