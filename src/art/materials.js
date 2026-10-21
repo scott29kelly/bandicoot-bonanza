@@ -56,6 +56,9 @@ export function toonMat(opts={}){
     // space darkening toward the silhouette gives every round part a core
     // shadow band inside the rim, whatever the key angle.
     const formK=rim.formK??0.42,formP=rim.formP??1.6;
+    // cap: the grazing pixel hits rimF 1; capped, the band keeps its width
+    // without a 1-2 px cream spike at the silhouette (p14 WO-A43).
+    const rimCap=rim.cap??1;
     // mapBias: sample the colour map this many mips softer. The authored
     // hero's fur strokes read as ink hatching at full res (p03, WO-A08).
     const mapBias=rim.mapBias??0;
@@ -134,7 +137,8 @@ void main() {`)
 {
   vec3 rimN=normalize(normal);
   vec3 rimV=normalize(vViewPosition);
-  float rimF=pow(1.0-clamp(dot(rimN,rimV),0.0,1.0),uRimP);
+  float rimF=pow(1.0-clamp(dot(rimN,rimV),0.0,1.0),uRimP);${rimCap<1?`
+  rimF=min(rimF,${rimCap.toFixed(3)}); // cap: no 1-2 px silhouette spike`:''}
   totalEmissiveRadiance+=uRimColor*rimF*uRimK;
   // Warm, saturating darkening — a plain multiply left a grey-blue band
   // (rgb 108,115,107, sat 0.05) at the belly terminator (round 34).

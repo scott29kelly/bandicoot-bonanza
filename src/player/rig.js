@@ -122,7 +122,7 @@ export function createRiggedHero(gltfScene){
   // front-face teal was sky fill, now neutralised by diffuseDesat.
   // r63 (p08 WO-A33): rim 0.8x at power 7 (~2.5x the body), a cool sheen on
   // up-facing fur, a slightly warmer base.
-  skinned.material=toonMat({map:src.map??null,rim:{...RIM,strength:RIM.strength*0.8,power:7.0,mapBias:1.6,diffuseDesat:0.8,tint:[0.64,0.46,0.32],tintFace:[1.16,1.0,0.82],sheen:[0.10,0.115,0.13]}});
+  skinned.material=toonMat({map:src.map??null,rim:{...RIM,strength:RIM.strength*0.63,power:8.0,cap:0.32,mapBias:1.6,diffuseDesat:0.8,tint:[0.64,0.46,0.32],tintFace:[1.16,1.0,0.82],sheen:[0.115,0.132,0.15]}});
   src.dispose();
   skinned.castShadow=true;
   skinned.frustumCulled=false; // skinned bounds do not follow the pose
