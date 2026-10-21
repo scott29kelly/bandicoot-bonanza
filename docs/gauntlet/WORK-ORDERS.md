@@ -215,6 +215,25 @@ Verdict: candidate 4 / baseline 2. Candidate: hero-closeup high (pupils + catchl
 | WO-L20 | — | critic | (confirms) fruit = smooth spheres with leaf caps and a near-blown orange rim glow | as WO-L20 | P2 | OPEN | — |
 | WO-V26 | — | critic | (confirms) cut-off foreground orange competes with the hero in title-hero | as WO-V26 | P3 | OPEN | — |
 
+## Packet p09 (r65: accepted baseline r51 vs candidate r64), critic v2, seed 65
+
+Verdict: candidate 4 / baseline 2. Candidate: water-gap med-high (seams gone — not named; lower sea shows cliffs: dark cliff 15.3% → 30.9%; foam wash 34% → 25%, ref 20%), hero-closeup med (eyes rgb 166,170,145 / 180,186,153 sat 0.17 ≈ refs/cat 10; inner ear hue 6 sat 0.29 ≈ ref; slimmer tail), title-hero low-med, crate-cluster low-med. Baseline: beach-corridor low (at ~100 px the candidate coat reads slate grey, L 0.213 B−R +2.7 vs 0.167 / −2.8), play-camera low (far-bank foam dimmer after r64; darks lifted p5 0.152 vs 0.120). PROMOTED: r64 (`3f9da05`) is the accepted baseline. Deviation from G5's "no regression" recorded: two soft, low-confidence regressions (coat value at range, lifted darks) filed P1 below; no artefact-level fault.
+
+| ID | Round | Source | Problem / impact | Hypothesis / intervention | Pri | Status | Attempts |
+|---|---|---|---|---|---|---|---|
+| WO-R11 | r65 | critic A/B | Coat reads cool slate at range: median L 0.213–0.241, B−R +2.7 to +3.3 (target warm black L 0.15–0.17, B−R ≤ 0; refs/cat chest rgb 25,21,17) — the r63 sheen + fur lift overshoot at distance | sheen weaker at range (scale by view distance or by facing), warmer tint (B−R ≤ 0), retry fur lift 0.10; keep r63's face colours | P1 | OPEN | 0 |
+| WO-R12 | r65 | critic A/B | Darks lifted frame-wide: p5 0.100–0.152 vs baseline 0.072–0.120 and refs 0.03–0.09 (the r59 canopy lift); far-bank foam in play-camera dim and broken after r64 | anchor darks where they belong (canopy interior, crevices) without re-crushing the hero's backdrop: canopy floor 0.44 → 0.38 with a deeper depth term; ridge foam opacity 0.5 → 0.6 | P1 | OPEN | 0 |
+| WO-V28 | r65 | critic (top pick) | Ground plane flat: sand L sd 0.040–0.049, 40 px block-mean sd 0.032–0.040 vs form-1 path 0.155 / 0.120; no worn path, verges or edge AO; 30–45% of every gameplay frame | two-scale macro value+hue breakup in the sand (≈3–4 m and ≈12 m), a worn darker path down the corridor with clustered grass verges, AO at the path edges; target sand L sd ≥ 0.12. Merges WO-V09, V14, L22 | P1 | OPEN | 0 |
+| WO-A36 | r65 | critic | Coat looks like glossy plastic with long specular streaks (ref: soft fur sheen) | ties WO-A28 (fur breakup) — a broader, softer sheen falloff | P2 | OPEN | 0 |
+| WO-A37 | r65 | critic | Whiskers now thick opaque white bars; at ~100 px they read as scribbles | thinner (UV mask erode) or fade the whisker brightness with distance | P3 | OPEN | 0 |
+| WO-A38 | r65 | critic | The mascot face is neutral and the eyes small for the head at 100 px (form-4 pushes eye scale and expression) | Scott's design call with WO-A18 (mascot touches) | P2 | OPEN (design, Scott) | 0 |
+| WO-V29 | r65 | critic | No landmark props (carved stone, totems, ruins) in any framing | a stone ruin / tiki landmark GLB in a framing's mid-ground (ties WO-X02 for the totem) | P2 | OPEN | 0 |
+| WO-V30 | r65 | critic | Colour script greener and cooler than the refs: frame hue 66–107 vs 48–62; no golden key or warm path bounce | render owner: warmer key, warm bounce on the path (ties WO-V25) | P2 | OPEN | 0 |
+| WO-L32 | r65 | critic | Water flow marks are evenly spaced short white dashes that look stamped (water-gap 900–1250×520–720) | vary dash length/spacing, fade by depth (ties WO-L29) | P3 | OPEN | 0 |
+| WO-L33 | r65 | critic | Grass clumps evenly spaced, similar size, no clustering into verges | clustered scatter with a path mask (with WO-V28) | P2 | OPEN | 0 |
+| WO-A35 | — | critic | (confirms) white flecks at the back leg/foot (title 820–940×620–730) | as WO-A35 | P3 | OPEN | — |
+| WO-A30 | — | critic | (confirms) dotted white outline fringe at gameplay range | as WO-A30 | P2 | OPEN | — |
+
 ## Engine limits (logged, not scheduled)
 
 - Shadow-map texel staircase on crate faces at portrait range (4096 map).

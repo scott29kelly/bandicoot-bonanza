@@ -80,7 +80,12 @@
 - r63: hero fur sheen + stronger rim (A33), face colours to the photos
   (A34); screenshot timeout 120 s (WO-T04 flake).
 - r64: far-shore kerb softened (L30), stray lime leaf cards removed (L26).
-- Next: (done r64) hero shading + face colours
+- r65 BLIND PACKET p09 (r51 vs r64, critic v2): candidate 4 / 2.
+  PROMOTED: r64 `3f9da05` is the ACCEPTED BASELINE (second promotion).
+  Deviation: two soft regressions filed P1 (R11 coat slate at range, R12
+  lifted darks). Top pick: the ground plane (WO-V28).
+- Next: r66 ground plane (V28 + L33), r67 coat value + darks (R11, R12),
+  r68 ..., r69 BLIND PACKET. Later: (done r64) hero shading + face colours
   (A33, A34), r64 ..., r65 BLIND PACKET. Later:
   lift (V23), r60 slim-tail cat (staged in assets-raw/cat5, A27), r61
   BLIND PACKET.
