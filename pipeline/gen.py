@@ -7,6 +7,7 @@ can stop and resume. Models (all local, licences in docs/gauntlet/ASSETS.md):
   mesh     Pixal3D + TRELLIS.2 (MIT)
 
 Usage:
+  python pipeline/gen.py <name> "<edit instruction>" --edit ref.png   (concept from a reference)
   python pipeline/gen.py <name> "<object description>" [--seed N] [--faces N] [--tex N]
   python pipeline/gen.py <name> --image path/to/concept.png      (skip the concept step)
 Then: blender -b -P pipeline/prep.py -- assets-raw/<name>/mesh.glb assets/models/<name>.glb --height H
@@ -40,6 +41,25 @@ def concept(name, desc, seed):
     wf.set('KSampler', 'seed', seed)
     files, t = wf.run(RAW / name, 'concept')
     log(name, f'concept in {t}s')
+    return files[0]
+
+
+def edit(name, source, prompt, seed):
+    """Qwen Image Edit 2511 (4-step) from one reference image -> concept.png."""
+    dest = RAW / name / 'concept.png'
+    if dest.exists():
+        return dest
+    img = upload(source)
+    wf = Workflow(HERE / 'templates/image_qwen_image_edit_2511.json')
+    for node in wf.find('LoadImage'):
+        wf.api[node]['inputs']['image'] = img  # both reference slots: the same picture
+    enc = wf.find('TextEncodeQwenImageEditPlus')
+    for i in [i for i in enc if wf.api[i]['inputs'].get('prompt')]:
+        wf.api[i]['inputs']['prompt'] = prompt
+    wf.set('Enable 4steps LoRA', 'value', True)
+    wf.set('KSampler', 'seed', seed)
+    files, t = wf.run(RAW / name, 'concept')
+    log(name, f'edit concept in {t}s')
     return files[0]
 
 
@@ -91,13 +111,16 @@ def main():
     ap.add_argument('name')
     ap.add_argument('desc', nargs='?')
     ap.add_argument('--image')
+    ap.add_argument('--edit', help='reference image: desc becomes an edit instruction (Qwen Image Edit)')
     ap.add_argument('--seed', type=int, default=7)
     ap.add_argument('--faces', type=int, default=40000)
     ap.add_argument('--tex', type=int, default=2048)
     ap.add_argument('--stop', choices=['concept', 'cutout', 'mesh'], default='mesh')
     a = ap.parse_args()
     (RAW / a.name).mkdir(parents=True, exist_ok=True)
-    if a.image:
+    if a.edit:
+        src = edit(a.name, a.edit, a.desc, a.seed)
+    elif a.image:
         src = RAW / a.name / 'concept.png'
         if not src.exists():
             shutil.copy(a.image, src)

@@ -11,6 +11,7 @@ local models only, no paid API nodes. Raw generations live in
 | Concept image | Z-Image Turbo (`z_image_turbo_bf16`) | Apache-2.0 |
 | Background cutout | BiRefNet | MIT |
 | Image to mesh + texture | Pixal3D + TRELLIS.2 (`trellis_2_int8_convrot`) | MIT |
+| Concept from a reference photo | Qwen Image Edit 2511 (`qwen_image_edit_2511_fp8mixed`, 4-step LoRA) | Apache-2.0 |
 | Cleanup, decimate, export | Blender 5.2 (`pipeline/prep.py`) | GPL tool; output is ours |
 
 Hunyuan3D 2.1 is installed too, but its Tencent licence excludes the EU,
@@ -21,3 +22,7 @@ UK and South Korea. Do not ship its output without Scott's decision.
 | File | Round | Prompt / source | Seed | Faces | Replaces | A/B status |
 |---|---|---|---|---|---|---|
 | `sea-stack.glb` | 37 | "a tall tropical sea stack rock pillar, layered sandstone strata in warm ochre and terracotta, undercut at the base, lush jungle vegetation and ferns crowning the flat top, moss creeping down the sides" + house STYLE (`gen.py`) | 11 | 13,994 | `seaStack()` in `backdrop.js` (10 stacks) | self-review: kept; blind A/B owed |
+| `hero.glb` (r38, REMOVED r43 — resembled a trademarked character) | 38 | concept `hero-s42`: "full body character turnaround front view of an original cartoon bandicoot mascot hero, relaxed A-pose … orange fur, cream belly and muzzle, green eyes, spiky darker tuft, large pointed ears, long striped tail, fingerless brown gloves, blue denim shorts, chunky red sneakers" + STYLE; mesh `--faces 80000 --tex 2048`, prep 30k, `rig.py` (14 bones, region-gated distance weights) | 42 | 29,997 | `createHeroModel()` (model.js), via `src/player/rig.js` | self-review: kept; blind A/B owed |
+| `jungle-bush.glb` | 39 | "a dense round clump of tropical jungle foliage, overlapping big glossy elephant-ear and monstera leaves and ferns, deep emerald green with lime highlights and dark shaded gaps between leaves" + STYLE; mesh 40k, prep 2.5k faces, 512 tex | 9 | 2,493 | jungleRidge() sphere mounds (instanced, every slot ×1.4 + hash shore band) | self-review: kept; blind A/B owed |
+| `jungle-tree.glb` | 39 | "a lush tropical rainforest broadleaf tree, short curved trunk with buttress roots, wide dome canopy made of many dense clusters of large glossy leaves, deep emerald and lime greens with darker shaded interior" + STYLE; mesh 40k, prep 3k faces, 512 tex | 5 | 2,991 | bgTree() lollipops (instanced) | self-review: kept; blind A/B owed |
+| `hero.glb` (REPLACED r43) | 43 | Scott's black cat (decision 2026-10-20, WO-X01). Qwen Image Edit 2511 from `refs/cat/03.jpg` (Scott's own photo, yard-warz `reference/cat/`): "Turn this black cat into an original stylized 3D mascot hero … standing upright … A-pose … keep this exact cat's look: solid glossy black fur … pale yellow-green eyes with vertical slit pupils … long white whiskers, tall upright ears … long black tail … no clothes", seed 23; crop + brown patch pulled to a faint sheen (CAT_NOTES: brown is sheen only); TRELLIS.2 80k → prep 30k → `rig.py --soften 0.7 --fur-desat 0.85` (head-band recentre, blue-band desaturation) | 23 | 30,000 | the r38 bandicoot (removed from the repo) | self-review: kept; blind A/B owed at r44 |

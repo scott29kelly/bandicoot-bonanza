@@ -10,7 +10,7 @@ import {rand} from '../core/rng.js';
 import {toonMat,dappleTexture,foamTexture} from '../art/materials.js';
 import {mergeGeoms,xform,fbm3,vcolor,hash3} from './geo.js';
 import {WATER_Y} from './masses.js';
-import {hasAsset,placeAsset} from '../art/assets.js';
+import {hasAsset,placeAsset,instanceAsset,assetSize} from '../art/assets.js';
 
 const _c=new THREE.Color();
 
@@ -78,6 +78,8 @@ function seaStack(x,z,h,r){
 
 /** A jungle flank: a ridge mass buried under overlapping canopy mounds. */
 let ridgeSamples=[],ridgeShores=[];
+// Authored-canopy slots (round 39), filled by jungleRidge and the tree placer.
+let canopy=[],trees=[];
 /** Ridge surface height under (x,z) from the sampled vertices — the trees
  * stand ON the flank instead of half inside it (round 20: fronds through
  * the hill skin). */
@@ -247,6 +249,14 @@ function jungleRidge(x,z,len,w,h,dir,near=true){
         nx:rn.getX(i)*cd+rn.getZ(i)*sd,ny:rn.getY(i),nz:-rn.getX(i)*sd+rn.getZ(i)*cd,
         lx,ly,lz,lnx:rn.getX(i),lny:rn.getY(i),lnz:rn.getZ(i)});
     }
+    // The shore band (round 39): no samples below 1.5 m, so the authored
+    // carpet left the lower slope as bare skin. Hash-placed, no draws.
+    if(near&&hasAsset('jungle-bush'))for(let i=0;i<rp2.count;i++){
+      const ly=rp2.getY(i);
+      if(ly<0.2||ly>=1.8||rn.getY(i)<0.05||hash3(rp2.getX(i),ly,rp2.getZ(i)+x)>0.3)continue;
+      canopy.push({x,z,dir,lx:rp2.getX(i),ly:ly-0.4,lz:rp2.getZ(i),
+        R:1.5+hash3(i,ly,z)*1.2,depth:0.25,yaw:hash3(z,ly,i)*6.283});
+    }
   }
   ridgeSamples.push(...samples);
   // Waterline ring (the sphere's equator row sits exactly at y=0 local,
@@ -299,6 +309,15 @@ function jungleRidge(x,z,len,w,h,dir,near=true){
         Math.max(0.03,base*(0.07+0.93*cap)+(fbm3(px*1.4,py*1.4,i+40)-0.5)*0.10));
     });
     const sink=R*0.35;
+    if(hasAsset('jungle-bush')){
+      // Authored canopy (round 39): every mound slot becomes a bush clump
+      // 1.4x the mound, darker the lower it sits. Half the slots left the
+      // smooth ridge skin showing between clumps. The mound is still built
+      // above so the rng stream does not move.
+      canopy.push({x,z,dir,lx:sm.lx-sm.lnx*sink,ly:sm.ly-sm.lny*sink,
+        lz:sm.lz-sm.lnz*sink,R:R*1.4,depth,yaw:hash3(z,i,x)*6.283});
+      continue;
+    }
     xform(mound,{p:[sm.lx-sm.lnx*sink,sm.ly-sm.lny*sink,sm.lz-sm.lnz*sink]});
     parts.push(mound);
   }
@@ -415,7 +434,7 @@ function makeClouds(){
 export function createBackdrop(){
   const mat=toonMat({vertexColors:true,side:THREE.DoubleSide});
   const parts=[],stacks=[];
-  ridgeSamples=[];ridgeShores=[];
+  ridgeSamples=[];ridgeShores=[];canopy=[];trees=[];
 
   // Mid layer: jungle flanks RUNNING ALONG the corridor (a ridge's long
   // axis is X, so flanks need the quarter turn) from well outside it —
@@ -434,18 +453,23 @@ export function createBackdrop(){
     bgTreeSide(parts,-1,z);
     bgTreeSide(parts,1,z);
   }
+  // bgTree() runs either way: its draws keep the scatter after it in place.
+  function addTree(list,x,z,h,dy,second=false){
+    const g=bgTree(x,z,h);
+    if(hasAsset('jungle-tree'))trees.push({x,z,h:h*(second?1.0:0.85),y:WATER_Y+0.2+dy});
+    else{if(dy)g.translate(0,dy,0);list.push(g);}
+  }
   function bgTreeSide(list,side,z){
     if(rand(0,1)<0.25)return;
     const x=side*(rand(20,30));
-    list.push(bgTree(x,z+rand(-2,2),rand(4.5,9)));
+    addTree(list,x,z+rand(-2,2),rand(4.5,9),0);
     // A second rank climbs the slope, standing on the sampled surface
     // (round 20: buried at a guessed height, their fronds pierced the skin).
     if(rand(0,1)<0.6){
       const tx=side*rand(26,34),tz=z+rand(-2,2);
       const hy=ridgeHeightAt(tx,tz);
-      const g=bgTree(tx,tz,rand(5,10));
-      g.translate(0,hy===null?rand(2,7):Math.max(0,hy-WATER_Y-0.2-0.6),0);
-      list.push(g);
+      const th=rand(5,10);
+      addTree(list,tx,tz,th,hy===null?rand(2,7):Math.max(0,hy-WATER_Y-0.2-0.6),true);
     }
   }
 
@@ -478,11 +502,43 @@ export function createBackdrop(){
   parts.push(jungleRidge(-40,-182,150,40,30,0.25,false));
   parts.push(jungleRidge(60,-172,120,36,26,-0.3,false));
 
+  const authored=[];
+  if(canopy.length){
+    const m=new THREE.Matrix4(),q=new THREE.Quaternion(),sc=new THREE.Vector3(),p=new THREE.Vector3();
+    const up=new THREE.Vector3(0,1,0),size=assetSize('jungle-bush');
+    const mats=[],cols=[];
+    for(const c of canopy){
+      const cd=Math.cos(c.dir),sd=Math.sin(c.dir);
+      p.set(c.lx*cd+c.lz*sd+c.x,c.ly+WATER_Y,-c.lx*sd+c.lz*cd+c.z);
+      q.setFromAxisAngle(up,c.yaw);
+      const k=2.2*c.R/Math.max(size.x,size.z);
+      sc.set(k,k*0.9,k);
+      mats.push(m.compose(p,q,sc).clone());
+      // Interior dark: low on the flank sits under the canopy above it.
+      // 0.30 floor (was 0.45): the canopy interior must reach the refs'
+      // dark quarter, not hover at mid-key (round 42, WO-V13).
+      const v=0.30+0.62*c.depth*c.depth;
+      cols.push(new THREE.Color(v,v*(0.96+hash3(c.lx,c.lz,3)*0.08),v));
+    }
+    authored.push(instanceAsset('jungle-bush',mats,cols));
+  }
+  if(trees.length){
+    const m=new THREE.Matrix4(),q=new THREE.Quaternion(),sc=new THREE.Vector3(),p=new THREE.Vector3();
+    const up=new THREE.Vector3(0,1,0),mats=[],cols=[];
+    for(const t of trees){
+      q.setFromAxisAngle(up,hash3(t.x,t.z,9)*6.283);
+      sc.setScalar(t.h);
+      mats.push(m.compose(p.set(t.x,t.y,t.z),q,sc).clone());
+      const v=0.8+hash3(t.z,t.x,4)*0.25;
+      cols.push(new THREE.Color(v,v,v));
+    }
+    authored.push(instanceAsset('jungle-tree',mats,cols));
+  }
   const mesh=new THREE.Mesh(mergeGeoms(parts),mat);
   mesh.castShadow=false;   // far out of the cascade; shadows would just crawl
   mesh.receiveShadow=false;
   const group=new THREE.Group();
   const shellMat=toonMat({color:0xffffff,side:THREE.DoubleSide}); // white: instance colour IS the colour
-  group.add(mesh,leafShell(nearSamples,shellMat),ridgeFoam(),dappleCasters(),makeClouds(),...stacks);
+  group.add(mesh,leafShell(nearSamples,shellMat),ridgeFoam(),dappleCasters(),makeClouds(),...stacks,...authored);
   return group;
 }

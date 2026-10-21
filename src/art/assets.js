@@ -16,9 +16,15 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {ablated} from '../core/config.js';
 import {toonMat} from './materials.js';
 import seaStackUrl from '../../assets/models/sea-stack.glb';
+import heroUrl from '../../assets/models/hero.glb';
+import jungleBushUrl from '../../assets/models/jungle-bush.glb';
+import jungleTreeUrl from '../../assets/models/jungle-tree.glb';
 
 const SOURCES={
-  'sea-stack':seaStackUrl
+  'sea-stack':seaStackUrl,
+  'hero':heroUrl,
+  'jungle-bush':jungleBushUrl,
+  'jungle-tree':jungleTreeUrl
 };
 
 const loaded=new Map();
@@ -30,7 +36,7 @@ export async function loadAssets(){
   await Promise.all(Object.entries(SOURCES).map(async([name,url])=>{
     const gltf=await loader.loadAsync(url);
     gltf.scene.traverse(o=>{
-      if(!o.isMesh)return;
+      if(!o.isMesh||o.isSkinnedMesh)return; // skinned: src/player/rig.js builds its own
       const src=o.material;
       o.material=toonMat({map:src.map??null,color:src.map?0xffffff:src.color});
       src.dispose();
@@ -39,6 +45,29 @@ export async function loadAssets(){
     loaded.set(name,{scene:gltf.scene,size});
   }));
 }
+
+/** The loaded scene itself (not a copy) — for one-off assets like the hero. */
+export const getAsset=(name)=>loaded.get(name)?.scene;
+
+/** One InstancedMesh per mesh of the asset. mats: world matrices for the
+ * 1 m model; colors: optional per-instance tint (multiplies the map). */
+export function instanceAsset(name,mats,colors=null){
+  const {scene}=loaded.get(name);
+  const group=new THREE.Group();
+  scene.updateMatrixWorld(true);
+  scene.traverse(o=>{
+    if(!o.isMesh||!mats.length)return;
+    const im=new THREE.InstancedMesh(o.geometry.clone().applyMatrix4(o.matrixWorld),o.material,mats.length);
+    mats.forEach((m,i)=>im.setMatrixAt(i,m));
+    if(colors)colors.forEach((c,i)=>im.setColorAt(i,c));
+    im.castShadow=im.receiveShadow=false;
+    group.add(im);
+  });
+  return group;
+}
+
+/** The asset's size at 1 m height (x = width, z = depth). */
+export const assetSize=(name)=>loaded.get(name).size;
 
 /** True when the named asset is loaded and should replace its procedural twin. */
 export const hasAsset=(name)=>loaded.has(name);

@@ -66,6 +66,14 @@ export function createPost(renderer){
           // the fruit rim get the last stop back; mids are barely touched.
           float hl=smoothstep(0.58,0.92,dot(c,vec3(0.2126,0.7152,0.0722)));
           c*=1.0+0.24*hl;
+          // Value hierarchy (round 42, p03 top pick WO-V13): the frame
+          // edges fall into cool, saturated shade so the lit corridor and
+          // the hero are the brightest region. Edge/centre luma measured
+          // 0.74–1.20 against 0.57–0.61 in the refs. Mostly horizontal, as
+          // the refs' framing foliage is; tinted, never grey (Pillar B).
+          vec2 vq=(vUv-0.5)*vec2(2.0,1.6);
+          float vg=smoothstep(0.35,1.15,length(vq*vec2(1.0,0.55)));
+          c*=mix(vec3(1.0),vec3(0.50,0.64,0.70),vg*0.85);
         }
         // Black floor (Pillar B: nothing crushes to black). Surfaces lit by
         // ambient alone — crevices, undersides, the shade side of a clump —

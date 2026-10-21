@@ -1,5 +1,35 @@
 # Status and handoff
 
+## 2026-10-20 — authored-asset line, self-paced loop (READ FIRST)
+
+- Branch `claude/m3-authored-assets` in the `main` checkout (not pushed).
+- Scott's decisions: zero-asset rule lifted (authored GLBs, must win a
+  blind A/B); self-paced `/loop` rounds until he stops it; visuals first,
+  then gameplay. Cadence: `CONTRACT.md` §OUTER CADENCE.
+- Pipeline: `pipeline/gen.py` (ComfyUI must be open) -> `prep.py` ->
+  `rig.py` (characters). Blender: `C:/Program Files/Blender Foundation/Blender 5.2/blender.exe`.
+  Provenance: `ASSETS.md`.
+- r37 sea stacks GLB; r38 rigged hero GLB; r39 jungle canopy (bush + tree GLBs, instanced). Self-review kept all. The
+  blind packet is owed at r40 (baseline r36 code `1a8e534`, or
+  `?ablate=assets` on the candidate build for an asset-only A/B).
+- r40 BLIND PACKET p03 (base 3a1406f stills vs r39, seed 40): candidate
+  6 / 0. Regression WO-R07 (outline fringe) blocks promotion; r39 is the
+  baseline once it closes. Critic's top pick: WO-V13 value hierarchy.
+  Every tell filed (WO-R07, V13–V17, A08–A12, T02, L20, X01).
+- DECIDED (Scott, 2026-10-20): no trademark/copyright conflict. The hero
+  becomes Scott's black cat (the yard-warz cat; refs in `refs/cat/`,
+  notes `yard-warz/main/docs/CAT_NOTES.md`). r43 built it: the cat is
+  the hero; the bandicoot GLB is removed.
+- r42: value hierarchy (grade edge falloff, deeper canopy) WO-V13 partial.
+- DECISION OWED BY SCOTT: WO-X02 — other Crash-like trade dress (title,
+  X-crates, TNT, spin-fruit). Keep, or restyle and rename?
+- r41: hero outline from smoothed normals (WO-R07), fur softened in
+  rig.py (WO-A08), narrower rim (WO-A10), unused maps stripped (WO-A05).
+- Next: r42 WO-V13 (value
+  hierarchy, render owner), then palms/crates (staged in assets-raw/), island skirts/slabs (pillar D),
+  palms (WO-L07), crates/TNT/totem/fruit, then gameplay WO-F08/F10/F11.
+
+
 Updated 2026-09-10 (session of 2026-09-10). M2 built, gated, reviewed;
 see `CONTRACT.md` for the acceptance ledger.
 

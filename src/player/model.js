@@ -31,7 +31,7 @@ let outlineMat=null;
  * checker between grass blades (round 20, crop-verified at 10x).
  */
 const outlineMats=new Map();
-function outlineMaterial(px){
+export function outlineMaterial(px){
   if(outlineMats.has(px))return outlineMats.get(px);
   const m=new THREE.MeshBasicMaterial({color:0x2a1408,side:THREE.BackSide,toneMapped:false});
   m.onBeforeCompile=(sh)=>{
@@ -72,7 +72,7 @@ function outline(mesh,px=0.011){
 // body of 0.65 — present, but under the body, so it never separates.
 // 1.9 / 3.8: at 2.2 / 3.4 the band ran 24 px to near-white on the head
 // and read as bloom (round 27, measured 0.49→0.94).
-const RIM={color:0xffe4b8,strength:1.9,power:3.8};
+export const RIM={color:0xffe4b8,strength:1.9,power:3.8};
 
 function part(geo,color,{shadow=true,line=true}={}){
   const m=new THREE.Mesh(geo,toonMat({color,rim:RIM}));

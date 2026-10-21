@@ -1,0 +1,128 @@
+/**
+ * The authored hero (assets/models/hero.glb, rigged by pipeline/rig.py) behind
+ * the SAME pivot interface model.js exposes: {root,hips,head,ears,arms,legs,
+ * tailPivot}. hero.js keeps writing Euler angles onto those pivots; apply()
+ * turns them into bone rotations each frame.
+ *
+ * A pivot's rotation is read as a rotation in MODEL space at the joint, the
+ * way a nested Group behaves. For a bone with rest model-space rotation Rw,
+ * the local rotation is rest * (Rw^-1 * D * Rw): its world rotation becomes
+ * D * Rw, and every child inherits it, so chains compose like the old Groups.
+ *
+ * The GLB's rest pose is the concept's A-pose, which is the idle pose. Each
+ * pivot's NEUTRAL is the value hero.js writes at idle, so idle = rest.
+ */
+import * as THREE from 'three';
+import {toonMat} from '../art/materials.js';
+import {outlineMaterial,RIM} from './model.js';
+
+// hero.js's idle values (see the onGround branch), per pivot.
+const NEUTRAL={
+  hips:[0,0,0],head:[0,0,0],tail:[0,0,0],
+  ear_L:[0,0,0.28],ear_R:[0,0,-0.28],
+  arm_L:[0,0,0.13],arm_R:[0,0,-0.11],
+  leg_L:[0,0,0],leg_R:[0,0,0]
+};
+// hero.js's arm z grows as the arms rise; on the old model that raised the
+// hands across the body. Here a larger |z| lifts the arm OUTWARD, the pose
+// its comments describe ("arms out flat while spinning").
+const ARM_Z_SIGN={arm_L:-1,arm_R:1};
+const HIPS_Y=0.42;
+
+const _q=new THREE.Quaternion(),_e=new THREE.Euler(),_v=new THREE.Vector3();
+
+/** A copy of geo whose normals are averaged over every vertex sharing a position. */
+function smoothedNormals(geo){
+  const g=geo.clone(),p=g.getAttribute('position'),n=g.getAttribute('normal');
+  const sum=new Map(),key=(i)=>`${p.getX(i).toFixed(4)},${p.getY(i).toFixed(4)},${p.getZ(i).toFixed(4)}`;
+  for(let i=0;i<p.count;i++){
+    const k=key(i),s=sum.get(k)??[0,0,0];
+    s[0]+=n.getX(i);s[1]+=n.getY(i);s[2]+=n.getZ(i);sum.set(k,s);
+  }
+  const out=new Float32Array(p.count*3);
+  for(let i=0;i<p.count;i++){
+    const s=sum.get(key(i)),l=Math.hypot(s[0],s[1],s[2])||1;
+    out[i*3]=s[0]/l;out[i*3+1]=s[1]/l;out[i*3+2]=s[2]/l;
+  }
+  g.setAttribute('normal',new THREE.BufferAttribute(out,3));
+  return g;
+}
+
+export function createRiggedHero(gltfScene){
+  const root=new THREE.Group();
+  const scene=gltfScene;
+  root.add(scene);
+  root.updateMatrixWorld(true);
+
+  let skinned=null;
+  const bones={};
+  scene.traverse(o=>{
+    if(o.isSkinnedMesh)skinned=o;
+    if(o.isBone)bones[o.name]=o;
+  });
+  if(!skinned)throw new Error('hero.glb has no skinned mesh');
+
+  // Toon body with the old rim, plus an inverted-hull outline that rides
+  // the same skeleton.
+  const src=skinned.material;
+  // Half the old rim: the baked albedo already carries form light, and the
+  // full-strength band washed the silhouette white (round 38 crop).
+  // Narrower too (power 5.5): the tail top ran +0.4 L and desaturated (p03, WO-A10).
+  skinned.material=toonMat({map:src.map??null,rim:{...RIM,strength:RIM.strength*0.5,power:5.5,mapBias:1.6,tint:[1.22,1.0,0.74]}});
+  src.dispose();
+  skinned.castShadow=true;
+  skinned.frustumCulled=false; // skinned bounds do not follow the pose
+  // The hull needs ONE normal per position: the mesh splits its normals at
+  // 60° creases, and a hull pushed along split normals tears open at every
+  // crease — at range the tears read as a speckled pale fringe (p03, WO-R07).
+  const hull=new THREE.SkinnedMesh(smoothedNormals(skinned.geometry),outlineMaterial(0.007));
+  hull.bind(skinned.skeleton,skinned.bindMatrix);
+  hull.frustumCulled=false;
+  skinned.parent.add(hull);
+
+  const rest={};
+  for(const [name,b] of Object.entries(bones)){
+    rest[name]={
+      q:b.quaternion.clone(),
+      p:b.position.clone(),
+      w:b.getWorldQuaternion(new THREE.Quaternion()),
+      pw:b.parent?b.parent.getWorldQuaternion(new THREE.Quaternion()):new THREE.Quaternion()
+    };
+  }
+
+  const pivot=(name)=>{
+    const o=new THREE.Object3D();
+    const n=NEUTRAL[name]??[0,0,0];
+    o.rotation.set(n[0],n[1],n[2]);
+    return o;
+  };
+  const hips=pivot('hips');hips.position.y=HIPS_Y;
+  const head=pivot('head'),tailPivot=pivot('tail');
+  const ears={L:pivot('ear_L'),R:pivot('ear_R')};
+  const arms={L:pivot('arm_L'),R:pivot('arm_R')};
+  const legs={L:pivot('leg_L'),R:pivot('leg_R')};
+  const map=[['hips',hips],['head',head],['tail',tailPivot],
+    ['ear_L',ears.L],['ear_R',ears.R],['arm_L',arms.L],['arm_R',arms.R],
+    ['leg_L',legs.L],['leg_R',legs.R]].filter(([n])=>bones[n]);
+
+  function apply(){
+    for(const [name,p] of map){
+      const b=bones[name],r=rest[name],n=NEUTRAL[name]??[0,0,0];
+      let dz=p.rotation.z-n[2];
+      if(ARM_Z_SIGN[name])dz=ARM_Z_SIGN[name]*Math.abs(p.rotation.z)-ARM_Z_SIGN[name]*Math.abs(n[2]);
+      _e.set(p.rotation.x-n[0],p.rotation.y-n[1],dz);
+      _q.setFromEuler(_e);                                  // D, model space
+      b.quaternion.copy(r.w).invert().multiply(_q).multiply(r.w); // Rw^-1 D Rw
+      b.quaternion.premultiply(r.q);                        // rest * that
+    }
+    // The hips bob: a model-space lift, into the parent's frame.
+    if(bones.hips){
+      const r=rest.hips;
+      _v.set(0,hips.position.y-HIPS_Y,0).applyQuaternion(_q.copy(r.pw).invert());
+      bones.hips.position.copy(r.p).add(_v);
+    }
+  }
+  apply();
+
+  return {root,hips,head,ears,arms,legs,tailPivot,apply};
+}

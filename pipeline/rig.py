@@ -1,0 +1,266 @@
+"""Blender 5.2: rig a prepared hero GLB (1 m tall, origin at the feet, facing -Y in Blender).
+
+  blender -b -P pipeline/rig.py -- <in.glb> <out.glb> [--height 1.45] [--debug out.png]
+
+Joints are measured from the mesh, not guessed per model: hands are the widest
+front vertices at hand height, ears the widest above the brow, the tail the
+rearmost low vertices. Bone names are the game's pivot names (src/player/rig.js):
+  hips > spine > head > ear_L / ear_R
+  hips > arm_L > fore_L      hips > leg_L > shin_L      hips > tail
+L is the -X side, the same convention as model.js. Skinning uses Blender's bone
+heat; when that fails on a non-manifold mesh, the weights come from a voxel
+remeshed proxy through a Data Transfer modifier.
+"""
+import bpy, bmesh, sys, argparse, math
+from mathutils import Vector
+
+argv = sys.argv[sys.argv.index('--') + 1:]
+ap = argparse.ArgumentParser()
+ap.add_argument('src'); ap.add_argument('dst')
+ap.add_argument('--height', type=float, default=1.45)
+ap.add_argument('--debug')
+ap.add_argument('--fur-desat', type=float, default=0.0,
+                help='saturation share removed from dark pixels (V < 0.4); eyes stay vivid')
+ap.add_argument('--soften', type=float, default=0.5,
+                help='keep this share of the albedo detail above a 3 px blur (1 = untouched)')
+a = ap.parse_args(argv)
+
+bpy.ops.wm.read_factory_settings(use_empty=True)
+bpy.ops.import_scene.gltf(filepath=a.src)
+body = next(o for o in bpy.context.scene.objects if o.type == 'MESH')
+body.name = 'hero'
+V = [body.matrix_world @ v.co for v in body.data.vertices]
+# Recentre X on the head band: a long tail widens the bounding box prep.py
+# centred on, and the cat's body sat 0.08 m off the origin (round 43).
+_hb = [v.x for v in V if 0.6 <= v.z <= 0.85]
+_cx = (min(_hb) + max(_hb)) / 2 if _hb else 0.0
+if abs(_cx) > 1e-4:
+    from mathutils import Matrix
+    body.data.transform(Matrix.Translation((-_cx, 0, 0)))
+    V = [body.matrix_world @ v.co for v in body.data.vertices]
+    print(f'[rig] recentred x by {-_cx:+.3f}')
+
+
+def band(z0, z1, pred=lambda v: True):
+    return [v for v in V if z0 <= v.z <= z1 and pred(v)]
+
+
+def mean(vs):
+    s = Vector()
+    for v in vs:
+        s += v
+    return s / max(len(vs), 1)
+
+
+cy = mean(V).y  # body depth centre; front is -Y
+
+
+def extreme_side(vs, side, frac=0.85):
+    """Mean of the vertices on one side whose |x| is within frac of that side's max."""
+    vs = [v for v in vs if v.x * side > 0]
+    if not vs:
+        return None
+    m = max(abs(v.x) for v in vs)
+    return mean([v for v in vs if abs(v.x) >= m * frac])
+
+
+def width_at(z, dz=0.015):
+    vs = band(z - dz, z + dz, lambda v: abs(v.y - cy) < 0.12)
+    return max((abs(v.x) for v in vs), default=0.1)
+
+
+J = {}
+J['root'] = Vector((0, cy, 0))
+J['hips'] = Vector((0, cy, 0.31))
+J['spine'] = Vector((0, cy, 0.42))
+J['neck'] = Vector((0, cy, 0.55))
+J['crown'] = Vector((0, cy, 0.92))
+torso_half = width_at(0.47)
+for side, tag in ((-1, 'L'), (1, 'R')):
+    hand = extreme_side(band(0.24, 0.48, lambda v: v.y <= cy + 0.04), side) or Vector((side * 0.22, cy, 0.34))
+    # Per side, from the hand: generated bodies are not symmetric.
+    sh = Vector((side * min(torso_half * 0.78, abs(hand.x) * 0.68), cy, 0.52))
+    J['arm_' + tag] = sh
+    J['fore_' + tag] = sh.lerp(hand, 0.5) + Vector((0, 0.01, 0))
+    J['hand.' + tag] = hand
+    legx = side * max(width_at(0.27) * 0.5, 0.05)
+    J['leg_' + tag] = Vector((legx * 0.6, cy, 0.29))  # hips sit inside the wide stance
+    J['shin_' + tag] = Vector((legx, cy - 0.01, 0.16))
+    J['foot.' + tag] = Vector((legx, cy - 0.06, 0.03))
+    ear = extreme_side(band(0.80, 1.0), side, 0.9) or Vector((side * 0.2, cy, 0.9))
+    J['ear_' + tag] = Vector((side * abs(ear.x) * 0.55, cy, 0.80))
+    J['eartip.' + tag] = ear
+tailvs = band(0.08, 0.45, lambda v: v.y > cy + 0.10)
+if tailvs:
+    tip = max(tailvs, key=lambda v: (v - J['hips']).length)
+else:
+    tip = Vector((0.15, cy + 0.25, 0.25))
+J['tail'] = Vector((0, cy + 0.06, 0.27))
+J['tailtip'] = tip
+for k, v in sorted(J.items()):
+    print(f'[rig] {k:10s} {v.x:+.3f} {v.y:+.3f} {v.z:+.3f}')
+
+# Armature. Roll 0 on every bone; the game composes rotations in model space,
+# so the bone axes never need to agree with the old pivots.
+arm_data = bpy.data.armatures.new('rig')
+rig = bpy.data.objects.new('rig', arm_data)
+bpy.context.scene.collection.objects.link(rig)
+bpy.context.view_layer.objects.active = rig
+bpy.ops.object.mode_set(mode='EDIT')
+eb = arm_data.edit_bones
+
+
+def bone(name, head, tail, parent=None, deform=True):
+    b = eb.new(name)
+    b.head, b.tail = head, tail
+    b.roll = 0
+    b.use_deform = deform
+    if parent:
+        b.parent = eb[parent]
+    return b
+
+
+bone('root', J['root'], J['root'] + Vector((0, 0, 0.1)), deform=False)
+bone('hips', J['hips'], J['spine'], 'root')
+bone('spine', J['spine'], J['neck'], 'hips')
+bone('head', J['neck'], J['crown'], 'spine')
+for t in 'LR':
+    bone('ear_' + t, J['ear_' + t], J['eartip.' + t], 'head')
+    bone('arm_' + t, J['arm_' + t], J['fore_' + t], 'spine')
+    bone('fore_' + t, J['fore_' + t], J['hand.' + t], 'arm_' + t)
+    bone('leg_' + t, J['leg_' + t], J['shin_' + t], 'hips')
+    bone('shin_' + t, J['shin_' + t], J['foot.' + t], 'leg_' + t)
+bone('tail', J['tail'], J['tailtip'], 'hips')
+bpy.ops.object.mode_set(mode='OBJECT')
+
+# Skin. Bone heat fails on generated meshes (non-manifold shells), so the
+# weights are region-gated distance weights: each vertex may only follow the
+# bones of its body region, then 1/d^4 among those, top three kept.
+deform = [b.name for b in arm_data.bones if b.use_deform]
+segs = {b.name: (b.head_local.copy(), b.tail_local.copy()) for b in arm_data.bones if b.use_deform}
+
+
+def seg_dist(p, a0, a1):
+    d = a1 - a0
+    t = max(0.0, min(1.0, (p - a0).dot(d) / max(d.length_squared, 1e-9)))
+    return (p - (a0 + d * t)).length
+
+
+def allowed(v):
+    side = 'L' if v.x < 0 else 'R'
+    out = ['hips', 'spine', 'head']
+    if v.z > 0.76 and abs(v.x) > 0.09:
+        out.append('ear_' + side)
+    if 0.22 < v.z < 0.58 and abs(v.x) > abs(J['arm_' + side].x) * 0.92 and v.y < cy + 0.06:
+        out += ['arm_' + side, 'fore_' + side]
+    if v.z < J['hips'].z + 0.03 and v.y < cy + 0.07:
+        out += ['leg_' + side, 'shin_' + side]
+    if v.y > cy + 0.07 and v.z < 0.45:
+        out.append('tail')
+    return out
+
+
+groups = {n: body.vertex_groups.new(name=n) for n in deform}
+for i, v in enumerate(V):
+    ws = sorted(((1.0 / (seg_dist(v, *segs[n]) ** 4 + 1e-7), n) for n in allowed(v)), reverse=True)[:3]
+    tot = sum(w for w, _ in ws)
+    for w, n in ws:
+        if w / tot > 0.02:
+            groups[n].add([i], w / tot, 'REPLACE')
+mod = body.modifiers.new('rig', 'ARMATURE'); mod.object = rig
+body.parent = rig
+for n in deform:
+    c = sum(1 for v in body.data.vertices for g in v.groups if g.group == groups[n].index and g.weight > 0.5)
+    print(f'[rig] weight {n:7s} {c:6d} verts > 0.5')
+
+# Soften the baked fur strokes: out = blur + (src - blur) * soften. At full
+# detail they read as ink hatching, 1.8x the references' micro-contrast
+# (p03, WO-A08). A 3 px radius at 2048 stays inside the UV islands.
+if a.soften < 1 or a.fur_desat > 0:
+    import numpy as np
+    for mat in body.data.materials:
+        for n in (mat.node_tree.nodes if mat and mat.use_nodes else []):
+            if n.type != 'TEX_IMAGE' or not n.image or not any(l.to_socket.name == 'Base Color' for l in n.outputs[0].links):
+                continue
+            img = n.image
+            w, h = img.size
+            px = np.array(img.pixels[:], dtype=np.float32).reshape(h, w, 4)
+            blur = px.copy()
+            for axis in (0, 1):
+                acc = np.zeros_like(blur)
+                for d in range(-3, 4):
+                    acc += np.roll(blur, d, axis=axis)
+                blur = acc / 7
+            out = blur + (px - blur) * a.soften
+            if a.fur_desat > 0:
+                # Black fur, not navy: the baked blue sheen stacked with the toon
+                # ramp's blue shade (round 43). Only dark pixels move.
+                rgb = out[..., :3]
+                v = rgb.max(axis=2, keepdims=True)
+                mn = rgb.min(axis=2, keepdims=True)
+                lum = (rgb * np.array([0.2126, 0.7152, 0.0722])).sum(axis=2, keepdims=True)
+                # Hue in degrees, then a weight for the blue band (170-270) at any value,
+                # plus every dark pixel. The eyes (yellow-green) and ear skin (pink) stay.
+                r, g, bb = rgb[..., 0:1], rgb[..., 1:2], rgb[..., 2:3]
+                d = np.maximum(v - mn, 1e-6)
+                h = np.where(v == r, ((g - bb) / d) % 6, np.where(v == g, (bb - r) / d + 2, (r - g) / d + 4)) * 60
+                blue = np.clip(1 - np.abs(h - 220) / 50, 0, 1)
+                dark = np.clip((0.45 - v) / 0.15, 0, 1)
+                k = a.fur_desat * np.maximum(blue, dark)
+                out[..., :3] = rgb * (1 - k) + lum * k
+            out[..., 3] = px[..., 3]
+            img.pixels[:] = np.clip(out, 0, 1).ravel()
+            img.update()
+            print(f'[rig] softened {img.name} {w}x{h} detail x{a.soften}')
+
+# The game's toon material reads only the colour map: drop the normal and
+# metal/rough maps so they do not ship (WO-A05).
+for mat in body.data.materials:
+    if not mat or not mat.use_nodes:
+        continue
+    nt = mat.node_tree
+    bsdf = next((n for n in nt.nodes if n.type == 'BSDF_PRINCIPLED'), None)
+    if bsdf:
+        for name in ('Normal', 'Metallic', 'Roughness'):
+            for l in list(bsdf.inputs[name].links):
+                nt.links.remove(l)
+
+# Scale the whole rig to game height.
+rig.scale = (a.height,) * 3
+bpy.ops.object.select_all(action='DESELECT')
+rig.select_set(True); body.select_set(True)
+bpy.context.view_layer.objects.active = rig
+bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
+
+if a.debug:
+    scene = bpy.context.scene
+    cam = bpy.data.objects.new('cam', bpy.data.cameras.new('cam'))
+    scene.collection.objects.link(cam)
+    cam.data.type = 'ORTHO'; cam.data.ortho_scale = a.height * 1.15
+    cam.location = (0, -5, a.height / 2); cam.rotation_euler = (math.pi / 2, 0, 0)
+    scene.camera = cam
+    rig.show_in_front = True
+    arm_data.display_type = 'STICK'
+    scene.render.engine = 'BLENDER_WORKBENCH'
+    scene.display.shading.color_type = 'TEXTURE'
+    scene.render.resolution_x = scene.render.resolution_y = 900
+    scene.render.filepath = __import__('os').path.abspath(a.debug)
+    # Workbench skips armatures in final renders; draw joints as small spheres.
+    for k, v in J.items():
+        bpy.ops.mesh.primitive_uv_sphere_add(radius=0.012 * a.height, location=v * a.height)
+        s = bpy.context.active_object
+        m = bpy.data.materials.new('j'); m.diffuse_color = (1, 0, 1, 1); s.data.materials.append(m)
+    scene.display.shading.color_type = 'MATERIAL'
+    scene.display.shading.show_xray = True
+    scene.display.shading.xray_alpha = 0.45
+    bpy.ops.render.render(write_still=True)
+    for o in [o for o in scene.objects if o.type == 'MESH' and o is not body]:
+        bpy.data.objects.remove(o, do_unlink=True)
+    bpy.data.objects.remove(cam, do_unlink=True)
+
+bpy.ops.object.select_all(action='DESELECT')
+body.select_set(True); rig.select_set(True)
+bpy.ops.export_scene.gltf(filepath=a.dst, export_format='GLB', use_selection=True,
+                          export_image_format='WEBP', export_image_quality=88,
+                          export_skins=True, export_animations=False, export_yup=True)
+print(f'[rig] -> {a.dst}: {len(body.data.polygons)} faces, {len(deform)} deform bones')

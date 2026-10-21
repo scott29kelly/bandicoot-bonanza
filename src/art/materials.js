@@ -56,12 +56,26 @@ export function toonMat(opts={}){
     // space darkening toward the silhouette gives every round part a core
     // shadow band inside the rim, whatever the key angle.
     const formK=rim.formK??0.42,formP=rim.formP??1.6;
+    // mapBias: sample the colour map this many mips softer. The authored
+    // hero's fur strokes read as ink hatching at full res (p03, WO-A08).
+    const mapBias=rim.mapBias??0;
+    // tint: multiplies the albedo. A near-black body sits entirely in the
+    // grade's teal split-tone and the blue sky fill; the black cat needs a
+    // warm counter-tint to land at blue-GRAY, not cobalt (round 43).
+    const tint=rim.tint?new THREE.Vector3(...rim.tint):null;
     m.onBeforeCompile=(sh)=>{
       sh.uniforms.uRimColor={value:color};
       sh.uniforms.uRimK={value:strength};
       sh.uniforms.uRimP={value:power};
       sh.uniforms.uFormK={value:formK};
       sh.uniforms.uFormP={value:formP};
+      if(tint){sh.uniforms.uTint={value:tint};sh.fragmentShader=sh.fragmentShader
+        .replace('#include <common>','#include <common>\nuniform vec3 uTint;')
+        .replace('#include <color_fragment>','#include <color_fragment>\n  diffuseColor.rgb*=uTint;');}
+      if(mapBias)sh.fragmentShader=sh.fragmentShader.replace('#include <map_fragment>',
+`#ifdef USE_MAP
+  diffuseColor*=texture2D(map,vMapUv,${mapBias.toFixed(2)});
+#endif`);
       sh.fragmentShader=sh.fragmentShader
         .replace('void main() {',
 `uniform vec3 uRimColor;

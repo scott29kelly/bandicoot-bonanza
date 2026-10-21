@@ -11,6 +11,8 @@ import {CFG} from '../game/cfg.js';
 import {windAt} from '../world/wind.js';
 import {contactBlob} from '../world/contact.js';
 import {createHeroModel} from './model.js';
+import {createRiggedHero} from './rig.js';
+import {hasAsset,getAsset} from '../art/assets.js';
 
 /**
  * hooks (rules module): onLand(solid) may return 'bounce' (crate/TNT stomp);
@@ -18,7 +20,8 @@ import {createHeroModel} from './model.js';
  * built-in respawn when the hero drops below CFG.killY.
  */
 export function createHero(scene,solids,spawn,hooks={}){
-  const model=createHeroModel();
+  // Authored hero when bundled (round 38), the procedural one otherwise.
+  const model=hasAsset('hero')?createRiggedHero(getAsset('hero')):createHeroModel();
   const group=model.root;
   scene.add(group);
   // Dynamic contact blob: the floor demands a shadow under the feet in
@@ -182,6 +185,7 @@ export function createHero(scene,solids,spawn,hooks={}){
     ears.R.rotation.z=-0.28-windAt(pos.x,pos.z,t*1.05)*0.08;
     tailPivot.rotation.x=Math.sin(t*2.2+runPhase*0.5)*0.16;
     tailPivot.rotation.z=Math.sin(t*1.7)*0.12;
+    if(model.apply)model.apply();
 
     const gy=groundAt(pos.x,pos.z);
     if(gy>-Infinity){
