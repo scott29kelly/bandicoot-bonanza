@@ -84,7 +84,7 @@ try{
   check('checkpoint: HUD label',h.cp==='TOTEM 1',`hud "${h.cp}"`);
 
   /* --- G7b TNT: stomp it, run clear, wait out the fuse ------------------ */
-  await place([0,3.2,-52]);
+  await place([0,3.2,-50.8]); // on the keg (beach.js TNT_Z)
   await step(30); // the fall lands at ~24 frames
   g=await game();
   check('tnt: stomp arms the fuse',g.tnt[0].armed&&g.tnt[0].fuse>1.5&&g.tnt[0].fuse<=2.2,`armed ${g.tnt[0].armed} fuse ${g.tnt[0].fuse.toFixed(2)}`);

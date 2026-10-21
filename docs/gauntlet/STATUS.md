@@ -101,7 +101,9 @@
   near-black fur won both hero pairs; the keg lost every pair it is in
   (R14), and the r73 tint dulled the face colours (R15). Not promoted.
 - r75: face colours back (R15): fur-only dark tint (`tintFace`).
-- Next: r76 R14 keg
+- r76: keg out of the slot (R14): 1.2 m in front of the row, upright, skull
+  to camera, soft flame sprite. Playtest 19/19.
+- Next: (done r76) R14 keg
   (out of the slot, sharper decal, flame sprite), r77 A40/A36, r78 BLIND
   PACKET. Pending Scott:
   the adventurer look (goggles + scarf/bandolier/vest/neckerchief), game name.

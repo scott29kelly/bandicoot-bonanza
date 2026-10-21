@@ -6,12 +6,12 @@
 import * as THREE from 'three';
 import {hasAsset,placeAsset} from '../art/assets.js';
 import {rand} from '../core/rng.js';
-import {toonMat,woodTexture,tntTexture} from '../art/materials.js';
+import {toonMat,woodTexture,tntTexture,flameTexture} from '../art/materials.js';
 import {mergeGeoms,xform,vcolor} from './geo.js';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 
 const _c=new THREE.Color();
-let crateMat=null,tntMat=null,fuseMat=null,potMat=null;
+let crateMat=null,tntMat=null,fuseMat=null,potMat=null,flameTex=null;
 function mats(){
   if(!crateMat){
     // emissiveMap = the wood itself: shaded crate faces sat AT the grade
@@ -165,18 +165,22 @@ export function makeTNT(x,y,z){
     // a glance, an orange keg among orange crates did not (round 69).
     keg.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;
       o.material=o.material.clone();o.material.color.setRGB(0.78,0.55,0.50);}});
+    keg.rotation.x=0.09; // the mesh's hoops lean 5° back (-z): stand it upright
     group.add(keg);
     // A lit fuse spark on the lid: the one hot point in the yard says "bang".
-    const spark=new THREE.Mesh(new THREE.SphereGeometry(0.07,10,8),
-      new THREE.MeshBasicMaterial({color:0xffc35a,toneMapped:false}));
-    spark.position.set(0.05,-S*0.49+KH*1.02,0.02);
-    const glow=new THREE.Mesh(new THREE.SphereGeometry(0.16,10,8),
-      new THREE.MeshBasicMaterial({color:0xff7a1a,transparent:true,opacity:0.35,depthWrite:false,toneMapped:false}));
-    glow.position.copy(spark.position);
-    group.add(spark,glow);
+    // A camera-facing flame sprite with a soft falloff (r76, p11 WO-R14: the
+    // hard sphere + halo read as a flat "lollipop" disc).
+    if(!flameTex){flameTex=flameTexture();flameTex.wrapS=flameTex.wrapT=THREE.ClampToEdgeWrapping;}
+    const flame=new THREE.Sprite(new THREE.SpriteMaterial({map:flameTex,
+      blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));
+    flame.scale.set(0.42,0.42,1);
+    flame.position.set(0.05,-S*0.49+KH*1.02+0.10,0.02);
+    group.add(flame);
     group.position.set(x,y+S*0.49,z);
     // The skull (the GLB's +Z front) faces the player's approach (+z).
-    group.rotation.y=rand(-0.08,0.08)-0.45; // the bake's skull sits off +Z; -0.45 faces it to the player
+    // The bake's skull sits off +Z; +0.73 turns it between the player's approach
+    // (+z) and the crate-cluster camera (r76: out of the slot it showed edge-on).
+    group.rotation.y=rand(-0.08,0.08)+0.73;
     const hw=S*0.49+0.02;
     return {mesh:group,solid:{minX:x-hw,maxX:x+hw,minZ:z-hw,maxZ:z+hw,topY:y+KH-0.04}};
   }

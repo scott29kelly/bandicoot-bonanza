@@ -97,14 +97,20 @@ export function buildBeach(scene){
   crateAt(-1.8,0,-14);crateAt(0,0,-14.25);crateAt(1.8,0,-14);
   crateAt(-2.2,0,-52);crateAt(-1,0,-52);crateAt(1,0,-52);crateAt(2.2,0,-52);
   crateAt(-1.6,1.13,-52);crateAt(1.6,1.13,-52);
-  const tnt=makeTNT(0,0,-52);
+  // The keg stands 1.2 m in FRONT of the row (r76, p11 WO-R14): in the
+  // crate-sized slot it read as a hole in the wall. The slot stays open
+  // as the way through the row; every row crate is still inside tntRadius.
+  const TNT_Z=-50.8;
+  const tnt=makeTNT(0,0,TNT_Z);
   scene.add(tnt.mesh);
   solids.push(tnt.solid);
   tnt.armed=false;tnt.fuse=0;tnt.exploded=false;
   tnt.solid.ent={type:'tnt',obj:tnt};tnts.push(tnt);
-  avoid.push({x:0,z:-52,r:1.15});
-  ground(0,-52,0.95);
-  mark('tnt1',tnt.mesh);
+  avoid.push({x:0,z:TNT_Z,r:1.15});
+  ground(0,TNT_Z,0.95);
+  // The framings keep aiming at the row's centre, not at the keg.
+  const rowMark=new THREE.Object3D();rowMark.position.set(0,tnt.mesh.position.y,-52);
+  mark('tnt1',rowMark);
 
   /* ---------- ground cover --------------------------------------------- */
   for(const [x,z,s] of [[-6.2,-8,1.1],[6.3,-15,0.9],[-6.4,-22,1.2],[6.2,-28,0.8],

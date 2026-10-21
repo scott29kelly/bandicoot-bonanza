@@ -403,6 +403,33 @@ export function dappleTexture(){
 }
 
 /** Sun glints: sparse short bright dashes, additive over the sea. */
+/** A fuse flame for a camera-facing sprite: a teardrop with a hot core and
+ * a soft orange falloff, clear edges (p11 WO-R14: the hard disc read as a
+ * lollipop). No rand(): the rng stream must not shift. */
+export function flameTexture(){
+  return canvasTex(128,(g,s)=>{
+    g.clearRect(0,0,s,s);
+    const cx=s/2,cy=s*0.62;
+    const halo=g.createRadialGradient(cx,cy,0,cx,cy,s*0.46);
+    halo.addColorStop(0,'rgba(255,170,60,0.85)');
+    halo.addColorStop(0.35,'rgba(255,120,30,0.35)');
+    halo.addColorStop(1,'rgba(255,90,20,0)');
+    g.fillStyle=halo;g.fillRect(0,0,s,s);
+    // the tongue: a teardrop pointing up
+    const tongue=g.createRadialGradient(cx,cy,0,cx,cy-s*0.06,s*0.24);
+    tongue.addColorStop(0,'rgba(255,250,215,1)');
+    tongue.addColorStop(0.45,'rgba(255,205,90,0.95)');
+    tongue.addColorStop(1,'rgba(255,120,30,0)');
+    g.fillStyle=tongue;
+    g.beginPath();
+    g.moveTo(cx,cy-s*0.40);
+    g.bezierCurveTo(cx+s*0.07,cy-s*0.22,cx+s*0.17,cy-s*0.04,cx+s*0.14,cy+s*0.08);
+    g.bezierCurveTo(cx+s*0.10,cy+s*0.18,cx-s*0.10,cy+s*0.18,cx-s*0.14,cy+s*0.08);
+    g.bezierCurveTo(cx-s*0.17,cy-s*0.04,cx-s*0.07,cy-s*0.22,cx,cy-s*0.40);
+    g.fill();
+  },{repeat:1});
+}
+
 export function glintTexture(){
   return canvasTex(256,(g,s)=>{
     g.clearRect(0,0,s,s);
