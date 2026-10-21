@@ -66,7 +66,9 @@
 - r57 BLIND PACKET p07 (r51 vs r56, critic v2): candidate 4 / 2. Pupils
   win the hero frames; the lower sea wins water-gap but LOST the shore
   foam (WO-R09) — not promoted. Top pick: lift the jungle (WO-V23).
-- Next: r58 shoreline foam at the new waterline (R09, L28), r59 jungle
+- r58: foam rings follow the lower waterline (WO-R09): surf breaks on
+  the cliff feet again.
+- Next: r59 jungle
   lift (V23), r60 slim-tail cat (staged in assets-raw/cat5, A27), r61
   BLIND PACKET.
 - DECISION OWED BY SCOTT: WO-X02 — other Crash-like trade dress (title,
