@@ -247,6 +247,26 @@ Verdict: BASELINE 6 / candidate 0 (crate-cluster high; title, beach, play med; h
 | WO-L34 | r70 | critic | A small brown box post with a floating cyan diamond (title-hero 100–135×300–370) reads as a primitive | the checkpoint totem (makeCheckpoint) — authored totem GLB (ties WO-X02: a generic tiki, no Aku Aku look) | P2 | OPEN | 0 |
 | WO-A33 | — | critic (top pick) | (re-measured) hero fur slate-grey vinyl: chest L 0.21, forehead 0.27 vs refs/cat chest 0.03, cheek 0.13; vinyl specular | near-black albedo (body L 0.06–0.12), anisotropic blue-grey sheen, strand breakup, stronger warm core band (r63 sheen + r67 tint not enough) | P1 | IN PROGRESS (r73: tint (0.64,0.46,0.32) — near-black albedo; hero-closeup body L p50 0.093, head 0.113, p95 0.32–0.37 from the cool sheen; R−B still −2..−4, no strand breakup yet) | 1 |
 
+## Packet p11 (r74: accepted baseline r64 vs candidate r73), critic v2, seed 74
+
+Verdict: BASELINE 4 / candidate 2. Candidate won title-hero (low) and hero-closeup (low) on the near-black warm fur (body L 0.111 sat 0.27 vs base 0.166 green-grey; refs 0.09–0.16). Baseline won crate-cluster (high), water-gap (med), play-camera and beach-corridor (low): every pair where the keg is visible, and the hero separates from the foliage ~3× better at range on the base. The r73 tint multiplies the WHOLE albedo, so it also darkened the face colours the critic says the base had right. Not promoted; r64 stays the baseline. Critic's top pick: re-shade the hero — base face values + candidate fur + a soft fur sheen in place of vinyl speculars.
+
+| ID | Round | Source | Problem / impact | Hypothesis / intervention | Pri | Status | Attempts |
+|---|---|---|---|---|---|---|---|
+| WO-R15 | r74 | critic A/B | REGRESSION (r73 tint): face colours went dull — iris (164,159,111) sat 0.33 vs base (187,193,159) ≈ ref (187,190,156); whiskers tan (165,148,132) vs near-white; inner ear L 0.13–0.17 muddy red vs base 0.21–0.25 (ref 0.25–0.33) | apply the dark tint by albedo luma only (bright face texels untinted), or by the rig.py masks; keep the fur base L ≈0.10 | P1 | OPEN | 0 |
+| WO-R14 | — | critic A/B | (confirms, r72 not enough) keg: smeared illegible red decal (crate 500–560×380–520), a flat hard-edged orange disc "lollipop" flame (575–605×315–350), the open slot shows a dark void; far off it is a brown barrel with a red speck | move the keg out of the slot to the row front; a sharper, larger skull decal (re-bake or a decal plane); a small flame/spark sprite with falloff in place of the hard disc | P1 | OPEN | 1 |
+| WO-A40 | r74 | critic | The near-black hero loses separation from the dark foliage at range: head vs foliage ΔL 0.027 (base 0.08) | a slightly stronger rim at distance, or brighter backlit foliage behind the play lane; ties WO-A30 | P1 | OPEN | 0 |
+| WO-V32 | r74 | critic | Orphan dark damp discs on sand with no caster (crate 590,735; play-camera lower left) — read as stains | r71 damp patches: smaller, softer, fewer, only near the waterline | P2 | OPEN | 0 |
+| WO-A36 | — | critic | (confirms) vinyl/latex gloss, specular blobs on chest and legs (p95 0.31–0.33), no fine fur sheen | as WO-A36 (broader, softer sheen; fur breakup) | P1 | OPEN | — |
+| WO-A39 | — | critic | (confirms) dark smear in the iris beside the slit (hc 535–560×280–310, 630–660×270–300) | as WO-A39; check the slit's depth offset | P2 | OPEN | — |
+| WO-A30 | — | critic | (confirms) rim/outline breaks into dashes at range (water-gap, beach hero) | as WO-A30 | P2 | OPEN | — |
+| WO-L24 | — | critic | (confirms) faint vertical seam at x = 640 in three framings (edge energy 1.8–2.3× median) — likely post-process | as WO-L24; check the grade/bloom passes for a half-width split | P2 | OPEN | — |
+| WO-V33 | r74 | critic | Sand value range too narrow: std 0.04–0.07 vs 0.18 on the ref path; no ruts, roots or dapple across the lane | ties WO-V28 | P2 | OPEN | 0 |
+| WO-L35 | r74 | critic | Fruit are smooth spheres (surface std 0.034) with a glow edge | ties WO-L20 (authored fruit GLB) | P2 | OPEN | 0 |
+| WO-V34 | r74 | critic | Foliage wall: shard cards and one big flat leaf plane (title 920–1100×60–230); right 40% of title is one undifferentiated mass | ties WO-V02 | P2 | OPEN | 0 |
+| WO-V35 | r74 | critic | Flat sky (std 0.077 vs 0.135 in light-1); no bounce light on crate shadow faces; cliffs flat slabs | backlog | P3 | OPEN | 0 |
+| WO-L36 | r74 | critic | Foot shadow reads cyan-teal on orange sand; title fruit leaf tangent at the paw (840,700) | ties WO-V31 | P3 | OPEN | 0 |
+
 ## Engine limits (logged, not scheduled)
 
 - Shadow-map texel staircase on crate faces at portrait range (4096 map).

@@ -97,7 +97,12 @@
   spark + glow, solid top raised. Reads as a barrel in the crate row; in
   crate-cluster the front crate still hides most of it. Playtest 19/19.
 - r73: hero fur near-black (A33).
-- Next: r74 BLIND PACKET. Pending Scott:
+- r74 BLIND PACKET p11 (r64 vs r73, critic v2): BASELINE 4 / 2. The
+  near-black fur won both hero pairs; the keg lost every pair it is in
+  (R14), and the r73 tint dulled the face colours (R15). Not promoted.
+- Next: r75 R15 (tint by albedo luma, face untinted), r76 R14 keg
+  (out of the slot, sharper decal, flame sprite), r77 A40/A36, r78 BLIND
+  PACKET. Pending Scott:
   the adventurer look (goggles + scarf/bandolier/vest/neckerchief), game name.
 - (done r67) coat value + darks (R11, R12),
   r68 ..., r69 BLIND PACKET. Later: (done r64) hero shading + face colours
