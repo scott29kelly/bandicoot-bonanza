@@ -71,7 +71,12 @@
 - r59: jungle canopy lifted (WO-V23): foliage mean +0.016 to +0.046 L.
 - r60: slim-tail cat (`cat5-s88`) is the hero: raised slim tail, slit
   pupils, pink-brown ears; rig.py eye detection generalised.
-- Next: r61 BLIND PACKET (critic v2, base r51 vs cand r60), then
+- r61 BLIND PACKET p08 (r51 vs r60, critic v2): candidate 4 / 2. The face
+  (pupils, ears) and the lifted canopy win; water-plane SEAMS (WO-R10,
+  likely r58's larger foam rings) lose water-gap and play-camera — not
+  promoted. Top pick: hero fur shading + face colours (A33, A34).
+- Next: r62 water seams (R10, L30), r63 hero shading + face colours
+  (A33, A34), r64 ..., r65 BLIND PACKET. Later:
   lift (V23), r60 slim-tail cat (staged in assets-raw/cat5, A27), r61
   BLIND PACKET.
 - DECISION OWED BY SCOTT: WO-X02 — other Crash-like trade dress (title,

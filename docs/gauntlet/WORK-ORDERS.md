@@ -198,6 +198,23 @@ Verdict: candidate 4 / baseline 2. Candidate: hero-closeup high (slit pupils 10/
 | WO-V25 | r57 | critic | Even midday light: no golden-hour key, no dappled canopy light, no bounce-lit crevices (refs light-1, light-2, form-1) | render owner: a warmer, lower key + canopy dapple pools on the path | P2 | OPEN | 0 |
 | WO-V26 | r57 | critic | Title-hero composition: the hero is ~8% of the frame at right-centre; the most saturated mass is a foreground orange cut by the bottom edge | reframe title-hero (hero larger, nearer centre), move or shrink the foreground fruit (ties WO-L20) | P3 | OPEN | 0 |
 
+## Packet p08 (r61: accepted baseline r51 vs candidate r60), critic v2, seed 61
+
+Verdict: candidate 4 / baseline 2. Candidate: hero-closeup high (pupils + catchlight + ear interiors; canopy behind the head L 0.177 → 0.231 so the head separates), title-hero med-high, crate-cluster med-high, beach-corridor low. Baseline: water-gap high and play-camera med — on BOTH, a hard straight-edged seam in the water plane on the candidate (water-gap: red 146 → 183 in 5 px along a diagonal (820,780)–(1100,500); play-camera: a 3 px dark sliver between two pale sheets at x 860–880, y 310–316). NOT PROMOTED (regression WO-R10). Critic's top pick: rebuild the black-fur shading + bring the face colours to the cat.
+
+| ID | Round | Source | Problem / impact | Hypothesis / intervention | Pri | Status | Attempts |
+|---|---|---|---|---|---|---|---|
+| WO-R10 | r61 | critic A/B | REGRESSION: straight-edged seams in the water — "stacked sheets": water-gap (820,780)–(1100,500) red step 37 in 5 px + a thin dark-blue line at the cliff base (900–990, 570); play-camera 3 px dark sliver at x 860–880 y 310–316 and a straight pale band (380–460, 297–323) | most likely r58's larger foam rings: pushed 0.91 m further out and widened, the gap islets' rings now overlap each other and the channel, and their straight polygon ends/edges stack (transparent, depthWrite off, same height). Fix: clip/fade ring ends where rings overlap, or lower ring opacity where two meet; second suspect: base/ripple/glint plane offsets vs the new WATER_Y | P1 | OPEN | 0 |
+| WO-A33 | r61 | critic (top pick) | Hero black fur is flat grey plastic: value range 0.08–0.17 vs refs/cat 0.00–0.31; rim ≈1.7× interior (target 2.5×); warm band barely there (R−B ≈ 3–4) | one hero-shading pass: a broad cool view-dependent sheen on head/shoulders/back peaking L 0.30–0.35, rim 2.5×, a slight warm fur base (R−B 3–5), less fur lift for deeper darks. Merges WO-A26, A29 | P1 | OPEN | 0 |
+| WO-A34 | r61 | critic | Face colours overshoot the cat: inner ear 155,87,76 sat 0.51 (ref 63,54,54 sat 0.15); iris 155,157,80 yellow-olive sat 0.49 (ref 152,166,131 / 191,210,188 sat 0.10–0.21); whiskers dark grey (p98 V 115–124, ref white) | rig.py: ear pink → dark mauve (×0.45 sat); iris → pale desaturated green (lum × [0.92,1.0,0.80], sat ≈0.18); whiskers: exempt bright low-sat pixels from desat/lift and boost to near-white | P1 | OPEN | 0 |
+| WO-A35 | r61 | critic | Small white flecks at the wrist and foot in title-hero (cat5) | likely whisker-mask verts (hull mask 0) on claws — check the hull mask; or bright texture specks | P3 | OPEN | 0 |
+| WO-V27 | r61 | critic | Value structure lifted AND clipped: darkest 2% of frames L 0.057–0.123 vs refs 0.017–0.058, yet vertical shadowed faces clip to V 0.067 (8,14,17) — the post black floor | render owner: lower the post floor curve and add an occlusion falloff on vertical faces (ties WO-V19, A22) | P2 | OPEN | 0 |
+| WO-L30 | r61 | critic | A flat pale grey "kerb" strip where the far water meets the jungle wall (beach 0–520, 410–470) | the ridge foam band (`ridgeFoam`) at the old waterline height — re-place it at WATER_Y | P2 | OPEN | 0 |
+| WO-L31 | r61 | critic | Large pale shallow-water areas read as ice (water-gap foreground ≈156,186,197, half the water); highlights p98 L 0.74–0.76 vs light-3 0.95 | shallows alpha down, sparkle/glints up (ties WO-L29, V17) | P3 | OPEN | 0 |
+| WO-A30 | — | critic | (confirms) speckled light halo on the hero outline at every distance (beach 580–660×430–540, water-gap 340–400×360–460) | as WO-A30 | P2 | OPEN | — |
+| WO-L20 | — | critic | (confirms) fruit = smooth spheres with leaf caps and a near-blown orange rim glow | as WO-L20 | P2 | OPEN | — |
+| WO-V26 | — | critic | (confirms) cut-off foreground orange competes with the hero in title-hero | as WO-V26 | P3 | OPEN | — |
+
 ## Engine limits (logged, not scheduled)
 
 - Shadow-map texel staircase on crate faces at portrait range (4096 map).
