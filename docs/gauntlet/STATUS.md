@@ -53,7 +53,9 @@
   r28). Deviation: one local regression (pupils, WO-R08) filed P1.
 - r53: slit pupils + catchlights as geometry on the head bone (the baked
   iris had no pupil); eye zone and ear skin spared from the fur pass.
-- Next: r54 tail
+- r54: tail taper — two tactics failed (curl defeats a local shrink;
+  bone scale tore the root); all reverted, WO-A27 STALLED → re-concept.
+- Next: r55 tail
   taper + violet fur shade (A27, A26), r55 island skirts (V22), then
   r47 perf LOD (WO-A06, variants staged in assets-raw/*/lod1.glb).
 - DECISION OWED BY SCOTT: WO-X02 — other Crash-like trade dress (title,
