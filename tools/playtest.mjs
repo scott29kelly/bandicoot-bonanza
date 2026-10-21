@@ -118,7 +118,9 @@ try{
     const file=path.resolve(ROOT,String(args.shot));
     mkdirSync(path.dirname(file),{recursive:true});
     await place([-1.6,0,-3,Math.PI]);await hold('ArrowUp',60);await step(10);
-    await page.screenshot({path:file});
+    // 120 s (was Playwright's 30 s default): SwiftShader JIT-compiles a richer
+    // hero shader slowly and the first frame of a framing can exceed 30 s (WO-T04).
+    await page.screenshot({path:file,timeout:120000});
     console.log(`[playtest] shot -> ${file}`);
   }
 }catch(err){

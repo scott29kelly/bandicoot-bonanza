@@ -299,10 +299,19 @@ if a.soften < 1 or a.fur_desat > 0 or a.fur_lift > 0:
             # fading to butter-yellow) when the bake came out cream (cat5).
             if iris.any():
                 il = (out[iris, :3] * np.array([0.2126, 0.7152, 0.0722])).sum(axis=1, keepdims=True)
-                out[iris, :3] = np.clip(il * np.array([0.92, 1.0, 0.45]), 0, 1)
+                # Pale green, sat ~0.2 (refs/cat 152,166,131 / 191,210,188; p08 WO-A34).
+                out[iris, :3] = np.clip(il * np.array([0.90, 1.0, 0.80]), 0, 1)
             ps = pink & ~eye
             pl = (out[ps, :3] * np.array([0.2126, 0.7152, 0.0722])).sum(axis=1, keepdims=True)
-            out[ps, :3] = np.clip(pl * np.array([1.45, 0.88, 0.84]) * 1.1, 0, 1)  # pink-brown, sat ~0.25
+            # Dark mauve, ~rgb(60,50,50) sat ~0.17 (refs/cat inner ear; p08 WO-A34:
+            # the salmon 155,87,76 at sat 0.51 overshot by 3x).
+            pm = float(pl.mean()) if len(pl) else 0.3
+            out[ps, :3] = np.clip(np.array([0.245, 0.205, 0.205]) * (0.75 + 0.5 * pl / max(pm, 1e-3)), 0, 1)
+            # Whiskers near-white (p08: p98 V 115-124 vs white in the photos):
+            # bright, low-saturation pixels outside the eyes.
+            wh = (ov > 0.5) & (osat < 0.2) & ~eye
+            out[wh, :3] = np.maximum(out[wh, :3], 0.90)
+            print(f'[rig] whiskers lifted: {int(wh.sum())} px')
             out[..., 3] = px[..., 3]
             img.pixels[:] = np.clip(out, 0, 1).ravel()
             img.update()

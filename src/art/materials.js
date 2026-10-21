@@ -68,12 +68,25 @@ export function toonMat(opts={}){
     // its front faces; a warm albedo tint cancelled it by turning the fur
     // olive (p05, WO-A20). Neutral light keeps a black cat black.
     const diffuseDesat=rim.diffuseDesat??0;
+    // sheen: a cool emissive band on up-facing (view-space) surfaces — the
+    // photos' blue-grey gloss on forehead, shoulders and back (p08 WO-A33).
+    const sheen=rim.sheen?new THREE.Color(...rim.sheen):null;
     m.onBeforeCompile=(sh)=>{
       sh.uniforms.uRimColor={value:color};
       sh.uniforms.uRimK={value:strength};
       sh.uniforms.uRimP={value:power};
       sh.uniforms.uFormK={value:formK};
       sh.uniforms.uFormP={value:formP};
+      if(sheen){sh.uniforms.uSheen={value:sheen};sh.fragmentShader=sh.fragmentShader
+        .replace('#include <common>',`#include <common>
+uniform vec3 uSheen;`)
+        .replace('#include <emissivemap_fragment>',`#include <emissivemap_fragment>
+{
+  vec3 shN=normalize(normal),shV=normalize(vViewPosition);
+  float up=smoothstep(0.15,0.85,shN.y);
+  float facing=clamp(dot(shN,shV),0.0,1.0);
+  totalEmissiveRadiance+=uSheen*up*(0.35+0.65*facing);
+}`);}
       if(diffuseDesat)sh.fragmentShader=sh.fragmentShader.replace(
         'vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + totalEmissiveRadiance;',
 `vec3 dLight=reflectedLight.directDiffuse+reflectedLight.indirectDiffuse;

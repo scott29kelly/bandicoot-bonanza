@@ -78,7 +78,9 @@ try{
       return a;
     },[f.id,SETTLE]);
     const file=path.join(DIR,f.id+'.png');
-    await page.screenshot({path:file});
+    // 120 s (was Playwright's 30 s default): SwiftShader JIT-compiles a richer
+    // hero shader slowly and the first frame of a framing can exceed 30 s (WO-T04).
+    await page.screenshot({path:file,timeout:120000});
     const stats=await page.evaluate(()=>({...window.BB.stats}));
     // Decode what was actually written and look at the PICTURE. Triangle and
     // draw-call counts are happy to describe a frame of solid black.

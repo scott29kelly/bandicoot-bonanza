@@ -120,7 +120,9 @@ export function createRiggedHero(gltfScene){
   // 4 px and cut the figure out like a sticker (p04, WO-A17). Then 0.45x at
   // power 8: the silhouette edge only, >=2.5x the body (p05, WO-A21); the
   // front-face teal was sky fill, now neutralised by diffuseDesat.
-  skinned.material=toonMat({map:src.map??null,rim:{...RIM,strength:RIM.strength*0.45,power:8.0,mapBias:1.6,diffuseDesat:0.8,tint:[1.10,1.0,0.84]}});
+  // r63 (p08 WO-A33): rim 0.8x at power 7 (~2.5x the body), a cool sheen on
+  // up-facing fur, a slightly warmer base.
+  skinned.material=toonMat({map:src.map??null,rim:{...RIM,strength:RIM.strength*0.8,power:7.0,mapBias:1.6,diffuseDesat:0.8,tint:[1.12,1.0,0.86],sheen:[0.10,0.12,0.15]}});
   src.dispose();
   skinned.castShadow=true;
   skinned.frustumCulled=false; // skinned bounds do not follow the pose

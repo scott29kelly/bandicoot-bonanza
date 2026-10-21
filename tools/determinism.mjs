@@ -51,7 +51,9 @@ async function shot(name,seed){
     await window.BB.settle(n);
   },[ID,SETTLE]);
   const file=path.join(DIR,name+'.png');
-  await page.screenshot({path:file});
+  // 120 s (was Playwright's 30 s default): SwiftShader JIT-compiles a richer
+    // hero shader slowly and the first frame of a framing can exceed 30 s (WO-T04).
+    await page.screenshot({path:file,timeout:120000});
   await page.close();
   return file;
 }
