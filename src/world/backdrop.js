@@ -51,8 +51,12 @@ vec3 canopyTri(vec3 p,vec3 w,float s,float r){
   vec3 w=pow(abs(normalize(vCWNrm)),vec3(4.0));w/=(w.x+w.y+w.z);
   vec3 t=canopyTri(vCWPos,w,7.0,0.0)*canopyTri(vCWPos,w,19.0,0.9)*4.0;
   float l=dot(t,vec3(0.2126,0.7152,0.0722));
-  vec3 m=mix(vec3(l),t,0.3);
-  diffuseColor.rgb*=mix(vec3(1.0),m,0.84); // 0.9 -> 0.72 (r59) -> 0.84 (r67, WO-R12): deeper leaf gaps
+  // Two painted tones, not a photo (r89, p14 WO-V41): the smooth texture
+  // read as a blurred photo-leaf shell beside the crisp polygon clumps.
+  // A soft-edged step keeps the leaf shapes and drops the photo gradient;
+  // the skin shows only between clumps, so it sits in under-canopy shade.
+  float tone=mix(0.26,1.0,smoothstep(0.40,0.52,l));
+  diffuseColor.rgb*=tone;
 }`);
   };
 }
