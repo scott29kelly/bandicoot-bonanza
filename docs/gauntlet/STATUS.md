@@ -2,7 +2,11 @@
 
 ## 2026-10-20 — authored-asset line, self-paced loop (READ FIRST)
 
-- Branch `claude/m3-authored-assets` in the `main` checkout (not pushed).
+- Branch `claude/m3-authored-assets` in the `main` checkout. PUSHED
+  2026-10-20 (Scott's go-ahead) as its own branch at `a4a7c77` — not main.
+  The repo is PUBLIC: rounds 38-43 were squashed into one commit before the
+  push so the interim Crash-like hero is not published. The unsquashed
+  history is LOCAL ONLY on `backup/m3-full-history` — never push it.
 - Scott's decisions: zero-asset rule lifted (authored GLBs, must win a
   blind A/B); self-paced `/loop` rounds until he stops it; visuals first,
   then gameplay. Cadence: `CONTRACT.md` §OUTER CADENCE.
