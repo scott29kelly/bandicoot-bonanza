@@ -122,7 +122,12 @@
 - r84: jungle wall (V34) tactic 1: bigleaf on the upper flank, lit crowns
   brighter (canopy lum 0.196 -> 0.213). 4.0M tris.
 - r85: sand hue toward the ref path (V39): sat 0.79 -> 0.59-0.64, L +0.05.
-- Next: r86 BLIND PACKET (base r81). (done r80) R14 keg texture/hazard read,
+- r86 BLIND PACKET p14 (r81 vs r85, critic v2): CANDIDATE 6 / 0.
+  PROMOTED: r85 `18b71ea` is the ACCEPTED BASELINE (fourth promotion). The
+  banana crowns and the paler sand won every pair. Top pick: matte fur
+  re-shade of the hero (A36, A43 rim spike).
+- Next: r87 A43 rim softer + A36 sheen, r88 V40 value structure (sun
+  pools), r89 V41 canopy shell, r90 BLIND PACKET (base r85). (done r80) R14 keg texture/hazard read,
   r81 V33 sand, r82 BLIND PACKET. (done r76) R14 keg
   (out of the slot, sharper decal, flame sprite), r77 A40/A36, r78 BLIND
   PACKET. Pending Scott:

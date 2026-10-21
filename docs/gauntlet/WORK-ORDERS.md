@@ -310,6 +310,29 @@ Verdict: CANDIDATE 5 / baseline 0 / 1 tie → PROMOTED, r81 `a4b70f7` is the acc
 | WO-V35 | — | critic | (confirms) straight extruded cliffs with drawn cracks; flat sky, repeated sea-stack construction; little AO at contacts, teal (not sand) bounce on the paws | backlog | P3 | OPEN | — |
 | WO-L28 | — | critic | (confirms) faceted foam edges, uniform flow dashes | as WO-L28 | P3 | OPEN | — |
 
+## Packet p14 (r86: accepted baseline r81 vs candidate r85), critic v2, seed 86
+
+Verdict: CANDIDATE 6 / baseline 0 → PROMOTED, r85 `18b71ea` is the accepted baseline (fourth promotion). Only canopy and sand differ; the hero, props, water and sky are pixel-identical. Won water-gap (high: a banana crown at the top centre, sky in region 0.514 → 0.347), title-hero, beach-corridor, crate-cluster (med: sand reads as sand, sat 0.60 vs mustard 0.79; fruit vs sand ΔE 25.5 vs 20.3; r83 gap fill covers the exposed shell edge), hero-closeup and play-camera (low-med). Candidate-only tell: pale cut stalks with red bases in the title canopy. Cost: +785k tris (~24%), draws equal. Critic's top pick: re-shade the hero as matte fur (WO-A36).
+
+| ID | Round | Source | Problem / impact | Hypothesis / intervention | Pri | Status | Attempts |
+|---|---|---|---|---|---|---|---|
+| WO-A36 | — | critic (top pick) | (confirms) glossy vinyl coat: spec streaks over head, arms, tail; painted smudges; no silhouette breakup at cheeks, chest, tail tip | a broad low-gloss cool sheen in place of the streaks; tuft breakup at the silhouette | P1 | OPEN | — |
+| WO-A43 | r86 | critic | Rim over-strength: a 1–2 px cream spike V 0.86 (8.6× the interior) inside a 2–4 px maroon outline reads as a sticker edge (hc y330 x≈751) | rim wider and softer, peak V ~0.4–0.5 (lower power + strength); ties WO-A30 | P1 | OPEN | 0 |
+| WO-A39 | — | critic | (confirms) iris hue 66 cream-yellow vs ref 86–97 pale green; slit pupils + sideways glance vs the ref's front-on medium pupils | rig.py iris recolour toward hue ~90; a radial gradient | P2 | OPEN | — |
+| WO-A44 | r86 | critic | Tail a thick uniform tube (ref thinner, tapering); no small white chest patch (cat ref 09); whiskers thick | tail taper in rig.py (--tail-taper) or a scale ramp on the tail bones; chest patch only if Scott's cat has one — CHECK refs before adding | P3 | OPEN | 0 |
+| WO-V40 | r86 | critic | Value structure mid-key: pixels L>0.7 are 0.004–0.043 of frame vs refs 0.009–0.262 (form-1 0.057); frame L sd 0.155–0.188 vs 0.19–0.30; no sunlit path pools against dark walls | brighter key on the path (sun pools), highlight headroom in the grade; ties WO-V38 | P1 | OPEN | 0 |
+| WO-V41 | r86 | critic | Two foliage styles in one canopy: crisp flat-shaded polygon leaves next to blurred photo-texture shells (beach 20–300×300–460, hc 0–500×150–380, play 0–250×100–300) | the ridge skin's triplanar canopy texture reads as a blurred photo: darken/flatten it into under-canopy shade, or retire it; more gap fill | P2 | OPEN | 0 |
+| WO-V39 | — | critic | (follow-up) sand still dark and orange vs the ref path (223,191,100) hue 44 v 0.88; ours (172,134,69) hue 38 v 0.68, ΔE 23 | lift and yellow the sand further; watch the crate/sand hue separation | P2 | OPEN | — |
+| WO-L40 | r86 | critic | Near-black void under a platform step (play-camera 632–672×375–390, ~295 px V<0.12) reads as a hole | ties WO-V36 (shadow floor on skirt faces) | P2 | OPEN | 0 |
+| WO-L28 | — | critic | (confirms) foam band along the cliff reads as ice (60–120 px near-white); flat cyan, no specular; straight parallel foam ribbons in play-camera | as WO-L28; a specular glint pass | P2 | OPEN | — |
+| WO-L38 | — | critic | (confirms) pale mint broadleaf rosettes look unlit next to the grass (beach 640–760×650–760) | as WO-L38; darken/tint them toward the grass | P2 | OPEN | — |
+| WO-V31 | — | critic | Sand shadow grey-green (62,70,46) hue 79; the ref's sand shadow is a warm brown (60,47,31) — conflicts with QUALITY-BAR's "blue-green"; the bar governs | note only; revisit if the bar changes | P3 | OPEN | — |
+| WO-V34 | — | critic | (candidate only) pale cut stalks with red bases float in the title canopy (1180–1220×120–140) — bigleaf stems | tint the bigleaf stem texels or cull the stalk ends | P3 | OPEN | — |
+| WO-P05 | — | critic | (confirms) crates red-orange hue 22 vs ref tan-gold hue 38; marbled grain; no metal corners or icons | as WO-P05 | P3 | OPEN | — |
+| WO-V35 | — | critic | (confirms) slab platforms with uniform bevels and crack decals; cloned distant sea stacks (play-camera 490–580, 720–800) | backlog | P3 | OPEN | — |
+| WO-T05 | — | critic | (confirms) hero absent in play-camera, hidden by grass in water-gap, 13.5% of frame height in beach-corridor; a grass blade crosses the legs in hero-closeup | as WO-T05 | P2 | OPEN | — |
+| WO-V32 | — | critic | (confirms, low) a firm-edged dark disc on bare sand at play-camera (458–490×733–752) | as WO-V32 | P3 | OPEN | — |
+
 ## Engine limits (logged, not scheduled)
 
 - Shadow-map texel staircase on crate faces at portrait range (4096 map).
