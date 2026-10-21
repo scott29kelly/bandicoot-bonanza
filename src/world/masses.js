@@ -53,8 +53,14 @@ varying vec3 vSWPos;`)
   vec3 W=vec3(0.2126,0.7152,0.0722);
   float l=dot(texture2D(uSandD,a).rgb,W)*2.0*dot(texture2D(uSandD,b).rgb,W)*2.0;
   l=1.0+(l-1.0)*1.4;
-  // 0.72 floor (r71): darker sank to 8-12 px stains (p10).
-  diffuseColor.rgb*=clamp(l,0.72,1.3);
+  // r81 (p12 WO-V33): a 1.5 m grain octave. The lit sand measured sd
+  // 0.006-0.010 inside a 60x30 px patch; the 4 m and 13 m scales are
+  // larger than that patch at play range.
+  vec2 c=mat2(0.6,0.8,-0.8,0.6)*vSWPos.xz/1.5;
+  l*=1.0+(dot(texture2D(uSandD,c).rgb,W)*2.0-1.0)*0.55;
+  // 0.72 floor (r71): darker sank to 8-12 px stains (p10). 0.82 (r81,
+  // p11 WO-V32): the texture's damp discs still read as orphan stains.
+  diffuseColor.rgb*=clamp(l,0.82,1.3);
 }`);
   };
 }
@@ -185,7 +191,10 @@ export function islandMass({x,z,w,d,topY=0}){
       _c.lerp(cSandPale,Math.max(0,fbm3((px+x)*0.45,31,(pz+z)*0.45)-0.55)*0.9);
       // ~3.5 m value breakup: the second macro scale the bar asks for.
       // Centred on 1.0 (r71): 0.70+0.55·fbm averaged below 1 and darkened the beach.
-      _c.multiplyScalar(0.80+0.40*fbm3((px+x)*0.28,41,(pz+z)*0.28));
+      // r81 (p12 WO-V33, lit sand sd 0.006-0.010 in 60x30 px): swing 0.40 ->
+      // 0.64, still centred; the 1.07 lift returns the r64 level that the
+      // r68 detail texture took (mean 0.535 -> 0.506 in title-hero).
+      _c.multiplyScalar(1.07*(0.68+0.64*fbm3((px+x)*0.28,41,(pz+z)*0.28)));
       // A worn path down the corridor (r66): compacted, a touch darker and
       // warmer, wandering, with a darker rut at its edge where feet push
       // sand aside — form-1's path reads as a path, ours as a field.

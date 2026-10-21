@@ -110,7 +110,10 @@
   torn at 3x with no hazard read at range (R14). Not promoted.
 - r79: dressing back to r64 exactly (R16): rng-stable avoid + sink().
 - r80: keg rebuilt in code (R14): staves, iron hoops, red band, white skull.
-- Next: (done r80) R14 keg texture/hazard read,
+- r81: sand level up (x1.07) and stains fainter (V32); V33 breakup by
+  value noise FAILED (sd unchanged) — next tactic is structure (debris
+  drifts, path edges). The x=640 vertical seam (L24) is visible in r64-r81.
+- Next: r82 BLIND PACKET (base r64 vs r81). (done r80) R14 keg texture/hazard read,
   r81 V33 sand, r82 BLIND PACKET. (done r76) R14 keg
   (out of the slot, sharper decal, flame sprite), r77 A40/A36, r78 BLIND
   PACKET. Pending Scott:
