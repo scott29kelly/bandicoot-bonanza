@@ -113,7 +113,12 @@
 - r81: sand level up (x1.07) and stains fainter (V32); V33 breakup by
   value noise FAILED (sd unchanged) — next tactic is structure (debris
   drifts, path edges). The x=640 vertical seam (L24) is visible in r64-r81.
-- Next: r82 BLIND PACKET (base r64 vs r81). (done r80) R14 keg texture/hazard read,
+- r82 BLIND PACKET p13 (r64 vs r81, critic v2): CANDIDATE 5 / 0 / 1 tie.
+  PROMOTED: r81 `a4b70f7` is the ACCEPTED BASELINE (third promotion). Won
+  on the warm-black coat and the code-built keg; no candidate-only defect.
+  Top pick: designed jungle leaf clusters (V34/V02).
+- Next: r83 V37 canopy card seam, r84 V34 jungle clusters (authored GLB),
+  r85 V38/V39 fill + sand hue, r86 BLIND PACKET (base r81). (done r80) R14 keg texture/hazard read,
   r81 V33 sand, r82 BLIND PACKET. (done r76) R14 keg
   (out of the slot, sharper decal, flame sprite), r77 A40/A36, r78 BLIND
   PACKET. Pending Scott:

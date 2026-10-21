@@ -287,6 +287,29 @@ Verdict: BASELINE 3 / candidate 1 / 2 ties. Candidate won hero-closeup (med-high
 | WO-A30 | — | critic | (confirms) single-pixel sparkle on the head outline at small scale | as WO-A30 | P2 | OPEN | — |
 | WO-L24 | — | critic | (possible) sand seam at x≈640 in play-camera (110 → 104) | as WO-L24 | P3 | OPEN | — |
 
+## Packet p13 (r82: accepted baseline r64 vs candidate r81), critic v2, seed 82
+
+Verdict: CANDIDATE 5 / baseline 0 / 1 tie → PROMOTED, r81 `a4b70f7` is the accepted baseline (third promotion). Candidate won hero-closeup (med: warm black coat, chest lum 0.111 sat 0.265 vs ref cheek 0.127; base charcoal-grey 0.166 sat 0.149), crate-cluster (med-high: the code-built keg's red band and skull are the left-third focal accent; the base TNT interpenetrates its neighbours and its X brace crosses out the label), title-hero, play-camera and water-gap (low: the keg reads at 20–25 px where the TNT is a red smudge; play sand std 0.022 vs 0.013). beach-corridor tie. No candidate-only defect found. Soft notes against the candidate: darker canopy (0.199 vs 0.238) and deeper sand shadow (V 0.26 vs 0.33) than the base and the refs; sand more saturated (0.77–0.82 vs ref 0.64). Critic's top pick: rebuild the jungle mass as designed leaf clusters (WO-V02/V34).
+
+| ID | Round | Source | Problem / impact | Hypothesis / intervention | Pri | Status | Attempts |
+|---|---|---|---|---|---|---|---|
+| WO-V34 | — | critic (top pick) | (confirms) jungle mass is a faceted noise wall of leaf cards, 20–34% of every frame: lum 0.15–0.24 std 0.08–0.12 vs ref lit leaf mass 0.285 std 0.139 built from large readable banana/fern silhouettes in lit and shade groups | designed leaf clusters: large banana/fern/palm silhouettes, per-cluster lit/shade value grouping, lit leaf L → ~0.28 (authored cluster GLBs; ties WO-V02) | P1 | OPEN | — |
+| WO-V37 | r82 | critic | A blurred rectangular leaf-texture square in the canopy — an impostor/card seam (title-hero 950–1100×60–200) | find the card (leafShell / bigleaf / bush-lo LOD) and fix its alpha or cull it | P1 | OPEN | 0 |
+| WO-L38 | r82 | critic | The ground broadleaf is one cloned 4–5-leaf mesh, only rotated (beach 650–790×640–730, 950–1060×690–750, +6) | 2–3 variants (leaf count, scale, lean) or a scale/tint jitter per instance | P2 | OPEN | 0 |
+| WO-V38 | r82 | critic | Lifted fill moved toward the refs on the base: canopy 0.238 vs 0.199, sand shadow V 0.33 vs 0.26 (ref sand shadow L 0.404) | adopt more fill without touching the hero coat (the hero has its own tint path now): hemi / shadow floor up a little for world materials only; ties WO-V31 | P2 | OPEN | 0 |
+| WO-V39 | r82 | critic | Sand too orange and dark vs the ref path: rgb ~165/130/40 lum 0.45–0.54 sat 0.74–0.82 vs 210/164/76 lum 0.657 sat 0.64 | desaturate the sand albedo (cSand family) ~0.12 sat and lift; ties WO-R13/V33 | P2 | OPEN | 0 |
+| WO-P05 | r82 | critic | Crates read rust-brown (shade face 104/50/27 sat 0.70) vs the refs' golden crates (128/78/10) with bright bevelled frames | crate wood warmer/yellower, frames lighter | P3 | OPEN | 0 |
+| WO-L39 | r82 | critic | Rectangular grass beds with hard edges on the platforms (play-camera 505–760×300–350; water-gap 120–650×410–520) | break the bed outline: noise-thinned edge density, overhang tufts | P2 | OPEN | 0 |
+| WO-A42 | r82 | critic | Tail is plain; the ref shows faint ghost banding (07.webp) | rig.py tail texture: subtle darker bands | P3 | OPEN | 0 |
+| WO-A41 | — | critic | (confirms) whiskers short, thick, stiff (~3 px, 60% face width) vs long fine ref whiskers | as WO-A41 | P3 | OPEN | — |
+| WO-A30 | — | critic | (confirms) outline stipple at ~60 px (beach, water-gap) | as WO-A30 | P2 | OPEN | — |
+| WO-A39 | — | critic | (confirms) dark streak smudges inside both irises (hc 530–560, 625–670 × 270–320) | as WO-A39 | P2 | OPEN | — |
+| WO-A36 | — | critic | (confirms) vinyl spec streaks (p95 0.51–0.73 vs coat median 0.09–0.17) | as WO-A36 | P1 | OPEN | — |
+| WO-T05 | — | critic | (confirms) no hero in play-camera | as WO-T05 | P2 | OPEN | — |
+| WO-L35 | — | critic | (confirms) fruit sphere + leaf crown | as WO-L35 | P2 | OPEN | — |
+| WO-V35 | — | critic | (confirms) straight extruded cliffs with drawn cracks; flat sky, repeated sea-stack construction; little AO at contacts, teal (not sand) bounce on the paws | backlog | P3 | OPEN | — |
+| WO-L28 | — | critic | (confirms) faceted foam edges, uniform flow dashes | as WO-L28 | P3 | OPEN | — |
+
 ## Engine limits (logged, not scheduled)
 
 - Shadow-map texel staircase on crate faces at portrait range (4096 map).
