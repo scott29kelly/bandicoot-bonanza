@@ -75,7 +75,9 @@
   (pupils, ears) and the lifted canopy win; water-plane SEAMS (WO-R10,
   likely r58's larger foam rings) lose water-gap and play-camera — not
   promoted. Top pick: hero fur shading + face colours (A33, A34).
-- Next: r62 water seams (R10, L30), r63 hero shading + face colours
+- r62: water seams fixed (WO-R10): soft inner foam edge, original band
+  width, offset scaled by island size.
+- Next: r63 hero shading + face colours
   (A33, A34), r64 ..., r65 BLIND PACKET. Later:
   lift (V23), r60 slim-tail cat (staged in assets-raw/cat5, A27), r61
   BLIND PACKET.

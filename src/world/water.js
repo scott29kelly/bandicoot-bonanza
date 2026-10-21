@@ -128,14 +128,16 @@ function foamRing(s,tex){
   // Band reach scales with the island: full-size rings off the 4 m gap
   // islets overlap each other and flood the channel solid white.
   const size=Math.min(s.maxX-s.minX,s.maxZ-s.minZ);
-  const W=Math.min(2.6,1.1+size*0.14);   // band width, metres
+  const W=Math.min(2.2,0.9+size*0.12);   // band width, metres (r62: the r58 widening made gap-islet rings overlap)
   // Start against the rock skirt (its bulge + lip reach ~1.4 m past the
   // footprint) and run out through it: surf breaks ON rock. Starting
   // inside the bulge buries the band and leaves a bare polygon shoreline.
   // The skirt bulges further out the deeper it goes, so the start follows
   // the waterline: the r56 sea drop (-0.55 -> -1.25) buried the old ring
   // inside the rock and the shore lost its foam (p07, WO-R09).
-  const deeper=Math.max(0,-0.55-WATER_Y)*1.3;
+  // Scaled by island size (r62, WO-R10): the gap islets sit ~4.5 m apart,
+  // and at full offset their rings met mid-channel as one pale sheet.
+  const deeper=Math.max(0,-0.55-WATER_Y)*1.3*THREE.MathUtils.clamp(size/12,0.3,1);
   const pts=perimeter(s,Math.min(2.0,1.2+size*0.06)+deeper);
   const posArr=[],uvArr=[],idx=[];
   for(let i=0;i<pts.length;i++){
@@ -165,6 +167,15 @@ function foamRing(s,tex){
   own.needsUpdate=true;
   const mat=new THREE.MeshBasicMaterial({map:own,transparent:true,depthWrite:false,
     opacity:0.85,fog:true,side:THREE.DoubleSide});
+  // Soft inner edge (round 62, p08 WO-R10): v=0 is the solid end of the
+  // foam gradient, which used to sit hidden inside the rock bulge. Since
+  // the r56 sea drop moved the band out into open water, that solid edge
+  // drew a hard straight line, and neighbouring rings stacked on it.
+  mat.onBeforeCompile=(sh)=>{
+    sh.fragmentShader=sh.fragmentShader.replace('#include <map_fragment>',
+`#include <map_fragment>
+  diffuseColor.a*=smoothstep(-0.08,0.22,vMapUv.y);`);
+  };
   const mesh=new THREE.Mesh(geo,mat);
   mesh.position.y=WATER_Y+0.04;
   mesh.renderOrder=2;
