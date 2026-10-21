@@ -267,6 +267,26 @@ Verdict: BASELINE 4 / candidate 2. Candidate won title-hero (low) and hero-close
 | WO-V35 | r74 | critic | Flat sky (std 0.077 vs 0.135 in light-1); no bounce light on crate shadow faces; cliffs flat slabs | backlog | P3 | OPEN | 0 |
 | WO-L36 | r74 | critic | Foot shadow reads cyan-teal on orange sand; title fruit leaf tangent at the paw (840,700) | ties WO-V31 | P3 | OPEN | 0 |
 
+## Packet p12 (r78: accepted baseline r64 vs candidate r77), critic v2, seed 78
+
+Verdict: BASELINE 3 / candidate 1 / 2 ties. Candidate won hero-closeup (med-high: warm brown-black coat, chest Y 0.154 vs slate 0.214; ref cheek 0.088 — and the base's grass clump hid the leg). Baseline won title-hero (low-med: the candidate has 3–4 untextured upright sticks at the hero's feet), crate-cluster (low-med: the keg's hoops are torn texture strips and the skull decal fragmented, flat-lit std 0.075) and water-gap (low: the red TNT label reads as a hazard at range, the keg does not). beach-corridor and play-camera tie. The critic saw the lower-half differences as "re-randomised dressing": the r76 keg move changed the scatter `avoid` list, and scatter() retries rejected points, so the whole dressing rng stream shifted. Not promoted. Critic's top pick: sand two-scale breakup + edge-clustered debris (WO-V33).
+
+| ID | Round | Source | Problem / impact | Hypothesis / intervention | Pri | Status | Attempts |
+|---|---|---|---|---|---|---|---|
+| WO-R16 | r78 | critic A/B | REGRESSION (r76 dressing drift): moving the keg's `avoid` disc re-rolled every later scatter; the candidate title-hero got 3–4 upright sticks at the hero's feet (700–720×660–720) and hero-closeup a stick across the paw (470,620) | keep the avoid list rng-identical to r64 ({0,−52,1.15}) and clear the keg's footprint with a post-filter (no retry, no rng draw) — the r64 dressing returns exactly | P1 | OPEN | 0 |
+| WO-R14 | — | critic A/B | (confirms, r76) keg texture at 3×: ragged torn hoop strips, fragmented skull, flat-lit (std 0.075); at range it gives no hazard read (the red TNT label did) | a cleaner keg: re-bake/regenerate with crisp iron hoops and a bold skull, or paint hoops + skull decal in code; a red accent visible at range (red lid or band) | P1 | OPEN | 2 |
+| WO-L37 | r78 | critic | Twigs/sticks are untextured thin boxes; upright ones read as stakes (title, beach foreground) | lay sticks flat (pitch ~90°), bark texture, fewer near the lane | P2 | OPEN | 0 |
+| WO-V36 | r78 | critic | Near-black shadow notch on the vertical cliff band (water-gap 75–115×545–570, Y 0.048) — crushes to black; cliffs flat brown, no bounce | lift the cliff shadow floor (hemi ground colour / min ambient on the island skirt material) | P2 | OPEN | 0 |
+| WO-A41 | r78 | critic | Brow whiskers are thick white outlined tubes — read as stitches | ties WO-A37: hull mask 0 on whiskers is in; thin the whisker texels / fade with distance | P3 | OPEN | 0 |
+| WO-T05 | r78 | critic | play-camera has no hero in frame; water-gap hides the hero ~50% behind grass | check the play-camera player placement vs the camera; water-gap: thin grass near the hero spot or move the hero | P2 | OPEN | 0 |
+| WO-V33 | — | critic (top pick) | (confirms) bare flat sand: lit std 0.006–0.010 vs ref path 0.197; no path-edge banking (ferns, roots), debris evenly scattered | two-scale sand breakup (3–4 m ripple, 12 m wet/dry bands) + debris clustered at path margins and plant bases | P1 | OPEN | — |
+| WO-A39 | — | critic | (confirms) iris flat (std 0.004), Y 0.76 sat 0.19; this critic reads the ref iris as Y 0.57–0.60 sat 0.24–0.29 with a ring gradient (p11 read 187,190,156) | as WO-A39: a radial gradient + limbal ring; settle the target on refs/cat 10 | P2 | OPEN | — |
+| WO-A36 | — | critic | (confirms) glossy vinyl coat, no fur breakup at silhouette or cheek | as WO-A36 | P1 | OPEN | — |
+| WO-L35 | — | critic | (confirms) fruit flat orange discs (std 0.005–0.009) with a white fresnel halo | as WO-L35 / WO-L20 | P2 | OPEN | — |
+| WO-L28 | — | critic | (confirms) faceted polygon foam shelf, uniform dash streaks | as WO-L28 | P3 | OPEN | — |
+| WO-A30 | — | critic | (confirms) single-pixel sparkle on the head outline at small scale | as WO-A30 | P2 | OPEN | — |
+| WO-L24 | — | critic | (possible) sand seam at x≈640 in play-camera (110 → 104) | as WO-L24 | P3 | OPEN | — |
+
 ## Engine limits (logged, not scheduled)
 
 - Shadow-map texel staircase on crate faces at portrait range (4096 map).

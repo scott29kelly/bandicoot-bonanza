@@ -104,7 +104,12 @@
 - r76: keg out of the slot (R14): 1.2 m in front of the row, upright, skull
   to camera, soft flame sprite. Playtest 19/19.
 - r77: hero separation at range (A40): sheen fade floor 0.75; ΔL 0.080.
-- Next: r78 BLIND PACKET (base r64 vs r77). (done r76) R14 keg
+- r78 BLIND PACKET p12 (r64 vs r77, critic v2): BASELINE 3 / 1 / 2 ties.
+  The hero won the close-up (med-high). Losses: the r76 keg move re-rolled
+  the dressing (sticks at the hero's feet, R16), and the keg's texture is
+  torn at 3x with no hazard read at range (R14). Not promoted.
+- Next: r79 R16 (rng-stable keg avoid), r80 R14 keg texture/hazard read,
+  r81 V33 sand, r82 BLIND PACKET. (done r76) R14 keg
   (out of the slot, sharper decal, flame sprite), r77 A40/A36, r78 BLIND
   PACKET. Pending Scott:
   the adventurer look (goggles + scarf/bandolier/vest/neckerchief), game name.
