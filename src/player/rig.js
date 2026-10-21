@@ -61,7 +61,7 @@ function addEyes(mesh,head){
   const up=new THREE.Vector3(0,1,0);
   for(const e of Object.values(eyes)){
     const n=new THREE.Vector3(...e.n).normalize();
-    const p=new THREE.Vector3(...e.p).addScaledVector(n,e.r*0.32); // clear of the eye's bulge
+    const p=new THREE.Vector3(...e.p).addScaledVector(n,e.r*0.55); // clear of the eye's bulge (cat5 bulges more)
     const side=new THREE.Vector3().crossVectors(up,n).normalize();
     const g=new THREE.Group();
     g.position.copy(p);

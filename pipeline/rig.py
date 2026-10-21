@@ -246,11 +246,14 @@ if a.soften < 1 or a.fur_desat > 0 or a.fur_lift > 0:
             osat = np.where(ov > 0, (ov - omn) / np.maximum(ov, 1e-6), 0)
             orr, ogg, obb = o[..., 0], o[..., 1], o[..., 2]
             ohue = np.where(ov == orr, ((ogg - obb) / od) % 6, np.where(ov == ogg, (obb - orr) / od + 2, (orr - ogg) / od + 4)) * 60
-            iris = (ohue > 45) & (ohue < 115) & (osat > 0.35) & (ov > 0.3)
+            # Pale irises (cat5) sit below sat 0.35: 0.18 and V 0.45 catch them.
+            # cat5 bakes its eyes pale cream-yellow (hue ~50, sat 0.12-0.3,
+            # V > 0.6); whiskers are whiter (sat < 0.12).
+            iris = (ohue > 35) & (ohue < 130) & (osat > 0.12) & (ov > 0.45)
             eye = iris.copy()
             for _ in range(10):
                 eye = eye | np.roll(eye, 1, 0) | np.roll(eye, -1, 0) | np.roll(eye, 1, 1) | np.roll(eye, -1, 1)
-            pink = ((ohue >= 320) | (ohue <= 40)) & (osat > 0.08) & (ov > 0.10) & (ov < 0.75)
+            pink = ((ohue >= 320) | (ohue <= 40)) & (osat > 0.15) & (ov > 0.12) & (ov < 0.75)
             keep = (eye | pink)[..., None].astype(np.float32)
             print(f'[rig] masks: iris {int(iris.sum())} px, eye zone {int(eye.sum())} px, pink {int(pink.sum())} px')
             if a.fur_desat > 0:
@@ -265,7 +268,7 @@ if a.soften < 1 or a.fur_desat > 0 or a.fur_lift > 0:
                 r, g, bb = rgb[..., 0:1], rgb[..., 1:2], rgb[..., 2:3]
                 d = np.maximum(v - mn, 1e-6)
                 h = np.where(v == r, ((g - bb) / d) % 6, np.where(v == g, (bb - r) / d + 2, (r - g) / d + 4)) * 60
-                blue = np.clip(1 - np.abs(h - 220) / 50, 0, 1)
+                blue = np.clip(1 - np.abs(h - 215) / 65, 0, 1)  # 150-280: teal sheen too (cat5 belly)
                 dark = np.clip((0.45 - v) / 0.15, 0, 1)
                 k = a.fur_desat * np.maximum(blue, dark) * (1 - keep)
                 out[..., :3] = rgb * (1 - k) + lum * k
@@ -284,6 +287,19 @@ if a.soften < 1 or a.fur_desat > 0 or a.fur_lift > 0:
             out[slit, :3] *= 0.25
             print(f'[rig] eye: iris median V {irisv:.2f}, slit {int(slit.sum())} px')
             # Ear skin toward the photos' pink-brown (sat ~0.23, hue ~7).
+            # Bright teal sheen patches (cat5 belly) went light grey after the
+            # desat, and the grade's shadow split-tone tinted them blue: cap the
+            # originally blue-teal fur at V 0.22. Whiskers are low-sat, untouched.
+            teal = (ohue > 150) & (ohue < 280) & (osat > 0.15) & ~eye & ~pink
+            tv = out[..., :3].max(axis=2)
+            over = teal & (tv > 0.22)
+            out[over, :3] *= (0.22 / np.maximum(tv[over], 1e-6))[:, None]
+            print(f'[rig] teal cap: {int(over.sum())} px')
+            # Iris to the photos' pale yellow-green (CAT_NOTES: lime near the pupil
+            # fading to butter-yellow) when the bake came out cream (cat5).
+            if iris.any():
+                il = (out[iris, :3] * np.array([0.2126, 0.7152, 0.0722])).sum(axis=1, keepdims=True)
+                out[iris, :3] = np.clip(il * np.array([0.92, 1.0, 0.45]), 0, 1)
             ps = pink & ~eye
             pl = (out[ps, :3] * np.array([0.2126, 0.7152, 0.0722])).sum(axis=1, keepdims=True)
             out[ps, :3] = np.clip(pl * np.array([1.45, 0.88, 0.84]) * 1.1, 0, 1)  # pink-brown, sat ~0.25
@@ -340,17 +356,29 @@ if _img is not None:
     vsat = (vmax - vmin) / np.maximum(vmax, 1e-6)
     vh = np.where(vmax == rgbv[:, 0], ((rgbv[:, 1] - rgbv[:, 2]) / vd) % 6,
          np.where(vmax == rgbv[:, 1], (rgbv[:, 2] - rgbv[:, 0]) / vd + 2, (rgbv[:, 0] - rgbv[:, 1]) / vd + 4)) * 60
-    irisv = (vh > 45) & (vh < 115) & (vsat > 0.35) & (vmax > 0.3)
+    irisv = (vh > 35) & (vh < 130) & (vsat > 0.12) & (vmax > 0.45)
     eyes = {}
     for tag, sgn in (('L', -1), ('R', 1)):
         idx = [i for i in np.nonzero(irisv)[0] if me.vertices[i].co.x * sgn > 0 and me.vertices[i].co.z > 0.6]
         if len(idx) < 8:
             continue
         P = np.array([tuple(me.vertices[i].co) for i in idx]); N = np.array([tuple(me.vertices[i].normal) for i in idx])
+        # Front-facing only (Blender front is -Y): cat5 bakes whole cream
+        # eyeballs, and the mean normal of a full sphere points anywhere —
+        # the slit landed inside the head (round 60).
+        front = N[:, 1] < -0.25
+        if front.sum() >= 6:
+            P, N = P[front], N[front]
         # Median centre and a 70th-percentile radius: the farthest iris vertex
         # overshot the eye and made the slit too tall (round 53).
-        c = np.median(P, 0); n = N.mean(0); n /= max(np.linalg.norm(n), 1e-6)
-        r = float(np.percentile(np.sqrt(((P - c) ** 2).sum(1)), 70)) * 1.1
+        c = np.median(P, 0)
+        # Outlier rejection: cream muzzle and whisker roots also pass the
+        # iris test on some textures (cat5); keep the cluster round the eye.
+        keepm = np.sqrt(((P - c) ** 2).sum(1)) < 0.05
+        if keepm.sum() >= 6:
+            P, N = P[keepm], N[keepm]; c = np.median(P, 0)
+        n = N.mean(0); n /= max(np.linalg.norm(n), 1e-6)
+        r = min(float(np.percentile(np.sqrt(((P - c) ** 2).sum(1)), 70)) * 1.1, 0.045)
         H = a.height
         eyes[tag] = {'p': [c[0] * H, c[2] * H, -c[1] * H], 'n': [n[0], n[2], -n[1]], 'r': r * H}
         print(f'[rig] eye {tag}: {len(idx)} verts, r {r * H:.3f} m')
