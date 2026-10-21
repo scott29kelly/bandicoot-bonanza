@@ -55,9 +55,9 @@
   iris had no pupil); eye zone and ear skin spared from the fur pass.
 - r54: tail taper — two tactics failed (curl defeats a local shrink;
   bone scale tore the root); all reverted, WO-A27 STALLED → re-concept.
-- Next: r55 tail
-  taper + violet fur shade (A27, A26), r55 island skirts (V22), then
-  r47 perf LOD (WO-A06, variants staged in assets-raw/*/lod1.glb).
+- Next: r55 island skirts (WO-V22, authored rock/root GLBs), r56 BLIND
+  PACKET (critic v2, base r51), then the cat re-concept with a slim raised
+  tail (A27) + violet fur shade (A26), palms (staged), fruit (L20).
 - DECISION OWED BY SCOTT: WO-X02 — other Crash-like trade dress (title,
   X-crates, TNT, spin-fruit). Keep, or restyle and rename?
 - r41: hero outline from smoothed normals (WO-R07), fur softened in
