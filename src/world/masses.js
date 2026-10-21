@@ -61,6 +61,10 @@ varying vec3 vSWPos;`)
   // 0.72 floor (r71): darker sank to 8-12 px stains (p10). 0.82 (r81,
   // p11 WO-V32): the texture's damp discs still read as orphan stains.
   diffuseColor.rgb*=clamp(l,0.82,1.3);
+  // r85 (p13 WO-V39): lit sand rendered 173/127/36 sat 0.79-0.87 against
+  // the ref path's 210/164/76 sat 0.64. Toward its own grey, then lifted.
+  float sL=dot(diffuseColor.rgb,W);
+  diffuseColor.rgb=mix(vec3(sL),diffuseColor.rgb,0.80)*1.22;
 }`);
   };
 }
