@@ -117,7 +117,9 @@
   PROMOTED: r81 `a4b70f7` is the ACCEPTED BASELINE (third promotion). Won
   on the warm-black coat and the code-built keg; no candidate-only defect.
   Top pick: designed jungle leaf clusters (V34/V02).
-- Next: r83 V37 canopy card seam, r84 V34 jungle clusters (authored GLB),
+- r83: canopy "impostor square" (V37) = bare ridge skin; hash-placed
+  low-poly gap-fill clumps cover most of it (+470k tris).
+- Next: r84 V34 jungle clusters (authored GLB),
   r85 V38/V39 fill + sand hue, r86 BLIND PACKET (base r81). (done r80) R14 keg texture/hazard read,
   r81 V33 sand, r82 BLIND PACKET. (done r76) R14 keg
   (out of the slot, sharper decal, flame sprite), r77 A40/A36, r78 BLIND

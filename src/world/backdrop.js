@@ -314,6 +314,18 @@ function jungleRidge(x,z,len,w,h,dir,near=true){
       canopy.push({x,z,dir,lx:rp2.getX(i),ly:ly-(big?0.2:0.4),lz:rp2.getZ(i),
         R:(1.5+hash3(i,ly,z)*1.2)*(big?1.6:1),depth:0.25,yaw:hash3(z,ly,i)*6.283,big});
     }
+    // Gap fill (r83, p13 WO-V37): the rand-placed clumps left bare ridge
+    // skin between them, and a sun-facing patch of it read as a blurred
+    // "impostor square" in title-hero. About one in six upper-slope vertices,
+    // steep faces included, gets a 1.1k-face clump (it sits behind the
+    // full ones). Hash-placed, no draws.
+    if(near&&hasAsset('jungle-bush'))for(let i=0;i<rp2.count;i++){
+      const lx=rp2.getX(i),ly=rp2.getY(i),lz=rp2.getZ(i);
+      if(ly<1.5||rn.getY(i)<-0.1||hash3(lx*1.7,ly+x,lz*1.3)>0.16)continue;
+      const R=(1.3+hash3(lz,lx,ly)*1.0)*1.4,sink=R*0.35;
+      canopy.push({x,z,dir,lx:lx-rn.getX(i)*sink,ly:ly-rn.getY(i)*sink,lz:lz-rn.getZ(i)*sink,
+        R,depth:THREE.MathUtils.clamp(ly/h,0,1),yaw:hash3(ly,lz,i)*6.283,lo:true});
+    }
   }
   ridgeSamples.push(...samples);
   // Waterline ring (the sphere's equator row sits exactly at y=0 local,
