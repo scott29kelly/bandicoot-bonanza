@@ -234,6 +234,19 @@ Verdict: candidate 4 / baseline 2. Candidate: water-gap med-high (seams gone —
 | WO-A35 | — | critic | (confirms) white flecks at the back leg/foot (title 820–940×620–730) | as WO-A35 | P3 | OPEN | — |
 | WO-A30 | — | critic | (confirms) dotted white outline fringe at gameplay range | as WO-A30 | P2 | OPEN | — |
 
+## Packet p10 (r70: accepted baseline r64 vs candidate r69), critic v2, seed 70
+
+Verdict: BASELINE 6 / candidate 0 (crate-cluster high; title, beach, play med; hero-closeup, water-gap low-med). The hero is near-identical between the sides; the losses come from two candidate changes. NOT PROMOTED; r64 stays the accepted baseline. Both regressions are P1.
+
+| ID | Round | Source | Problem / impact | Hypothesis / intervention | Pri | Status | Attempts |
+|---|---|---|---|---|---|---|---|
+| WO-R13 | r70 | critic A/B | REGRESSION (r66/r68 ground): the sand went darker and more orange — lit-sand luma 0.35–0.44 vs 0.49–0.53 (refs 0.56–0.69), hue 26–35° vs 40–48°; it collapses into the crate-wood hue (22°): in crate-cluster crate/sand ΔL −0.008, the crates sink into the ground; dark pock blotches 8–12 px read as stains. The breakup itself was right (sand sd 0.122 vs 0.080 title) | keep the breakup, restore the level and hue: centre the 3.5 m multiply on 1.0 (0.70+0.55·fbm averaged <1), path colour lighter/yellower (≈0xc9a874), damp patches toward yellow-ochre, the sand detail clamp floor 0.55 → 0.75 (no stains); target lit-sand luma ≥0.50, hue ≥40° | P1 | OPEN | 0 |
+| WO-R14 | r70 | critic A/B | REGRESSION (r69 keg): in the crate row the keg reads as a HOLE in the crate wall — "an empty slot showing a banded barrel and a ragged red alpha-cut fragment"; the critic did not see a hazard. A cylinder in a cube's slot leaves gaps, and the skull is part-hidden | the keg must read as its own object: stand it proud of the crate row (bigger, h ×1.25), a brighter red skull and dark iron bands, a lit fuse spark; or move the hazard out of the crate wall (gameplay position — keep the tntRadius checks green) | P1 | OPEN | 0 |
+| WO-A39 | r70 | critic | Iris is a flat fill (sd 0.001), no gradient and no dark limbal ring | rig.py: radial iris gradient (lime near the pupil → butter-yellow at the rim) + a dark ring at the iris edge (CAT_NOTES) | P2 | OPEN | 0 |
+| WO-V31 | r70 | critic | Shadow on sand is olive, over-saturated (palm shadow sat 0.71, hue 67°); ref form-1 plant shadow sat 0.40, B/R 0.60 — desaturate and move toward blue-violet | render owner: the grade's shadow split-tone and the hemi ground colour (ties WO-L13) | P2 | OPEN | 0 |
+| WO-L34 | r70 | critic | A small brown box post with a floating cyan diamond (title-hero 100–135×300–370) reads as a primitive | the checkpoint totem (makeCheckpoint) — authored totem GLB (ties WO-X02: a generic tiki, no Aku Aku look) | P2 | OPEN | 0 |
+| WO-A33 | — | critic (top pick) | (re-measured) hero fur slate-grey vinyl: chest L 0.21, forehead 0.27 vs refs/cat chest 0.03, cheek 0.13; vinyl specular | near-black albedo (body L 0.06–0.12), anisotropic blue-grey sheen, strand breakup, stronger warm core band (r63 sheen + r67 tint not enough) | P1 | OPEN | — |
+
 ## Engine limits (logged, not scheduled)
 
 - Shadow-map texel staircase on crate faces at portrait range (4096 map).

@@ -89,7 +89,11 @@
 - r67: coat warm black at range (R11), darks deeper (R12).
 - r68: sand detail texture (ripples, pebbles) on the beach (V28 tactic 2).
 - r69: the powder keg (Scott's pick B) replaces the TNT crate.
-- Next: r70 BLIND PACKET (critic v2, base r64 vs cand r69). Pending Scott:
+- r70 BLIND PACKET p10 (r64 vs r69, critic v2): BASELINE 6 / 0. The sand
+  went darker/orange and merged with the crates (WO-R13, r66/r68), and
+  the keg reads as a hole in the crate wall (R14). Not promoted.
+- Next: r71 sand level + hue back (R13, keep the breakup), r72 keg
+  presentation (R14), r73 hero fur (A33), r74 BLIND PACKET. Pending Scott:
   the adventurer look (goggles + scarf/bandolier/vest/neckerchief), game name.
 - (done r67) coat value + darks (R11, R12),
   r68 ..., r69 BLIND PACKET. Later: (done r64) hero shading + face colours
