@@ -51,6 +51,34 @@ attribute vec4 color;`)
   return m;
 }
 
+function addEyes(mesh,head){
+  let eyes=null;
+  try{eyes=JSON.parse(mesh.userData?.eyes??'null');}catch{eyes=null;}
+  if(!eyes||!head)return;
+  head.updateWorldMatrix(true,false);
+  const slitMat=new THREE.MeshBasicMaterial({color:0x050506});
+  const glintMat=new THREE.MeshBasicMaterial({color:0xffffff,toneMapped:false});
+  const up=new THREE.Vector3(0,1,0);
+  for(const e of Object.values(eyes)){
+    const n=new THREE.Vector3(...e.n).normalize();
+    const p=new THREE.Vector3(...e.p).addScaledVector(n,e.r*0.32); // clear of the eye's bulge
+    const side=new THREE.Vector3().crossVectors(up,n).normalize();
+    const g=new THREE.Group();
+    g.position.copy(p);
+    g.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),n);
+    // Lens-shaped slit: narrow, about 0.8 of the iris tall (CAT_NOTES: 1/5 wide).
+    const slit=new THREE.Mesh(new THREE.SphereGeometry(1,12,10),slitMat);
+    slit.scale.set(e.r*0.17,e.r*0.78,e.r*0.05);
+    const glint=new THREE.Mesh(new THREE.SphereGeometry(1,8,6),glintMat);
+    glint.scale.setScalar(e.r*0.13);
+    glint.position.set(e.r*0.28,e.r*0.36,e.r*0.06);
+    g.add(slit,glint);
+    head.add(g);
+    // Into the bone's frame: the group was composed in model space.
+    g.applyMatrix4(new THREE.Matrix4().copy(head.matrixWorld).invert());
+  }
+}
+
 /** A copy of geo whose normals are averaged over every vertex sharing a position. */
 function smoothedNormals(geo){
   const g=geo.clone(),p=g.getAttribute('position'),n=g.getAttribute('normal');
@@ -104,6 +132,11 @@ export function createRiggedHero(gltfScene){
   hull.bind(skinned.skeleton,skinned.bindMatrix);
   hull.frustumCulled=false;
   skinned.parent.add(hull);
+
+  // Eyes (round 53, WO-A24): the generated iris has no pupil. rig.py
+  // measured each eye (centre, normal, radius); a black vertical slit and a
+  // catchlight ride the head bone there, as in Scott's photos (refs/cat 10).
+  addEyes(skinned,bones.head);
 
   const rest={};
   for(const [name,b] of Object.entries(bones)){

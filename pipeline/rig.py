@@ -237,6 +237,22 @@ if a.soften < 1 or a.fur_desat > 0 or a.fur_lift > 0:
                     acc += np.roll(blur, d, axis=axis)
                 blur = acc / 7
             out = blur + (px - blur) * a.soften
+            # Masks from the ORIGINAL albedo (round 53, p06 WO-R08/A24/A25): the
+            # fur pass lifted the pupils into a grey smudge and greyed the pink
+            # ear skin. Iris = yellow-green; the eye zone is the iris dilated
+            # ~10 px so it covers the slit inside it; pink = ear skin and nose.
+            o = px[..., :3]
+            ov = o.max(axis=2); omn = o.min(axis=2); od = np.maximum(ov - omn, 1e-6)
+            osat = np.where(ov > 0, (ov - omn) / np.maximum(ov, 1e-6), 0)
+            orr, ogg, obb = o[..., 0], o[..., 1], o[..., 2]
+            ohue = np.where(ov == orr, ((ogg - obb) / od) % 6, np.where(ov == ogg, (obb - orr) / od + 2, (orr - ogg) / od + 4)) * 60
+            iris = (ohue > 45) & (ohue < 115) & (osat > 0.35) & (ov > 0.3)
+            eye = iris.copy()
+            for _ in range(10):
+                eye = eye | np.roll(eye, 1, 0) | np.roll(eye, -1, 0) | np.roll(eye, 1, 1) | np.roll(eye, -1, 1)
+            pink = ((ohue >= 320) | (ohue <= 40)) & (osat > 0.08) & (ov > 0.10) & (ov < 0.75)
+            keep = (eye | pink)[..., None].astype(np.float32)
+            print(f'[rig] masks: iris {int(iris.sum())} px, eye zone {int(eye.sum())} px, pink {int(pink.sum())} px')
             if a.fur_desat > 0:
                 # Black fur, not navy: the baked blue sheen stacked with the toon
                 # ramp's blue shade (round 43). Only dark pixels move.
@@ -251,18 +267,30 @@ if a.soften < 1 or a.fur_desat > 0 or a.fur_lift > 0:
                 h = np.where(v == r, ((g - bb) / d) % 6, np.where(v == g, (bb - r) / d + 2, (r - g) / d + 4)) * 60
                 blue = np.clip(1 - np.abs(h - 220) / 50, 0, 1)
                 dark = np.clip((0.45 - v) / 0.15, 0, 1)
-                k = a.fur_desat * np.maximum(blue, dark)
+                k = a.fur_desat * np.maximum(blue, dark) * (1 - keep)
                 out[..., :3] = rgb * (1 - k) + lum * k
             if a.fur_lift > 0:
                 # Charcoal, not void (p04, WO-A16): in shade the near-black body
                 # read as a hole; form showed only where specular landed.
                 v = out[..., :3].max(axis=2, keepdims=True)
-                w = np.clip((0.40 - v) / 0.40, 0, 1)
-                out[..., :3] += w * a.fur_lift * np.array([0.95, 0.97, 1.0])  # near-neutral: refs/cat chroma ~0.09
+                lw = np.clip((0.40 - v) / 0.40, 0, 1) * (1 - keep)
+                out[..., :3] += lw * a.fur_lift * np.array([0.95, 0.97, 1.0])  # near-neutral: refs/cat chroma ~0.09
+            # A crisp slit: dark, non-iris pixels inside the eye zone go near black.
+            # The slit is darker than the iris around it but often green-tinted, so
+            # it is found RELATIVE to the local iris value, not by a fixed black.
+            ev = out[..., :3].max(axis=2)
+            irisv = float(np.median(ev[iris])) if iris.any() else 0.6
+            slit = eye & (ev < irisv * 0.62)
+            out[slit, :3] *= 0.25
+            print(f'[rig] eye: iris median V {irisv:.2f}, slit {int(slit.sum())} px')
+            # Ear skin toward the photos' pink-brown (sat ~0.23, hue ~7).
+            ps = pink & ~eye
+            pl = (out[ps, :3] * np.array([0.2126, 0.7152, 0.0722])).sum(axis=1, keepdims=True)
+            out[ps, :3] = np.clip(pl * np.array([1.45, 0.88, 0.84]) * 1.1, 0, 1)  # pink-brown, sat ~0.25
             out[..., 3] = px[..., 3]
             img.pixels[:] = np.clip(out, 0, 1).ravel()
             img.update()
-            print(f'[rig] softened {img.name} {w}x{h} detail x{a.soften}')
+            print(f'[rig] processed {img.name} {img.size[0]}x{img.size[1]} detail x{a.soften}')
 
 # The game's toon material reads only the colour map: drop the normal and
 # metal/rough maps so they do not ship (WO-A05).
@@ -298,6 +326,35 @@ if _img is not None:
         r, g, b, _ = px[y, x]
         lum[loop.vertex_index] += 0.2126 * r + 0.7152 * g + 0.0722 * b; cnt[loop.vertex_index] += 1
     lum /= np.maximum(cnt, 1)
+    # Eyes (round 53, WO-A24): the baked iris has no pupil. Measure each eye
+    # from its iris vertices (yellow-green) so the game can add a slit pupil
+    # and a catchlight. Stored as mesh extras in game units, glTF Y-up.
+    import json
+    rgbv = np.zeros((len(me.vertices), 3))
+    for loop in me.loops:
+        u, v = uv[loop.index].uv
+        x = min(iw - 1, max(0, int((u % 1.0) * iw))); y = min(ih - 1, max(0, int((v % 1.0) * ih)))
+        rgbv[loop.vertex_index] += px[y, x, :3]
+    rgbv /= np.maximum(cnt, 1)[:, None]
+    vmax = rgbv.max(1); vmin = rgbv.min(1); vd = np.maximum(vmax - vmin, 1e-6)
+    vsat = (vmax - vmin) / np.maximum(vmax, 1e-6)
+    vh = np.where(vmax == rgbv[:, 0], ((rgbv[:, 1] - rgbv[:, 2]) / vd) % 6,
+         np.where(vmax == rgbv[:, 1], (rgbv[:, 2] - rgbv[:, 0]) / vd + 2, (rgbv[:, 0] - rgbv[:, 1]) / vd + 4)) * 60
+    irisv = (vh > 45) & (vh < 115) & (vsat > 0.35) & (vmax > 0.3)
+    eyes = {}
+    for tag, sgn in (('L', -1), ('R', 1)):
+        idx = [i for i in np.nonzero(irisv)[0] if me.vertices[i].co.x * sgn > 0 and me.vertices[i].co.z > 0.6]
+        if len(idx) < 8:
+            continue
+        P = np.array([tuple(me.vertices[i].co) for i in idx]); N = np.array([tuple(me.vertices[i].normal) for i in idx])
+        # Median centre and a 70th-percentile radius: the farthest iris vertex
+        # overshot the eye and made the slit too tall (round 53).
+        c = np.median(P, 0); n = N.mean(0); n /= max(np.linalg.norm(n), 1e-6)
+        r = float(np.percentile(np.sqrt(((P - c) ** 2).sum(1)), 70)) * 1.1
+        H = a.height
+        eyes[tag] = {'p': [c[0] * H, c[2] * H, -c[1] * H], 'n': [n[0], n[2], -n[1]], 'r': r * H}
+        print(f'[rig] eye {tag}: {len(idx)} verts, r {r * H:.3f} m')
+    body['eyes'] = json.dumps(eyes)
     ca = me.color_attributes.new('Col', 'FLOAT_COLOR', 'POINT')
     for i, l in enumerate(lum):
         w = 0.0 if l > 0.45 else 1.0
@@ -342,5 +399,5 @@ bpy.ops.object.select_all(action='DESELECT')
 body.select_set(True); rig.select_set(True)
 bpy.ops.export_scene.gltf(filepath=a.dst, export_format='GLB', use_selection=True,
                           export_image_format='WEBP', export_image_quality=88,
-                          export_skins=True, export_animations=False, export_yup=True)
+                          export_skins=True, export_animations=False, export_yup=True, export_extras=True)
 print(f'[rig] -> {a.dst}: {len(body.data.polygons)} faces, {len(deform)} deform bones')
