@@ -245,7 +245,7 @@ Verdict: BASELINE 6 / candidate 0 (crate-cluster high; title, beach, play med; h
 | WO-A39 | r70 | critic | Iris is a flat fill (sd 0.001), no gradient and no dark limbal ring | rig.py: radial iris gradient (lime near the pupil → butter-yellow at the rim) + a dark ring at the iris edge (CAT_NOTES) | P2 | OPEN | 0 |
 | WO-V31 | r70 | critic | Shadow on sand is olive, over-saturated (palm shadow sat 0.71, hue 67°); ref form-1 plant shadow sat 0.40, B/R 0.60 — desaturate and move toward blue-violet | render owner: the grade's shadow split-tone and the hemi ground colour (ties WO-L13) | P2 | OPEN | 0 |
 | WO-L34 | r70 | critic | A small brown box post with a floating cyan diamond (title-hero 100–135×300–370) reads as a primitive | the checkpoint totem (makeCheckpoint) — authored totem GLB (ties WO-X02: a generic tiki, no Aku Aku look) | P2 | OPEN | 0 |
-| WO-A33 | — | critic (top pick) | (re-measured) hero fur slate-grey vinyl: chest L 0.21, forehead 0.27 vs refs/cat chest 0.03, cheek 0.13; vinyl specular | near-black albedo (body L 0.06–0.12), anisotropic blue-grey sheen, strand breakup, stronger warm core band (r63 sheen + r67 tint not enough) | P1 | OPEN | — |
+| WO-A33 | — | critic (top pick) | (re-measured) hero fur slate-grey vinyl: chest L 0.21, forehead 0.27 vs refs/cat chest 0.03, cheek 0.13; vinyl specular | near-black albedo (body L 0.06–0.12), anisotropic blue-grey sheen, strand breakup, stronger warm core band (r63 sheen + r67 tint not enough) | P1 | IN PROGRESS (r73: tint (0.64,0.46,0.32) — near-black albedo; hero-closeup body L p50 0.093, head 0.113, p95 0.32–0.37 from the cool sheen; R−B still −2..−4, no strand breakup yet) | 1 |
 
 ## Engine limits (logged, not scheduled)
 

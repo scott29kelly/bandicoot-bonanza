@@ -96,7 +96,8 @@
 - r72: keg presentation (R14) partial: keg 1.26x crate height, lid fuse
   spark + glow, solid top raised. Reads as a barrel in the crate row; in
   crate-cluster the front crate still hides most of it. Playtest 19/19.
-- Next: r73 hero fur (A33), r74 BLIND PACKET. Pending Scott:
+- r73: hero fur near-black (A33).
+- Next: r74 BLIND PACKET. Pending Scott:
   the adventurer look (goggles + scarf/bandolier/vest/neckerchief), game name.
 - (done r67) coat value + darks (R11, R12),
   r68 ..., r69 BLIND PACKET. Later: (done r64) hero shading + face colours
