@@ -100,7 +100,8 @@
 - r74 BLIND PACKET p11 (r64 vs r73, critic v2): BASELINE 4 / 2. The
   near-black fur won both hero pairs; the keg lost every pair it is in
   (R14), and the r73 tint dulled the face colours (R15). Not promoted.
-- Next: r75 R15 (tint by albedo luma, face untinted), r76 R14 keg
+- r75: face colours back (R15): fur-only dark tint (`tintFace`).
+- Next: r76 R14 keg
   (out of the slot, sharper decal, flame sprite), r77 A40/A36, r78 BLIND
   PACKET. Pending Scott:
   the adventurer look (goggles + scarf/bandolier/vest/neckerchief), game name.

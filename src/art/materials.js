@@ -63,6 +63,10 @@ export function toonMat(opts={}){
     // grade's teal split-tone and the blue sky fill; the black cat needs a
     // warm counter-tint to land at blue-GRAY, not cobalt (round 43).
     const tint=rim.tint?new THREE.Vector3(...rim.tint):null;
+    // tintFace: the tint for texels that are not fur — bright (iris,
+    // whiskers) or red-leaning (inner ear). The near-black fur tint dulled
+    // the face colours when it applied to the whole albedo (p11, WO-R15).
+    const tintFace=rim.tintFace?new THREE.Vector3(...rim.tintFace):null;
     // diffuseDesat: pull the DIFFUSE light (not the rim) toward its own
     // luminance. The black cat took the blue sky fill as a teal patch on
     // its front faces; a warm albedo tint cancelled it by turning the fur
@@ -99,9 +103,18 @@ uniform vec3 uSheen;`)
   float lightK=dot(dLight,wL)/max(dot(diffuseColor.rgb,wL),1e-3);
   dLight=mix(dLight,diffuseColor.rgb*lightK*vec3(0.97,0.99,1.05),${diffuseDesat.toFixed(2)});
   vec3 outgoingLight = dLight + totalEmissiveRadiance;`);
-      if(tint){sh.uniforms.uTint={value:tint};sh.fragmentShader=sh.fragmentShader
+      if(tint&&!tintFace){sh.uniforms.uTint={value:tint};sh.fragmentShader=sh.fragmentShader
         .replace('#include <common>','#include <common>\nuniform vec3 uTint;')
         .replace('#include <color_fragment>','#include <color_fragment>\n  diffuseColor.rgb*=uTint;');}
+      // Fur texels sit below linear L 0.05 with R-G under 0.002 (hero.glb).
+      if(tint&&tintFace){sh.uniforms.uTint={value:tint};sh.uniforms.uTintFace={value:tintFace};sh.fragmentShader=sh.fragmentShader
+        .replace('#include <common>','#include <common>\nuniform vec3 uTint;\nuniform vec3 uTintFace;')
+        .replace('#include <color_fragment>',`#include <color_fragment>
+  {
+    float tL=dot(diffuseColor.rgb,vec3(0.2126,0.7152,0.0722));
+    float face=max(smoothstep(0.05,0.10,tL),smoothstep(0.003,0.010,diffuseColor.r-diffuseColor.g));
+    diffuseColor.rgb*=mix(uTint,uTintFace,face);
+  }`);}
       if(mapBias)sh.fragmentShader=sh.fragmentShader.replace('#include <map_fragment>',
 `#ifdef USE_MAP
   diffuseColor*=texture2D(map,vMapUv,${mapBias.toFixed(2)});
