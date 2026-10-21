@@ -57,8 +57,10 @@
   bone scale tore the root); all reverted, WO-A27 STALLED → re-concept.
 - r55: island skirts tactic 1 (free-standing boulders) reverted — they
   read as stepping stones. Next tactic: a strata texture on the skirt.
-- Next: r56 BLIND
-  PACKET (critic v2, base r51), then the cat re-concept with a slim raised
+- r56: sea lowered 0.7 m (WATER_Y −1.25) — islands stand on rock plinths.
+  The r56 packet was deferred to r57 (only r53 had landed since r52).
+- Next: r57 BLIND
+  PACKET (critic v2, base r51 vs cand r56), then the cat re-concept with a slim raised
   tail (A27) + violet fur shade (A26), palms (staged), fruit (L20).
 - DECISION OWED BY SCOTT: WO-X02 — other Crash-like trade dress (title,
   X-crates, TNT, spin-fruit). Keep, or restyle and rename?

@@ -10,7 +10,10 @@ import {fbm3,vcolor,hash3,xform,mergeGeoms} from './geo.js';
 import {rand} from '../core/rng.js';
 import {toonMat,sandTexture,rockTexture,foamTexture} from '../art/materials.js';
 
-export const WATER_Y=-0.55;
+// -1.25 (was -0.55, round 56, p06 WO-V22): with 0.55 m of freeboard every
+// island read as a slab with a thin lip over the sea; the refs stand their
+// platforms on plinths. Falling still resolves at CFG.killY (-3.2).
+export const WATER_Y=-1.25;
 const SKIRT_DEPTH=6;
 
 let sandMat=null,cliffMat=null;
