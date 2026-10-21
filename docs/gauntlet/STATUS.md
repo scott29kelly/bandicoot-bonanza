@@ -63,9 +63,12 @@
   read as stepping stones. Next tactic: a strata texture on the skirt.
 - r56: sea lowered 0.7 m (WATER_Y −1.25) — islands stand on rock plinths.
   The r56 packet was deferred to r57 (only r53 had landed since r52).
-- Next: r57 BLIND
-  PACKET (critic v2, base r51 vs cand r56), then the cat re-concept with a slim raised
-  tail (A27) + violet fur shade (A26), palms (staged), fruit (L20).
+- r57 BLIND PACKET p07 (r51 vs r56, critic v2): candidate 4 / 2. Pupils
+  win the hero frames; the lower sea wins water-gap but LOST the shore
+  foam (WO-R09) — not promoted. Top pick: lift the jungle (WO-V23).
+- Next: r58 shoreline foam at the new waterline (R09, L28), r59 jungle
+  lift (V23), r60 slim-tail cat (staged in assets-raw/cat5, A27), r61
+  BLIND PACKET.
 - DECISION OWED BY SCOTT: WO-X02 — other Crash-like trade dress (title,
   X-crates, TNT, spin-fruit). Keep, or restyle and rename?
 - r41: hero outline from smoothed normals (WO-R07), fur softened in
