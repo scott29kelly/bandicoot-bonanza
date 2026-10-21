@@ -55,7 +55,9 @@
   iris had no pupil); eye zone and ear skin spared from the fur pass.
 - r54: tail taper — two tactics failed (curl defeats a local shrink;
   bone scale tore the root); all reverted, WO-A27 STALLED → re-concept.
-- Next: r55 island skirts (WO-V22, authored rock/root GLBs), r56 BLIND
+- r55: island skirts tactic 1 (free-standing boulders) reverted — they
+  read as stepping stones. Next tactic: a strata texture on the skirt.
+- Next: r56 BLIND
   PACKET (critic v2, base r51), then the cat re-concept with a slim raised
   tail (A27) + violet fur shade (A26), palms (staged), fruit (L20).
 - DECISION OWED BY SCOTT: WO-X02 — other Crash-like trade dress (title,
