@@ -93,8 +93,10 @@
   went darker/orange and merged with the crates (WO-R13, r66/r68), and
   the keg reads as a hole in the crate wall (R14). Not promoted.
 - r71: sand back to golden (R13): level and hue near r64, breakup kept.
-- Next: r72 keg
-  presentation (R14), r73 hero fur (A33), r74 BLIND PACKET. Pending Scott:
+- r72: keg presentation (R14) partial: keg 1.26x crate height, lid fuse
+  spark + glow, solid top raised. Reads as a barrel in the crate row; in
+  crate-cluster the front crate still hides most of it. Playtest 19/19.
+- Next: r73 hero fur (A33), r74 BLIND PACKET. Pending Scott:
   the adventurer look (goggles + scarf/bandolier/vest/neckerchief), game name.
 - (done r67) coat value + darks (R11, R12),
   r68 ..., r69 BLIND PACKET. Later: (done r64) hero shading + face colours

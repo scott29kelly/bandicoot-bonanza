@@ -156,17 +156,29 @@ export function makeTNT(x,y,z){
   // (WO-X02). Same footprint, same solid, same rules; rand() drawn as before.
   if(hasAsset('keg')){
     const group=new THREE.Group();
-    const keg=placeAsset('keg',{p:[0,-S*0.49,0],h:S*1.12,w:S*1.02});
+    // Taller than the crates (r72, p10 WO-R14): at crate height the keg sat in
+    // a crate-sized slot and read as a HOLE in the wall. Standing proud of the
+    // row, its lid, fuse and skull read as a separate object.
+    const KH=S*1.26;
+    const keg=placeAsset('keg',{p:[0,-S*0.49,0],h:KH,w:S*1.08});
     // Darker, redder wood than the crates: the red TNT box read as danger at
     // a glance, an orange keg among orange crates did not (round 69).
     keg.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;
       o.material=o.material.clone();o.material.color.setRGB(0.78,0.55,0.50);}});
     group.add(keg);
+    // A lit fuse spark on the lid: the one hot point in the yard says "bang".
+    const spark=new THREE.Mesh(new THREE.SphereGeometry(0.07,10,8),
+      new THREE.MeshBasicMaterial({color:0xffc35a,toneMapped:false}));
+    spark.position.set(0.05,-S*0.49+KH*1.02,0.02);
+    const glow=new THREE.Mesh(new THREE.SphereGeometry(0.16,10,8),
+      new THREE.MeshBasicMaterial({color:0xff7a1a,transparent:true,opacity:0.35,depthWrite:false,toneMapped:false}));
+    glow.position.copy(spark.position);
+    group.add(spark,glow);
     group.position.set(x,y+S*0.49,z);
     // The skull (the GLB's +Z front) faces the player's approach (+z).
     group.rotation.y=rand(-0.08,0.08)-0.45; // the bake's skull sits off +Z; -0.45 faces it to the player
     const hw=S*0.49+0.02;
-    return {mesh:group,solid:{minX:x-hw,maxX:x+hw,minZ:z-hw,maxZ:z+hw,topY:y+S*0.98-0.02}};
+    return {mesh:group,solid:{minX:x-hw,maxX:x+hw,minZ:z-hw,maxZ:z+hw,topY:y+KH-0.04}};
   }
   mats();
   const parts=[];
