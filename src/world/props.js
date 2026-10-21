@@ -4,14 +4,14 @@
  * own relief before any texture arrives.
  */
 import * as THREE from 'three';
-import {hasAsset,placeAsset} from '../art/assets.js';
+import {hasAsset} from '../art/assets.js';
 import {rand} from '../core/rng.js';
-import {toonMat,woodTexture,tntTexture,flameTexture} from '../art/materials.js';
+import {toonMat,woodTexture,tntTexture,flameTexture,skullTexture} from '../art/materials.js';
 import {mergeGeoms,xform,vcolor} from './geo.js';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 
 const _c=new THREE.Color();
-let crateMat=null,tntMat=null,fuseMat=null,potMat=null,flameTex=null;
+let crateMat=null,tntMat=null,fuseMat=null,potMat=null,flameTex=null,kegMats=null;
 function mats(){
   if(!crateMat){
     // emissiveMap = the wood itself: shaded crate faces sat AT the grade
@@ -150,40 +150,72 @@ export function makeCheckpoint(x,y,z,idx){
   return cp;
 }
 
+/** The powder keg, built in code (r80, p12 WO-R14). The generated GLB's
+ * baked texture read torn at 3x (ragged hoops, smeared skull) and gave no
+ * hazard read at range. A lathe barrel with vertical staves, iron hoops,
+ * a full red band and a bold white skull reads at every distance. The GLB
+ * stays the gate (hasAsset) so ?ablate=assets still shows the crate. */
+function makeKeg(x,y,z){
+  mats();
+  const KH=S*1.26,R0=0.46,R1=0.55,base=-S*0.49;
+  const rAt=(t)=>R0+(R1-R0)*Math.sin(Math.PI*t);
+  const profile=(t0,t1,dr,n)=>{const pts=[];for(let i=0;i<=n;i++){const t=t0+(t1-t0)*i/n;pts.push(new THREE.Vector2(rAt(t)+dr,t*KH));}return pts;};
+  if(!kegMats){
+    // Vertical staves: the crate wood turned a quarter, about 14 around.
+    const staves=crateMat.map.clone();
+    staves.center.set(0.5,0.5);staves.rotation=Math.PI/2;staves.repeat.set(1,3.5);
+    staves.needsUpdate=true;
+    const skull=skullTexture();skull.wrapS=skull.wrapT=THREE.ClampToEdgeWrapping;
+    kegMats={
+      wood:toonMat({map:staves,color:0xb88a70}),
+      lid:toonMat({map:staves,color:0x8a6450}),
+      iron:toonMat({color:0x2e2a27}),
+      red:toonMat({color:0xc4271d}),
+      skull:toonMat({map:skull,transparent:true,alphaTest:0.5})
+    };
+  }
+  const M=kegMats,group=new THREE.Group(),body=new THREE.Group();
+  const add=(geo,mat,cast=true)=>{const m=new THREE.Mesh(geo,mat);m.castShadow=cast;m.receiveShadow=true;body.add(m);return m;};
+  add(new THREE.LatheGeometry(profile(0,1,0,16),28),M.wood);
+  // The full red band reads as "danger" from any side and at range, as the
+  // red TNT label did (p12 water-gap).
+  add(new THREE.LatheGeometry(profile(0.34,0.70,0.008,6),28),M.red,false);
+  // The skull faces lathe phi 0 (+z).
+  add(new THREE.LatheGeometry(profile(0.32,0.72,0.016,6),8,-0.62,1.24),M.skull,false);
+  for(const t of [0.07,0.25,0.79,0.94]){
+    const hoop=add(new THREE.TorusGeometry(rAt(t)+0.014,0.026,6,36),M.iron);
+    hoop.rotation.x=Math.PI/2;hoop.position.y=t*KH;
+  }
+  const lid=add(new THREE.CircleGeometry(R0*0.97,28),M.lid,false);
+  lid.rotation.x=-Math.PI/2;lid.position.y=KH-0.03;
+  // The fuse: a bent wick out of the lid, lit at its tip.
+  const tip=new THREE.Vector3(0.16,KH+0.20,0.06);
+  const wick=add(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0,KH-0.03,0),new THREE.Vector3(0.05,KH+0.12,0.02),tip]),6,0.022,5),fuseMat);
+  wick.castShadow=true;
+  body.position.y=base;
+  group.add(body);
+  // A camera-facing flame sprite with a soft falloff (r76, p11 WO-R14: the
+  // hard sphere + halo read as a flat "lollipop" disc).
+  if(!flameTex){flameTex=flameTexture();flameTex.wrapS=flameTex.wrapT=THREE.ClampToEdgeWrapping;}
+  const flame=new THREE.Sprite(new THREE.SpriteMaterial({map:flameTex,
+    blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));
+  flame.scale.set(0.42,0.42,1);
+  flame.position.set(tip.x,base+tip.y+0.08,tip.z);
+  group.add(flame);
+  group.position.set(x,y+S*0.49,z);
+  // The skull turns between the player's approach (+z) and the
+  // crate-cluster camera (+x,+z); one rand() as the crate path draws.
+  group.rotation.y=rand(-0.08,0.08)+0.42;
+  const hw=S*0.49+0.02;
+  return {mesh:group,solid:{minX:x-hw,maxX:x+hw,minZ:z-hw,maxZ:z+hw,topY:y+KH-0.04}};
+}
+
 export function makeTNT(x,y,z){
   // Scott's pick (2026-10-21): a powder keg with a red skull replaces the
   // red "TNT" crate, which sat close to a well-known game's trade dress
   // (WO-X02). Same footprint, same solid, same rules; rand() drawn as before.
-  if(hasAsset('keg')){
-    const group=new THREE.Group();
-    // Taller than the crates (r72, p10 WO-R14): at crate height the keg sat in
-    // a crate-sized slot and read as a HOLE in the wall. Standing proud of the
-    // row, its lid, fuse and skull read as a separate object.
-    const KH=S*1.26;
-    const keg=placeAsset('keg',{p:[0,-S*0.49,0],h:KH,w:S*1.08});
-    // Darker, redder wood than the crates: the red TNT box read as danger at
-    // a glance, an orange keg among orange crates did not (round 69).
-    keg.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;
-      o.material=o.material.clone();o.material.color.setRGB(0.78,0.55,0.50);}});
-    keg.rotation.x=0.09; // the mesh's hoops lean 5° back (-z): stand it upright
-    group.add(keg);
-    // A lit fuse spark on the lid: the one hot point in the yard says "bang".
-    // A camera-facing flame sprite with a soft falloff (r76, p11 WO-R14: the
-    // hard sphere + halo read as a flat "lollipop" disc).
-    if(!flameTex){flameTex=flameTexture();flameTex.wrapS=flameTex.wrapT=THREE.ClampToEdgeWrapping;}
-    const flame=new THREE.Sprite(new THREE.SpriteMaterial({map:flameTex,
-      blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));
-    flame.scale.set(0.42,0.42,1);
-    flame.position.set(0.05,-S*0.49+KH*1.02+0.10,0.02);
-    group.add(flame);
-    group.position.set(x,y+S*0.49,z);
-    // The skull (the GLB's +Z front) faces the player's approach (+z).
-    // The bake's skull sits off +Z; +0.73 turns it between the player's approach
-    // (+z) and the crate-cluster camera (r76: out of the slot it showed edge-on).
-    group.rotation.y=rand(-0.08,0.08)+0.73;
-    const hw=S*0.49+0.02;
-    return {mesh:group,solid:{minX:x-hw,maxX:x+hw,minZ:z-hw,maxZ:z+hw,topY:y+KH-0.04}};
-  }
+  if(hasAsset('keg'))return makeKeg(x,y,z);
   mats();
   const parts=[];
   const ao=(y)=>0.72+0.28*THREE.MathUtils.clamp(y/S+0.5,0,1);

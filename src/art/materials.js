@@ -405,6 +405,33 @@ export function dappleTexture(){
 }
 
 /** Sun glints: sparse short bright dashes, additive over the sea. */
+/** A bold white skull-and-crossbones on clear, for the keg's red band
+ * (r80, p12 WO-R14: the baked decal read as a smear). Eye and nose holes
+ * are cut clear so the red shows through. No rand(). */
+export function skullTexture(){
+  return canvasTex(256,(g,s)=>{
+    g.clearRect(0,0,s,s);
+    g.fillStyle='#f4efe4';
+    // crossbones: two bars with knuckled ends, behind the skull
+    for(const a of [0.62,-0.62]){
+      g.save();g.translate(s/2,s*0.60);g.rotate(a);
+      g.fillRect(-s*0.40,-s*0.045,s*0.80,s*0.09);
+      for(const ex of [-s*0.40,s*0.40])for(const ey of [-s*0.05,s*0.05]){
+        g.beginPath();g.arc(ex,ey,s*0.055,0,Math.PI*2);g.fill();}
+      g.restore();
+    }
+    // cranium and jaw
+    g.beginPath();g.arc(s/2,s*0.40,s*0.22,0,Math.PI*2);g.fill();
+    g.fillRect(s*0.37,s*0.50,s*0.26,s*0.16);
+    // holes
+    g.globalCompositeOperation='destination-out';
+    for(const ex of [s*0.42,s*0.58]){g.beginPath();g.ellipse(ex,s*0.42,s*0.055,s*0.065,0,0,Math.PI*2);g.fill();}
+    g.beginPath();g.moveTo(s*0.5,s*0.49);g.lineTo(s*0.475,s*0.54);g.lineTo(s*0.525,s*0.54);g.closePath();g.fill();
+    for(const tx of [s*0.44,s*0.50,s*0.56])g.fillRect(tx-s*0.008,s*0.59,s*0.016,s*0.07);
+    g.globalCompositeOperation='source-over';
+  });
+}
+
 /** A fuse flame for a camera-facing sprite: a teardrop with a hot core and
  * a soft orange falloff, clear edges (p11 WO-R14: the hard disc read as a
  * lollipop). No rand(): the rng stream must not shift. */
