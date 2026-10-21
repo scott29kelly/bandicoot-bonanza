@@ -92,7 +92,8 @@
 - r70 BLIND PACKET p10 (r64 vs r69, critic v2): BASELINE 6 / 0. The sand
   went darker/orange and merged with the crates (WO-R13, r66/r68), and
   the keg reads as a hole in the crate wall (R14). Not promoted.
-- Next: r71 sand level + hue back (R13, keep the breakup), r72 keg
+- r71: sand back to golden (R13): level and hue near r64, breakup kept.
+- Next: r72 keg
   presentation (R14), r73 hero fur (A33), r74 BLIND PACKET. Pending Scott:
   the adventurer look (goggles + scarf/bandolier/vest/neckerchief), game name.
 - (done r67) coat value + darks (R11, R12),

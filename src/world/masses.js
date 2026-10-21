@@ -52,8 +52,9 @@ varying vec3 vSWPos;`)
   vec2 b=mat2(0.8,-0.6,0.6,0.8)*vSWPos.xz/13.0;
   vec3 W=vec3(0.2126,0.7152,0.0722);
   float l=dot(texture2D(uSandD,a).rgb,W)*2.0*dot(texture2D(uSandD,b).rgb,W)*2.0;
-  l=1.0+(l-1.0)*1.7;
-  diffuseColor.rgb*=clamp(l,0.55,1.35);
+  l=1.0+(l-1.0)*1.4;
+  // 0.72 floor (r71): darker sank to 8-12 px stains (p10).
+  diffuseColor.rgb*=clamp(l,0.72,1.3);
 }`);
   };
 }
@@ -71,7 +72,7 @@ function mats(){
 const cSand=new THREE.Color(0xffffff),cSandLow=new THREE.Color(0xd8c49a),
       cSandDamp=new THREE.Color(0xb59a6c),cSandPale=new THREE.Color(0xfff3d8),
       cWet=new THREE.Color(0x7d6448),cRockHi=new THREE.Color(0xa89478),
-      cRockLo=new THREE.Color(0x5c685e),cPath=new THREE.Color(0xa07c52),_c=new THREE.Color();
+      cRockLo=new THREE.Color(0x5c685e),cPath=new THREE.Color(0xd8bb88),_c=new THREE.Color();
 
 /**
  * @param {object} o {x,z,w,d,topY} — footprint of the WALKABLE top.
@@ -176,20 +177,23 @@ export function islandMass({x,z,w,d,topY=0}){
       _c.copy(cSand).lerp(cSandLow,Math.min(1,fbm3((px+x)*0.2,11,(pz+z)*0.2)*1.35));
       // r66 (p09 WO-V28, sand L sd 0.04 vs ref path 0.155): 12 m damp
       // patches start earlier and swing harder.
-      _c.lerp(cSandDamp,Math.min(1,Math.max(0,fbm3((px+x)*0.09,23,(pz+z)*0.09)-0.36)*2.1));
+      // r71 (p10 WO-R13): r66's 2.1 swing pulled the beach brown and the
+      // crates sank into it; 1.6 keeps visible patches at the old level.
+      _c.lerp(cSandDamp,Math.min(1,Math.max(0,fbm3((px+x)*0.09,23,(pz+z)*0.09)-0.42)*1.6));
       // Pale drift stays at the old amplitude: at 1.6 the 0.45/m octave,
       // sampled on 0.77 m vertices, printed round polka dots (round 22).
       _c.lerp(cSandPale,Math.max(0,fbm3((px+x)*0.45,31,(pz+z)*0.45)-0.55)*0.9);
       // ~3.5 m value breakup: the second macro scale the bar asks for.
-      _c.multiplyScalar(0.70+0.55*fbm3((px+x)*0.28,41,(pz+z)*0.28));
+      // Centred on 1.0 (r71): 0.70+0.55·fbm averaged below 1 and darkened the beach.
+      _c.multiplyScalar(0.80+0.40*fbm3((px+x)*0.28,41,(pz+z)*0.28));
       // A worn path down the corridor (r66): compacted, a touch darker and
       // warmer, wandering, with a darker rut at its edge where feet push
       // sand aside — form-1's path reads as a path, ours as a field.
       const wx=px+x-0.45*Math.sin((pz+z)*0.11)-0.25*Math.sin((pz+z)*0.27+1.3);
       const pd=Math.abs(wx);
       const onPath=1-THREE.MathUtils.smoothstep(pd,1.0,2.2);
-      _c.lerp(cPath,onPath*0.75);
-      _c.multiplyScalar(1-0.28*Math.exp(-Math.pow((pd-2.15)/0.45,2)));
+      _c.lerp(cPath,onPath*0.6); // compacted and cooler, not darker (r71)
+      _c.multiplyScalar(1-0.18*Math.exp(-Math.pow((pd-2.15)/0.45,2)));
       // Wet-sand band where the top meets the rim — the tide got here.
       const rim=Math.max(Math.abs(px)/halfW,Math.abs(pz)/halfD);
       return _c.lerp(cWet,THREE.MathUtils.smoothstep(rim,0.78,0.98)*0.45);
