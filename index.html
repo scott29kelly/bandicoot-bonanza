@@ -100,7 +100,7 @@ uniform vec3 uSheen;`).replace("#include <emissivemap_fragment>",`#include <emis
   // Fades past ~5 m (r67, p09 WO-R11): at range the band covered a large
   // share of a small figure and the coat read slate grey.
   float shD=1.0-smoothstep(3.5,9.0,length(vViewPosition));
-  totalEmissiveRadiance+=uSheen*up*(0.35+0.65*facing)*(0.25+0.75*shD);
+  totalEmissiveRadiance+=uSheen*up*(0.35+0.65*facing)*(0.75+0.25*shD);
 }`)),d&&(m.fragmentShader=m.fragmentShader.replace("vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + totalEmissiveRadiance;",`vec3 dLight=reflectedLight.directDiffuse+reflectedLight.indirectDiffuse;
   // Neutral LIGHT, coloured SURFACE: albedo x the light's brightness, so the
   // eyes and ear skin keep their hue while the sky's blue drops out.

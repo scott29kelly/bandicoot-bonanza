@@ -103,7 +103,8 @@
 - r75: face colours back (R15): fur-only dark tint (`tintFace`).
 - r76: keg out of the slot (R14): 1.2 m in front of the row, upright, skull
   to camera, soft flame sprite. Playtest 19/19.
-- Next: (done r76) R14 keg
+- r77: hero separation at range (A40): sheen fade floor 0.75; ΔL 0.080.
+- Next: r78 BLIND PACKET (base r64 vs r77). (done r76) R14 keg
   (out of the slot, sharper decal, flame sprite), r77 A40/A36, r78 BLIND
   PACKET. Pending Scott:
   the adventurer look (goggles + scarf/bandolier/vest/neckerchief), game name.

@@ -91,8 +91,10 @@ uniform vec3 uSheen;`)
   float facing=clamp(dot(shN,shV),0.0,1.0);
   // Fades past ~5 m (r67, p09 WO-R11): at range the band covered a large
   // share of a small figure and the coat read slate grey.
+  // r77 (p11 WO-A40): floor 0.25 -> 0.75. On the near-black fur (r73) the
+  // head merged with dark foliage at range; the sheen is its separator.
   float shD=1.0-smoothstep(3.5,9.0,length(vViewPosition));
-  totalEmissiveRadiance+=uSheen*up*(0.35+0.65*facing)*(0.25+0.75*shD);
+  totalEmissiveRadiance+=uSheen*up*(0.35+0.65*facing)*(0.75+0.25*shD);
 }`);}
       if(diffuseDesat)sh.fragmentShader=sh.fragmentShader.replace(
         'vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + totalEmissiveRadiance;',
