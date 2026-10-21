@@ -91,7 +91,12 @@
   (A33, A34), r64 ..., r65 BLIND PACKET. Later:
   lift (V23), r60 slim-tail cat (staged in assets-raw/cat5, A27), r61
   BLIND PACKET.
-- DECISION OWED BY SCOTT: WO-X02 — other Crash-like trade dress (title,
+- 2026-10-21 Scott: (1) propose small cat accessories — four concepts made
+  (bandana, goggles, collar+compass, satchel), awaiting his pick; (2) keep
+  Crash-like elements only where IP-safe — builder read: rename the game
+  (HIGH), restyle the TNT crate (MEDIUM), keep crates/fruit/totem (LOW).
+  Awaiting his pick of a new name and a TNT restyle.
+- (superseded) DECISION OWED BY SCOTT: WO-X02 — other Crash-like trade dress (title,
   X-crates, TNT, spin-fruit). Keep, or restyle and rename?
 - r41: hero outline from smoothed normals (WO-R07), fur softened in
   rig.py (WO-A08), narrower rim (WO-A10), unused maps stripped (WO-A05).
