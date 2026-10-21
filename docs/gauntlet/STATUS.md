@@ -126,7 +126,8 @@
   PROMOTED: r85 `18b71ea` is the ACCEPTED BASELINE (fourth promotion). The
   banana crowns and the paler sand won every pair. Top pick: matte fur
   re-shade of the hero (A36, A43 rim spike).
-- Next: r87 A43 rim softer + A36 sheen, r88 V40 value structure (sun
+- r87: hero rim capped (A43): edge spike 0.81 -> 0.57; separation 0.071.
+- Next: r88 V40 value structure (sun
   pools), r89 V41 canopy shell, r90 BLIND PACKET (base r85). (done r80) R14 keg texture/hazard read,
   r81 V33 sand, r82 BLIND PACKET. (done r76) R14 keg
   (out of the slot, sharper decal, flame sprite), r77 A40/A36, r78 BLIND
