@@ -129,7 +129,12 @@
 - r87: hero rim capped (A43): edge spike 0.81 -> 0.57; separation 0.071.
 - r88: sunlit lane down the corridor (V40): highlight share about x2.
 - r89: ridge canopy texture posterised to two painted tones (V41).
-- Next: r90 BLIND PACKET (base r85). (done r80) R14 keg texture/hazard read,
+- r90 BLIND PACKET p15 (r85 vs r89, critic v2): BASELINE 6 / 0. The r89
+  posterised jungle read as a camouflage card (R17); the r87 rim cap read
+  as a weaker rim (R18); the r88 lane helped hierarchy but desaturated.
+  Not promoted; r85 stays. Top pick: hero sheen to neutral satin fur.
+- Next: r91 revert r89 + r87 cap (R17, R18), lane re-saturated; r92 A36
+  sheen neutral; r93 V33 edge massing; r94 BLIND PACKET (base r85). (done r80) R14 keg texture/hazard read,
   r81 V33 sand, r82 BLIND PACKET. (done r76) R14 keg
   (out of the slot, sharper decal, flame sprite), r77 A40/A36, r78 BLIND
   PACKET. Pending Scott:

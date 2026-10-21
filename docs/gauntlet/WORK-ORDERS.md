@@ -333,6 +333,25 @@ Verdict: CANDIDATE 6 / baseline 0 → PROMOTED, r85 `18b71ea` is the accepted ba
 | WO-T05 | — | critic | (confirms) hero absent in play-camera, hidden by grass in water-gap, 13.5% of frame height in beach-corridor; a grass blade crosses the legs in hero-closeup | as WO-T05 | P2 | OPEN | — |
 | WO-V32 | — | critic | (confirms, low) a firm-edged dark disc on bare sand at play-camera (458–490×733–752) | as WO-V32 | P3 | OPEN | — |
 
+## Packet p15 (r90: accepted baseline r85 vs candidate r89), critic v2, seed 90
+
+Verdict: BASELINE 6 / candidate 0 (hero-closeup med-high; beach, crate, water-gap med; title, play low-med). Three differences, all candidate losses or mixed: (1) the r89 posterised ridge texture reads as a flat camouflage card — "flat dark green with flat light-green leaf stencils", gradient energy −19 to −23% in five of six frames; (2) the r87 capped rim is weaker (tail-edge peak 119 vs 139 lum) and the critic prefers the stronger rim; (3) the r88 sunlit lane gives a path lead-in (ratio 1.21 vs 1.03; ref form-1 1.34) but at sat 0.47–0.535 vs the ref path's 0.65. Not promoted; r85 stays the baseline. Critic's top pick: hero sheen from blue vinyl (sat 0.31, hue 211) to near-neutral satin fur (sat ≤0.10, warm bias), broken anisotropic highlight, KEEP the stronger rim.
+
+| ID | Round | Source | Problem / impact | Hypothesis / intervention | Pri | Status | Attempts |
+|---|---|---|---|---|---|---|---|
+| WO-R17 | r90 | critic A/B | REGRESSION (r89): the posterised ridge texture reads as a flat camouflage backdrop card; the base's dappled painted texture read as depth | revert r89 (smooth texture back); V41 needs another tactic (more gap fill, or a soft 3-tone with dapple) | P1 | OPEN | 0 |
+| WO-R18 | r90 | critic A/B | REGRESSION (r87): the capped rim is weaker — the critic wants the stronger (r85) rim; p14 called the same rim's 1–2 px spike a sticker edge | revert r87's cap; if the spike returns as a tell, try a cap only at the 1-px grazing band (smoothstep on n·v) instead of a lower overall band | P1 | OPEN | 0 |
+| WO-V40 | — | critic A/B | (r88 lane) path hierarchy helps (ratio 1.21) but the lane desaturates to 0.47–0.535 (ref 0.65) | keep the lane lift, re-saturate it (warmer multiplier instead of a grey lift) | P1 | OPEN | — |
+| WO-A36 | — | critic (top pick) | Hero chest sheen rgb 45,55,66 sat 0.31 hue 211 — blue vinyl; ref fur highlights 94,91,95 sat ~0.04, rust-brown undertones | sheen tint (0.115,0.132,0.15) → near-neutral warm; break the highlight (noise-modulated / strand-anisotropic) | P1 | OPEN | — |
+| WO-L41 | r90 | critic | Shadow-map texel staircase on palm-frond shadows on sand at mid range (water-gap 0–450×470–640) — beyond the portrait-range engine-limit note | PCF softness / shadow radius up, or a tighter cascade over the play lane | P2 | OPEN | 0 |
+| WO-L42 | r90 | critic | Every palm trunk carries the same zig-zag chevron decal (beach, play-camera) | vary the trunk ring texture per palm (offset/scale by hash) | P3 | OPEN | 0 |
+| WO-V36 | — | critic | (confirms) near-black block where the palm shadow crosses the riser (water-gap 65–130×540–580, lum 12–16) | as WO-V36 / WO-L40 | P2 | OPEN | — |
+| WO-V33 | — | critic | (confirms) evenly spaced isolated tufts, no massing along the path edges (ref form-1 continuous grass banks) | as WO-V33 (structure tactic) | P1 | OPEN | — |
+| WO-T05 | — | critic | (confirms) hero ~8% of the title frame vs refs 25–40%; the bottom-centre fruit competes | as WO-T05 | P2 | OPEN | — |
+| WO-L28 | — | critic | (confirms) foam a flat white sheet with stepped polygon edges (sd 3.3 vs ref water 48) | as WO-L28 | P2 | OPEN | — |
+| WO-P05 | — | critic | (confirms) crates flat orange, no edge-wear highlights or metal brackets | as WO-P05 | P3 | OPEN | — |
+| WO-V35 | — | critic | (confirms) plain sky gradient with four puffs (21% of beach-corridor); flat risers with drawn cracks | backlog | P3 | OPEN | — |
+
 ## Engine limits (logged, not scheduled)
 
 - Shadow-map texel staircase on crate faces at portrait range (4096 map).
