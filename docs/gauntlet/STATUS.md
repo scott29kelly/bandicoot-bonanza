@@ -68,7 +68,8 @@
   foam (WO-R09) — not promoted. Top pick: lift the jungle (WO-V23).
 - r58: foam rings follow the lower waterline (WO-R09): surf breaks on
   the cliff feet again.
-- Next: r59 jungle
+- r59: jungle canopy lifted (WO-V23): foliage mean +0.016 to +0.046 L.
+- Next: (done r59) jungle
   lift (V23), r60 slim-tail cat (staged in assets-raw/cat5, A27), r61
   BLIND PACKET.
 - DECISION OWED BY SCOTT: WO-X02 — other Crash-like trade dress (title,
