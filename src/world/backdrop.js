@@ -383,8 +383,12 @@ function jungleRidge(x,z,len,w,h,dir,near=true){
       // 1.4x the mound, darker the lower it sits. Half the slots left the
       // smooth ridge skin showing between clumps. The mound is still built
       // above so the rng stream does not move.
+      // r84 (p13 WO-V34): three in ten upper-flank slots take the big-leaf
+      // plant at 1.3x. The wall read as a faceted noise of small cards;
+      // the refs build it from large readable banana/elephant-ear shapes.
+      const big=hasAsset('bigleaf')&&depth>0.45&&hash3(i,x,z+5)<0.3;
       canopy.push({x,z,dir,lx:sm.lx-sm.lnx*sink,ly:sm.ly-sm.lny*sink,
-        lz:sm.lz-sm.lnz*sink,R:R*1.4,depth,yaw:hash3(z,i,x)*6.283});
+        lz:sm.lz-sm.lnz*sink,R:R*1.4*(big?1.3:1),depth,yaw:hash3(z,i,x)*6.283,big});
       continue;
     }
     xform(mound,{p:[sm.lx-sm.lnx*sink,sm.ly-sm.lny*sink,sm.lz-sm.lnz*sink]});
@@ -594,7 +598,9 @@ export function createBackdrop(){
       // against the refs' 0.27-0.31 and the black hero had nothing to
       // separate from.
       // 0.38 (r67, p09 WO-R12): r59's 0.44 lifted every frame's darks.
-      const v=0.38+0.58*c.depth*c.depth;
+      // Top 0.96 -> 1.23 (r84, p13 WO-V34): lit crowns at the ref's leaf
+      // value (L 0.285, sd 0.139 vs ours 0.20, 0.10); the floor holds the darks.
+      const v=0.38+0.85*c.depth*c.depth;
       sets[name].cols.push(new THREE.Color(v,v*(0.96+hash3(c.lx,c.lz,3)*0.08),v));
     }
     for(const [name,{mats,cols}] of Object.entries(sets))

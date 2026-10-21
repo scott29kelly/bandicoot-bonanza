@@ -119,8 +119,9 @@
   Top pick: designed jungle leaf clusters (V34/V02).
 - r83: canopy "impostor square" (V37) = bare ridge skin; hash-placed
   low-poly gap-fill clumps cover most of it (+470k tris).
-- Next: r84 V34 jungle clusters (authored GLB),
-  r85 V38/V39 fill + sand hue, r86 BLIND PACKET (base r81). (done r80) R14 keg texture/hazard read,
+- r84: jungle wall (V34) tactic 1: bigleaf on the upper flank, lit crowns
+  brighter (canopy lum 0.196 -> 0.213). 4.0M tris.
+- Next: r85 V38/V39 fill + sand hue, r86 BLIND PACKET (base r81). (done r80) R14 keg texture/hazard read,
   r81 V33 sand, r82 BLIND PACKET. (done r76) R14 keg
   (out of the slot, sharper decal, flame sprite), r77 A40/A36, r78 BLIND
   PACKET. Pending Scott:
