@@ -52,7 +52,7 @@ vec3 canopyTri(vec3 p,vec3 w,float s,float r){
   vec3 t=canopyTri(vCWPos,w,7.0,0.0)*canopyTri(vCWPos,w,19.0,0.9)*4.0;
   float l=dot(t,vec3(0.2126,0.7152,0.0722));
   vec3 m=mix(vec3(l),t,0.3);
-  diffuseColor.rgb*=mix(vec3(1.0),m,0.72); // 0.9 -> 0.72 (r59): shallower leaf gaps
+  diffuseColor.rgb*=mix(vec3(1.0),m,0.84); // 0.9 -> 0.72 (r59) -> 0.84 (r67, WO-R12): deeper leaf gaps
 }`);
   };
 }
@@ -233,7 +233,7 @@ function ridgeFoam(){
   const t=foamTexture();
   t.flipY=false;t.wrapT=THREE.ClampToEdgeWrapping;t.needsUpdate=true;
   const fm=new THREE.MeshBasicMaterial({map:t,transparent:true,depthWrite:false,
-    opacity:0.5,fog:true,side:THREE.DoubleSide});
+    opacity:0.6,fog:true,side:THREE.DoubleSide});
   // Soft inner edge, as the island rings (r62): the solid v=0 end drew a line.
   fm.onBeforeCompile=(sh)=>{
     sh.fragmentShader=sh.fragmentShader.replace('#include <map_fragment>',
@@ -285,7 +285,7 @@ function jungleRidge(x,z,len,w,h,dir,near=true){
     0.42+fbm3(px*0.23,py*0.5,9)*0.18,
     // The base shell shows only BETWEEN crowns now: painted dark, those
     // gaps read as the under-canopy the refs have (p5 0.05 vs our 0.17).
-    Math.max(0.035,0.10+Math.max(0,py)/h*0.1 // base 0.06 -> 0.10 (r59, WO-V23)
+    Math.max(0.035,0.075+Math.max(0,py)/h*0.1 // base 0.06 -> 0.10 (r59) -> 0.075 (r67, WO-R12)
       +(fbm3(px*0.16,py*0.35,(pz+7)*0.16)-0.5)*0.24
       +(fbm3(px*0.55,py*0.9,(pz+3)*0.55)-0.5)*0.13
       +(fbm3(px*1.3,py*1.7,(pz+11)*1.3)-0.5)*0.08)));
@@ -581,7 +581,8 @@ export function createBackdrop(){
       // 0.44 floor (r59, p07 WO-V23): at 0.30 the canopy averaged L 0.19-0.21
       // against the refs' 0.27-0.31 and the black hero had nothing to
       // separate from.
-      const v=0.44+0.52*c.depth*c.depth;
+      // 0.38 (r67, p09 WO-R12): r59's 0.44 lifted every frame's darks.
+      const v=0.38+0.58*c.depth*c.depth;
       sets[name].cols.push(new THREE.Color(v,v*(0.96+hash3(c.lx,c.lz,3)*0.08),v));
     }
     for(const [name,{mats,cols}] of Object.entries(sets))

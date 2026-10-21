@@ -86,7 +86,8 @@
   lifted darks). Top pick: the ground plane (WO-V28).
 - r66: worn path + stronger sand macro (V28 tactic 1, partial: sand sd
   0.052 → 0.063 vs target 0.12); next ground tactic is a sand texture.
-- Next: r67 coat value + darks (R11, R12),
+- r67: coat warm black at range (R11), darks deeper (R12).
+- Next: (done r67) coat value + darks (R11, R12),
   r68 ..., r69 BLIND PACKET. Later: (done r64) hero shading + face colours
   (A33, A34), r64 ..., r65 BLIND PACKET. Later:
   lift (V23), r60 slim-tail cat (staged in assets-raw/cat5, A27), r61

@@ -85,7 +85,10 @@ uniform vec3 uSheen;`)
   vec3 shN=normalize(normal),shV=normalize(vViewPosition);
   float up=smoothstep(0.15,0.85,shN.y);
   float facing=clamp(dot(shN,shV),0.0,1.0);
-  totalEmissiveRadiance+=uSheen*up*(0.35+0.65*facing);
+  // Fades past ~5 m (r67, p09 WO-R11): at range the band covered a large
+  // share of a small figure and the coat read slate grey.
+  float shD=1.0-smoothstep(3.5,9.0,length(vViewPosition));
+  totalEmissiveRadiance+=uSheen*up*(0.35+0.65*facing)*(0.25+0.75*shD);
 }`);}
       if(diffuseDesat)sh.fragmentShader=sh.fragmentShader.replace(
         'vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse + totalEmissiveRadiance;',
