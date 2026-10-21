@@ -106,7 +106,12 @@ export function buildBeach(scene){
   solids.push(tnt.solid);
   tnt.armed=false;tnt.fuse=0;tnt.exploded=false;
   tnt.solid.ent={type:'tnt',obj:tnt};tnts.push(tnt);
-  avoid.push({x:0,z:TNT_Z,r:1.15});
+  // The scatter avoid disc stays where r64 had it (the row slot): scatter()
+  // retries rejected points, so moving it re-rolled every later draw and
+  // the dressing drifted (r78, p12 WO-R16). The keg's own footprint is
+  // cleared by sinking points out of sight (same count, no rng draw).
+  avoid.push({x:0,z:-52,r:1.15});
+  const sink=(pts)=>pts.map(p=>p[0]*p[0]+(p[2]-TNT_Z)*(p[2]-TNT_Z)<1.15*1.15?[p[0],p[1]-60,p[2]]:p);
   ground(0,TNT_Z,0.95);
   // The framings keep aiming at the row's centre, not at the keg.
   const rowMark=new THREE.Object3D();rowMark.position.set(0,tnt.mesh.position.y,-52);
@@ -128,36 +133,36 @@ export function buildBeach(scene){
     // over ~20% of the frame within 12 m (round 31).
     ...scatter(110,gapA.solid,0.5,avoid),...scatter(110,gapB.solid,0.5,avoid),
     ...scatter(120,yard.solid,0.8,avoid)];
-  const grass=makeGrassField(grassSpots);
+  const grass=makeGrassField(sink(grassSpots));
   scene.add(grass.mesh);
   updates.push(grass.update);
-  scene.add(contactField(grassSpots,0.30,0.5));
+  scene.add(contactField(sink(grassSpots),0.30,0.5));
 
   const broadSpots=[
     ...scatter(90,beach.solid,0.9,avoid),
     ...scatter(18,gapA.solid,0.6,avoid),...scatter(18,gapB.solid,0.6,avoid),
     ...scatter(45,yard.solid,0.9,avoid)];
-  const broad=makeBroadleafField(broadSpots);
+  const broad=makeBroadleafField(sink(broadSpots));
   scene.add(broad.mesh);
   updates.push(broad.update);
-  scene.add(contactField(broadSpots,0.42,0.55));
+  scene.add(contactField(sink(broadSpots),0.42,0.55));
 
   // Blossoms keep clear of the broadleaf clumps: a stem under a leaf
   // showed as a bare dark peg through the whorl (round 21, crop-verified).
   const flowerAvoid=[...avoid,...broadSpots.map(([x,,z])=>({x,z,r:0.75}))];
-  scene.add(makeFlowerField([
+  scene.add(makeFlowerField(sink([
     ...scatter(110,beach.solid,0.7,flowerAvoid),
-    ...scatter(50,yard.solid,0.7,flowerAvoid)]));
+    ...scatter(50,yard.solid,0.7,flowerAvoid)])));
 
   // Debris avoids the prop footprints too: a shell cut into a crate post
   // in the framing that judges prop relief (round 22, crop-verified).
-  const spots=(n)=>[
+  const spots=(n)=>sink([
     ...scatter(Math.round(n*0.62),beach.solid,0.4,avoid),
     // Margin 0.7 (was 0.3): a pebble on the islet lip showed as a ghost
     // polygon half inside the skirt face (round 32, crop-verified).
     ...scatter(Math.round(n*0.18),gapA.solid,0.7),
     ...scatter(Math.round(n*0.18),gapB.solid,0.7),
-    ...scatter(Math.round(n*0.24),yard.solid,0.4,avoid)];
+    ...scatter(Math.round(n*0.24),yard.solid,0.4,avoid)]);
   // Pebble sockets: sand directly under a pebble measured LIGHTER than
   // beside it (round 33). Same spots, one draw set — the discs draw none.
   const pebbleSpots=spots(950);

@@ -108,7 +108,8 @@
   The hero won the close-up (med-high). Losses: the r76 keg move re-rolled
   the dressing (sticks at the hero's feet, R16), and the keg's texture is
   torn at 3x with no hazard read at range (R14). Not promoted.
-- Next: r79 R16 (rng-stable keg avoid), r80 R14 keg texture/hazard read,
+- r79: dressing back to r64 exactly (R16): rng-stable avoid + sink().
+- Next: r80 R14 keg texture/hazard read,
   r81 V33 sand, r82 BLIND PACKET. (done r76) R14 keg
   (out of the slot, sharper decal, flame sprite), r77 A40/A36, r78 BLIND
   PACKET. Pending Scott:
