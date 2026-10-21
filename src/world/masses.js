@@ -9,6 +9,8 @@ import * as THREE from 'three';
 import {fbm3,vcolor,hash3,xform,mergeGeoms} from './geo.js';
 import {rand} from '../core/rng.js';
 import {toonMat,sandTexture,rockTexture,foamTexture} from '../art/materials.js';
+import {ablated} from '../core/config.js';
+import sandDetailUrl from '../../assets/textures/sand.webp';
 
 // -1.25 (was -0.55, round 56, p06 WO-V22): with 0.55 m of freeboard every
 // island read as a slab with a thin lip over the sea; the refs stand their
@@ -17,10 +19,49 @@ export const WATER_Y=-1.25;
 const SKIRT_DEPTH=6;
 
 let sandMat=null,cliffMat=null;
+
+/**
+ * Sand detail (round 68, p09 WO-V28 tactic 2): a generated tileable sand
+ * texture (ripples, damp patches, pebbles; mean luma normalised to 0.5)
+ * multiplied in world XZ at ~4 m and ~13 m, LUMINANCE only, contrast
+ * stretched to survive the grade. Vertex tint (r66) capped at L sd 0.063 vs
+ * the refs' 0.155. Skipped under ?ablate=assets.
+ */
+function addSandDetail(mat){
+  if(ablated('assets'))return;
+  const tex=new THREE.TextureLoader().load(sandDetailUrl);
+  tex.wrapS=tex.wrapT=THREE.RepeatWrapping;
+  // Data, not colour: decoded as sRGB its 0.5 mean became ~0.21 linear and
+  // darkened the whole beach (round 68 first capture).
+  tex.colorSpace=THREE.NoColorSpace;
+  tex.anisotropy=8;
+  mat.onBeforeCompile=(sh)=>{
+    sh.uniforms.uSandD={value:tex};
+    sh.vertexShader=sh.vertexShader
+      .replace('#include <common>',`#include <common>
+varying vec3 vSWPos;`)
+      .replace('#include <worldpos_vertex>',`#include <worldpos_vertex>
+vSWPos=(modelMatrix*vec4(transformed,1.0)).xyz;`);
+    sh.fragmentShader=sh.fragmentShader
+      .replace('#include <common>',`#include <common>
+uniform sampler2D uSandD;
+varying vec3 vSWPos;`)
+      .replace('#include <color_fragment>',`#include <color_fragment>
+{
+  vec2 a=vSWPos.xz/4.2;
+  vec2 b=mat2(0.8,-0.6,0.6,0.8)*vSWPos.xz/13.0;
+  vec3 W=vec3(0.2126,0.7152,0.0722);
+  float l=dot(texture2D(uSandD,a).rgb,W)*2.0*dot(texture2D(uSandD,b).rgb,W)*2.0;
+  l=1.0+(l-1.0)*1.7;
+  diffuseColor.rgb*=clamp(l,0.55,1.35);
+}`);
+  };
+}
 function mats(){
   if(!sandMat){
     const sand=sandTexture();
     sandMat=toonMat({map:sand,vertexColors:true});
+    addSandDetail(sandMat);
     const rock=rockTexture();
     cliffMat=toonMat({map:rock,vertexColors:true});
   }
