@@ -4,6 +4,7 @@
  * own relief before any texture arrives.
  */
 import * as THREE from 'three';
+import {hasAsset,placeAsset} from '../art/assets.js';
 import {rand} from '../core/rng.js';
 import {toonMat,woodTexture,tntTexture} from '../art/materials.js';
 import {mergeGeoms,xform,vcolor} from './geo.js';
@@ -150,6 +151,23 @@ export function makeCheckpoint(x,y,z,idx){
 }
 
 export function makeTNT(x,y,z){
+  // Scott's pick (2026-10-21): a powder keg with a red skull replaces the
+  // red "TNT" crate, which sat close to a well-known game's trade dress
+  // (WO-X02). Same footprint, same solid, same rules; rand() drawn as before.
+  if(hasAsset('keg')){
+    const group=new THREE.Group();
+    const keg=placeAsset('keg',{p:[0,-S*0.49,0],h:S*1.12,w:S*1.02});
+    // Darker, redder wood than the crates: the red TNT box read as danger at
+    // a glance, an orange keg among orange crates did not (round 69).
+    keg.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;
+      o.material=o.material.clone();o.material.color.setRGB(0.78,0.55,0.50);}});
+    group.add(keg);
+    group.position.set(x,y+S*0.49,z);
+    // The skull (the GLB's +Z front) faces the player's approach (+z).
+    group.rotation.y=rand(-0.08,0.08)-0.45; // the bake's skull sits off +Z; -0.45 faces it to the player
+    const hw=S*0.49+0.02;
+    return {mesh:group,solid:{minX:x-hw,maxX:x+hw,minZ:z-hw,maxZ:z+hw,topY:y+S*0.98-0.02}};
+  }
   mats();
   const parts=[];
   const ao=(y)=>0.72+0.28*THREE.MathUtils.clamp(y/S+0.5,0,1);

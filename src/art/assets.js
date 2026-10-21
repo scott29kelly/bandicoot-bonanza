@@ -21,6 +21,7 @@ import jungleBushUrl from '../../assets/models/jungle-bush.glb';
 import jungleTreeUrl from '../../assets/models/jungle-tree.glb';
 import jungleBushLoUrl from '../../assets/models/jungle-bush-lo.glb';
 import bigleafUrl from '../../assets/models/bigleaf.glb';
+import kegUrl from '../../assets/models/keg.glb';
 
 const SOURCES={
   'sea-stack':seaStackUrl,
@@ -28,7 +29,8 @@ const SOURCES={
   'jungle-bush':jungleBushUrl,
   'jungle-tree':jungleTreeUrl,
   'jungle-bush-lo':jungleBushLoUrl,
-  'bigleaf':bigleafUrl
+  'bigleaf':bigleafUrl,
+  'keg':kegUrl
 };
 
 const loaded=new Map();
