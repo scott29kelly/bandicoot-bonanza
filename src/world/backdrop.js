@@ -218,7 +218,9 @@ function ridgeFoam(){
       const p=ring[i%ring.length],q=ring[(i+1)%ring.length];
       if(i>0){const o=ring[(i-1)%ring.length];l+=Math.hypot(p.x-o.x,p.z-o.z);}
       let nx=p.x-cx,nz=p.z-cz;const nl=Math.hypot(nx,nz)||1;nx/=nl;nz/=nl;
-      const w=2.4*(0.7+0.5*Math.abs(Math.sin(l*0.31+p.x*0.2)));
+      // 1.3 m (was 2.4): at range the full-width band read as a pale grey
+      // kerb along every flank (p08 WO-L30).
+      const w=1.3*(0.6+0.7*Math.abs(Math.sin(l*0.31+p.x*0.2)));
       pos.push(p.x,0,p.z, p.x+nx*w,0,p.z+nz*w);
       uv.push(l/4,0, l/4,1);
       if(i<ring.length){const a=base+i*2;idx.push(a,a+1,a+2, a+1,a+3,a+2);}
@@ -230,8 +232,15 @@ function ridgeFoam(){
   g.setIndex(idx);
   const t=foamTexture();
   t.flipY=false;t.wrapT=THREE.ClampToEdgeWrapping;t.needsUpdate=true;
-  const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({map:t,transparent:true,depthWrite:false,
-    opacity:0.7,fog:true,side:THREE.DoubleSide}));
+  const fm=new THREE.MeshBasicMaterial({map:t,transparent:true,depthWrite:false,
+    opacity:0.5,fog:true,side:THREE.DoubleSide});
+  // Soft inner edge, as the island rings (r62): the solid v=0 end drew a line.
+  fm.onBeforeCompile=(sh)=>{
+    sh.fragmentShader=sh.fragmentShader.replace('#include <map_fragment>',
+`#include <map_fragment>
+  diffuseColor.a*=smoothstep(-0.05,0.3,vMapUv.y);`);
+  };
+  const m=new THREE.Mesh(g,fm);
   m.position.y=WATER_Y+0.04;
   m.renderOrder=2;
   return m;
@@ -596,6 +605,11 @@ export function createBackdrop(){
   mesh.receiveShadow=false;
   const group=new THREE.Group();
   const shellMat=toonMat({color:0xffffff,side:THREE.DoubleSide}); // white: instance colour IS the colour
-  group.add(mesh,leafShell(nearSamples,shellMat),ridgeFoam(),dappleCasters(),makeClouds(),...stacks,...authored);
+  // The leaf-fan shell predates the authored canopy: its flat lime fans
+  // poked out above the bushes as floating "origami" cards (p07/p08
+  // WO-L26). Still built when the bushes are in, so the rng stream holds.
+  const shell=leafShell(nearSamples,shellMat);
+  group.add(mesh,ridgeFoam(),dappleCasters(),makeClouds(),...stacks,...authored);
+  if(!hasAsset('jungle-bush'))group.add(shell);
   return group;
 }

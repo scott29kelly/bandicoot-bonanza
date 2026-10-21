@@ -79,7 +79,8 @@
   width, offset scaled by island size.
 - r63: hero fur sheen + stronger rim (A33), face colours to the photos
   (A34); screenshot timeout 120 s (WO-T04 flake).
-- Next: (done r63) hero shading + face colours
+- r64: far-shore kerb softened (L30), stray lime leaf cards removed (L26).
+- Next: (done r64) hero shading + face colours
   (A33, A34), r64 ..., r65 BLIND PACKET. Later:
   lift (V23), r60 slim-tail cat (staged in assets-raw/cat5, A27), r61
   BLIND PACKET.
