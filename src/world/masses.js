@@ -206,6 +206,10 @@ export function islandMass({x,z,w,d,topY=0}){
       const pd=Math.abs(wx);
       const onPath=1-THREE.MathUtils.smoothstep(pd,1.0,2.2);
       _c.lerp(cPath,onPath*0.6); // compacted and cooler, not darker (r71)
+      // r88 (p14 WO-V40): a sunlit pool down the lane. L>0.7 covered
+      // 0.4-4% of each frame against the refs' ~3.5% median; form-1's path
+      // is the brightest thing in the shot, framed by dark walls.
+      _c.multiplyScalar(1+0.60*onPath);
       _c.multiplyScalar(1-0.18*Math.exp(-Math.pow((pd-2.15)/0.45,2)));
       // Wet-sand band where the top meets the rim — the tide got here.
       const rim=Math.max(Math.abs(px)/halfW,Math.abs(pz)/halfD);
