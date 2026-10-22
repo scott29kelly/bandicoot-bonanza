@@ -144,6 +144,10 @@ export function buildBeach(scene){
   // path (masses.js); on a forked stream, so no later draw moves.
   forkRng(0x6a55,()=>{
     const bank=[],s=beach.solid;
+    // Kept off the hero-closeup spot and the ground under its camera (r95,
+    // p16 WO-R19): bank blades a metre from the lens crowded the tail.
+    // Clearing them draws nothing (the stream is forked anyway).
+    const clear=[{x:1.2,z:-9,r:1.6},{x:2.9,z:-6.8,r:2.6}];
     for(let z=s.maxZ-1.2;z>s.minZ+1.2;z-=0.42)for(const side of [-1,1]){
       const cx=0.45*Math.sin(z*0.11)+0.25*Math.sin(z*0.27+1.3);
       for(let k=0;k<2;k++){
@@ -151,6 +155,7 @@ export function buildBeach(scene){
         const x=cx+side*rand(2.35,3.5),zz=z+rand(-0.2,0.2);
         if(x<s.minX+0.8||x>s.maxX-0.8)continue;
         if(avoid.some(a=>(x-a.x)*(x-a.x)+(zz-a.z)*(zz-a.z)<a.r*a.r))continue;
+        if(clear.some(a=>(x-a.x)*(x-a.x)+(zz-a.z)*(zz-a.z)<a.r*a.r))continue;
         bank.push([x,s.topY,zz]);
       }
     }
