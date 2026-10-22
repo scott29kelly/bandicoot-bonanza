@@ -400,12 +400,16 @@ export function makeBroadleafField(spots){
 }
 
 /* ---------- debris (instanced) ------------------------------------------ */
-function debrisMesh(geo,mats,spots,colorFn,{yJitter=0.02,sMin=0.6,sMax=1.5,yBase=0}={}){
+function debrisMesh(geo,mats,spots,colorFn,{yJitter=0.02,sMin=0.6,sMax=1.5,yBase=0,flat=false}={}){
   const mesh=new THREE.InstancedMesh(geo,mats,spots.length);
   const m=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler();
   for(let i=0;i<spots.length;i++){
     const [x,y,z]=spots[i];
-    e.set(rand(0,3.1),rand(0,6.2),rand(0,3.1));
+    // flat: the same draws, squeezed to a few degrees of tilt, so a twig lies
+    // on the sand instead of standing up as a stake (r97, p16 WO-L37). The
+    // draw count is unchanged, so no later draw moves.
+    const rx=rand(0,3.1),ry=rand(0,6.2),rz=rand(0,3.1);
+    e.set(flat?(rx-1.55)*0.06:rx,ry,flat?(rz-1.55)*0.06:rz);
     m.compose(new THREE.Vector3(x,y+yBase+rand(0,yJitter),z),q.setFromEuler(e),
       new THREE.Vector3(rand(sMin,sMax),rand(sMin,sMax),rand(sMin,sMax)));
     mesh.setMatrixAt(i,m);
@@ -464,5 +468,5 @@ export function makeTwigs(spots){
   g.computeVertexNormals();
   return debrisMesh(g,toonMat({color:0xffffff}),spots,
     ()=>_c.setHSL(rand(0.06,0.1),rand(0.3,0.5),rand(0.2,0.4)),
-    {sMin:0.6,sMax:1.8});
+    {sMin:0.6,sMax:1.8,flat:true});
 }
