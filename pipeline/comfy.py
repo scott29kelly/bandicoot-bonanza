@@ -1,4 +1,4 @@
-"""Local ComfyUI helper for the Bandicoot Bonanza asset pipeline.
+"""Local ComfyUI helper for the Whisker Trek asset pipeline.
 
 Converts a ComfyUI workflow template (UI format, with nested subgraphs) into an API prompt,
 applies overrides, queues it on the local server (127.0.0.1:8188 only), waits, and downloads outputs.

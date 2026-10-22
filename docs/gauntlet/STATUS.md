@@ -150,9 +150,10 @@
 - r99: tapered double-blade grass tufts (L43), same rng draws.
 - r100: ghost pupil filled in the hero texture (A39); contact-AO tactic
   failed and was reverted (V42).
-- Pending Scott: adventurer look — options 1-4 (assets-raw/adventurer-
-  options-labeled.png) and 5-10 (adventurer-options-2.png); game title
-  (22 options offered 2026-10-22).
+- DECIDED (Scott, 2026-10-22): the hero look is option 6 — brass goggles +
+  canvas explorer backpack (assets-raw/adv6/concept.png). Game title DECIDED
+  2026-10-22: Whisker Trek (page title + VO script renamed; the baked VO
+  clip still says the old name until the audio pack is regenerated).
 - Next: r101 L39 platform bed edges, r102 BLIND PACKET (base r97). (done r80) R14 keg texture/hazard read,
   r81 V33 sand, r82 BLIND PACKET. (done r76) R14 keg
   (out of the slot, sharper decal, flame sprite), r77 A40/A36, r78 BLIND

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Generate the ElevenLabs audio pack for Bandicoot Bonanza and bake it into
+ * Generate the ElevenLabs audio pack for Whisker Trek and bake it into
  * index.html as base64 mp3 clips between the AUDIO_PACK markers.
  *
  * Usage:
@@ -49,7 +49,7 @@ const ONLY=(opt('only','voice,sfx,music')).split(',');
 const OUT=opt('out',null);
 
 const VOICE_LINES={
-  vo_intro:'Bandicoot Bonanza! Ready... set... go!',
+  vo_intro:'Whisker Trek! Ready... set... go!',
   vo_checkpoint:'Checkpoint!',
   vo_gameover:'Game over... better luck next time!',
   vo_victory:'You made it! Incredible!',
