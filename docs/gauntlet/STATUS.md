@@ -135,8 +135,8 @@
   Not promoted; r85 stays. Top pick: hero sheen to neutral satin fur.
 - r91: reverted r89 jungle (R17) and r87 rim cap (R18); lane golden
   (strip sat 0.54 -> 0.62).
-- Next: r92 A36
-  sheen neutral; r93 V33 edge massing; r94 BLIND PACKET (base r85). (done r80) R14 keg texture/hazard read,
+- r92: hero sheen warm-neutral (A36): chest sat 0.32 -> 0.06.
+- Next: r93 V33 edge massing; r94 BLIND PACKET (base r85). (done r80) R14 keg texture/hazard read,
   r81 V33 sand, r82 BLIND PACKET. (done r76) R14 keg
   (out of the slot, sharper decal, flame sprite), r77 A40/A36, r78 BLIND
   PACKET. Pending Scott:

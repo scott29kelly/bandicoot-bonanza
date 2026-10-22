@@ -126,7 +126,10 @@ export function createRiggedHero(gltfScene){
   // old tint (tintFace), so iris, whiskers and inner ear stay bright.
   // r87 capped this rim (p14 WO-A43, a 1-2 px "sticker" spike); p15 (r90)
   // preferred the stronger rim 6/0, so r91 reverted it (WO-R18).
-  skinned.material=toonMat({map:src.map??null,rim:{...RIM,strength:RIM.strength*0.8,power:7.0,mapBias:1.6,diffuseDesat:0.8,tint:[0.64,0.46,0.32],tintFace:[1.16,1.0,0.82],sheen:[0.10,0.115,0.13]}});
+  // r92 (p15 WO-A36): sheen warm-neutral, not cool: the chest read blue
+  // vinyl (45,55,66 sat 0.31); the cat's lit fur is near-neutral. UV-space
+  // strand streaks were tried and dropped: tabby stripes, then moire.
+  skinned.material=toonMat({map:src.map??null,rim:{...RIM,strength:RIM.strength*0.8,power:7.0,mapBias:1.6,diffuseDesat:0.8,tint:[0.64,0.46,0.32],tintFace:[1.16,1.0,0.82],sheen:[0.118,0.108,0.098]}});
   src.dispose();
   skinned.castShadow=true;
   skinned.frustumCulled=false; // skinned bounds do not follow the pose
