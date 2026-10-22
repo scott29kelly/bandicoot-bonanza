@@ -154,7 +154,17 @@
   canvas explorer backpack (assets-raw/adv6/concept.png). Game title DECIDED
   2026-10-22: Whisker Trek (page title + VO script renamed; the baked VO
   clip still says the old name until the audio pack is regenerated).
-- Next: r101 L39 platform bed edges, r102 BLIND PACKET (base r97). (done r80) R14 keg texture/hazard read,
+- r101: THE NEW HERO — Scott's look 6 (goggles + explorer backpack). Concept
+  6 hung the pack at the side and fused the right arm into it, so it was
+  re-conceived from the cat5 pose with the pack on the back (adv6b-s31,
+  Qwen edit seed 31). rig.py `--gear`: a per-texel position/weight map keeps
+  brass, leather and canvas out of the fur, eye and ear passes; ear skin is
+  what the ear bones carry; a side-swung tail is found among fur verts.
+  Gates all pass. Bundle 7.7 -> 9.1 MB (busier 2048 texture). Not yet
+  blind-tested against r97.
+- PAUSED 2026-10-22 by Scott until Sunday 2026-10-25 (token budget). On
+  resume: r102 BLIND PACKET (base r97 vs r101, the new hero); goggle frames
+  read redder than the concept's brass; L39 platform bed edges. (done r80) R14 keg texture/hazard read,
   r81 V33 sand, r82 BLIND PACKET. (done r76) R14 keg
   (out of the slot, sharper decal, flame sprite), r77 A40/A36, r78 BLIND
   PACKET. Pending Scott:

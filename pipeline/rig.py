@@ -25,6 +25,8 @@ ap.add_argument('--fur-desat', type=float, default=0.0,
                 help='saturation share removed from dark pixels (V < 0.4); eyes stay vivid')
 ap.add_argument('--fur-lift', type=float, default=0.0,
                 help='lift dark pixels toward a blue-gray charcoal by this much (mascot read)')
+ap.add_argument('--gear', action='store_true',
+                help='the cat wears gear (brass, leather, canvas): keep those texels out of the fur, eye and ear passes')
 ap.add_argument('--soften', type=float, default=0.5,
                 help='keep this share of the albedo detail above a 3 px blur (1 = untouched)')
 a = ap.parse_args(argv)
@@ -67,6 +69,33 @@ if abs(_cx) > 1e-4:
     body.data.transform(Matrix.Translation((-_cx, 0, 0)))
     V = [body.matrix_world @ v.co for v in body.data.vertices]
     print(f'[rig] recentred x by {-_cx:+.3f}')
+
+
+# Fur vs gear per vertex (r101, --gear): the backpack is the rearmost low
+# surface, so the tail search found it and the tail bone pointed into the
+# pack. Fur is the near-black texels; gear is lighter or saturated.
+FUR = [True] * len(V)
+if a.gear:
+    import numpy as np
+    _img = next((n.image for m in body.data.materials if m and m.use_nodes for n in m.node_tree.nodes
+                 if n.type == 'TEX_IMAGE' and n.image and any(l.to_socket.name == 'Base Color' for l in n.outputs[0].links)), None)
+    if _img:
+        _w, _h = _img.size
+        _px = np.array(_img.pixels[:], dtype=np.float32).reshape(_h, _w, 4)
+        _uv = body.data.uv_layers.active.data
+        _acc = np.zeros((len(V), 3)); _cnt = np.zeros(len(V))
+        for l in body.data.loops:
+            u, v = _uv[l.index].uv
+            _acc[l.vertex_index] += _px[min(_h - 1, max(0, int((v % 1.0) * _h))), min(_w - 1, max(0, int((u % 1.0) * _w))), :3]
+            _cnt[l.vertex_index] += 1
+        _col = _acc / np.maximum(_cnt, 1)[:, None]
+        FUR = list(_col.max(1) < 0.28)
+        print(f'[rig] fur verts {sum(FUR)} / {len(V)}')
+FURSET = {tuple(round(c, 6) for c in v) for i, v in enumerate(V) if FUR[i]}
+
+
+def is_fur(v):
+    return tuple(round(c, 6) for c in v) in FURSET
 
 
 def band(z0, z1, pred=lambda v: True):
@@ -118,7 +147,13 @@ for side, tag in ((-1, 'L'), (1, 'R')):
     ear = extreme_side(band(0.80, 1.0), side, 0.9) or Vector((side * 0.2, cy, 0.9))
     J['ear_' + tag] = Vector((side * abs(ear.x) * 0.55, cy, 0.80))
     J['eartip.' + tag] = ear
-tailvs = band(0.08, 0.45, lambda v: v.y > cy + 0.10)
+tailvs = band(0.08, 0.45, lambda v: v.y > cy + 0.10 and is_fur(v))
+if a.gear:
+    # With a pack on the back the tail swings out to the side (r101): fur
+    # beyond the feet's reach is the tail; take it when there is enough.
+    side_tail = band(0.08, 0.6, lambda v: abs(v.x) > 0.30 and is_fur(v))
+    if len(side_tail) > 40:
+        tailvs = side_tail
 if tailvs:
     tip = max(tailvs, key=lambda v: (v - J['hips']).length)
 else:
@@ -186,7 +221,7 @@ def allowed(v):
         out += ['arm_' + side, 'fore_' + side]
     if v.z < J['hips'].z + 0.03 and v.y < cy + 0.07:
         out += ['leg_' + side, 'shin_' + side]
-    if v.y > cy + 0.07 and v.z < 0.45:
+    if (v.y > cy + 0.07 or (a.gear and abs(v.x) > 0.26)) and v.z < 0.6 and is_fur(v):
         # Only past the tail's root: rump vertices near the base followed the
         # tail sway and tore a plate off the hip (p04, WO-A14).
         t0, t1 = J['tail'], J['tailtip']
@@ -221,6 +256,44 @@ for n in deform:
 # Soften the baked fur strokes: out = blur + (src - blur) * soften. At full
 # detail they read as ink hatching, 1.8x the references' micro-contrast
 # (p03, WO-A08). A 3 px radius at 2048 stays inside the UV islands.
+def position_map(w, h, scalar=None):
+    """Object-space position of the surface under every texel (NaN off the
+    UV islands): rasterise each UV triangle with barycentric weights. Gear
+    and eyes can then be told apart by WHERE they are, not only by colour
+    (r101: the brass highlights matched the iris test)."""
+    import numpy as np
+    me = body.data
+    me.calc_loop_triangles()
+    uvl = me.uv_layers.active.data
+    pos = np.full((h, w, 3), np.nan, dtype=np.float32)
+    sc = np.zeros((h, w), dtype=np.float32)
+    for t in me.loop_triangles:
+        U = np.array([[uvl[l].uv[0] * w, uvl[l].uv[1] * h] for l in t.loops])
+        P = np.array([tuple(me.vertices[i].co) for i in t.vertices])
+        S = [scalar[i] for i in t.vertices] if scalar is not None else None
+        x0, y0 = np.floor(U.min(0)).astype(int); x1, y1 = np.ceil(U.max(0)).astype(int)
+        x0 = max(x0, 0); y0 = max(y0, 0); x1 = min(x1, w - 1); y1 = min(y1, h - 1)
+        if x1 < x0 or y1 < y0:
+            continue
+        gy, gx = np.mgrid[y0:y1 + 1, x0:x1 + 1]
+        qx = gx + 0.5; qy = gy + 0.5
+        (ax, ay), (bx, by), (cx, cy) = U
+        den = (by - cy) * (ax - cx) + (cx - bx) * (ay - cy)
+        if abs(den) < 1e-12:
+            continue
+        l0 = ((by - cy) * (qx - cx) + (cx - bx) * (qy - cy)) / den
+        l1 = ((cy - ay) * (qx - cx) + (ax - cx) * (qy - cy)) / den
+        l2 = 1 - l0 - l1
+        ins = (l0 >= -0.02) & (l1 >= -0.02) & (l2 >= -0.02)
+        if not ins.any():
+            continue
+        p = l0[ins, None] * P[0] + l1[ins, None] * P[1] + l2[ins, None] * P[2]
+        pos[gy[ins], gx[ins]] = p
+        if S is not None:
+            sc[gy[ins], gx[ins]] = l0[ins] * S[0] + l1[ins] * S[1] + l2[ins] * S[2]
+    return pos, sc
+
+
 if a.soften < 1 or a.fur_desat > 0 or a.fur_lift > 0:
     import numpy as np
     for mat in body.data.materials:
@@ -254,7 +327,33 @@ if a.soften < 1 or a.fur_desat > 0 or a.fur_lift > 0:
             for _ in range(10):
                 eye = eye | np.roll(eye, 1, 0) | np.roll(eye, -1, 0) | np.roll(eye, 1, 1) | np.roll(eye, -1, 1)
             pink = ((ohue >= 320) | (ohue <= 40)) & (osat > 0.15) & (ov > 0.12) & (ov < 0.75)
-            keep = (eye | pink)[..., None].astype(np.float32)
+            # Gear (r101, Scott's goggles + backpack): brass, leather and canvas
+            # are warm and saturated (hue 18-65). Unguarded, the iris pass turned
+            # the brass grey-green and the ear pass turned the leather mauve.
+            gear = np.zeros_like(iris)
+            if a.gear:
+                # Ear weight per texel: ear skin is whatever the ear bones carry.
+                ew = [0.0] * len(body.data.vertices)
+                ei = {groups['ear_L'].index, groups['ear_R'].index}
+                for vi, vx in enumerate(body.data.vertices):
+                    ew[vi] = sum(g.weight for g in vx.groups if g.group in ei)
+                pos, earw = position_map(w, h, ew)
+                pz, py = pos[..., 2], pos[..., 1]
+                def pct(m, arr):
+                    v = arr[m & ~np.isnan(arr)]
+                    return ' '.join(f'{q:.2f}' for q in np.percentile(v, [5, 25, 50, 75, 95])) if v.size else '-'
+                # The ear-skin test also matched every leather texel (z 0.29-0.94);
+                # ear skin is rosy, less saturated, and only at ear height.
+                pink &= (earw > 0.5) & ((ohue >= 330) | (ohue <= 25))
+                gear = (ohue <= 65) & (osat > 0.40) & (ov > 0.10) & ~pink
+                iris &= ~gear & (osat < 0.42)
+                print(f'[rig] iris z: {pct(iris, pz)} | ear skin z: {pct(pink, pz)}')
+                eye = iris.copy()
+                for _ in range(10):
+                    eye = eye | np.roll(eye, 1, 0) | np.roll(eye, -1, 0) | np.roll(eye, 1, 1) | np.roll(eye, -1, 1)
+                pink &= ~gear
+                print(f'[rig] gear: {int(gear.sum())} px kept as authored')
+            keep = (eye | pink | gear)[..., None].astype(np.float32)
             print(f'[rig] masks: iris {int(iris.sum())} px, eye zone {int(eye.sum())} px, pink {int(pink.sum())} px')
             if a.fur_desat > 0:
                 # Black fur, not navy: the baked blue sheen stacked with the toon
@@ -322,7 +421,7 @@ if a.soften < 1 or a.fur_desat > 0 or a.fur_lift > 0:
             out[ps, :3] = np.clip(np.array([0.245, 0.205, 0.205]) * (0.75 + 0.5 * pl / max(pm, 1e-3)), 0, 1)
             # Whiskers near-white (p08: p98 V 115-124 vs white in the photos):
             # bright, low-saturation pixels outside the eyes.
-            wh = (ov > 0.5) & (osat < 0.2) & ~eye
+            wh = (ov > 0.5) & (osat < 0.2) & ~eye & ~gear
             out[wh, :3] = np.maximum(out[wh, :3], 0.90)
             print(f'[rig] whiskers lifted: {int(wh.sum())} px')
             out[..., 3] = px[..., 3]
@@ -379,6 +478,8 @@ if _img is not None:
     vh = np.where(vmax == rgbv[:, 0], ((rgbv[:, 1] - rgbv[:, 2]) / vd) % 6,
          np.where(vmax == rgbv[:, 1], (rgbv[:, 2] - rgbv[:, 0]) / vd + 2, (rgbv[:, 0] - rgbv[:, 1]) / vd + 4)) * 60
     irisv = (vh > 35) & (vh < 130) & (vsat > 0.12) & (vmax > 0.45)
+    if a.gear:
+        irisv &= vsat < 0.42  # not the goggles' brass
     eyes = {}
     for tag, sgn in (('L', -1), ('R', 1)):
         idx = [i for i in np.nonzero(irisv)[0] if me.vertices[i].co.x * sgn > 0 and me.vertices[i].co.z > 0.6]
