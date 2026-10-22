@@ -142,8 +142,8 @@
   golden lane + path-edge grass won the wide shots; the bank grass crowds
   the tail in hero-closeup (R19, soft). Top pick: hero shading (A45).
 - r95: bank grass kept off the close-up hero spot and camera (R19).
-- Next: r96 A45 warm fur + broad
-  back-rim, r97 L37/V36, r98 BLIND PACKET (base r93). (done r80) R14 keg texture/hazard read,
+- r96: warm-brown black fur base (A45): tint (0.72,0.46,0.26).
+- Next: r97 L37/V36, r98 BLIND PACKET (base r93). (done r80) R14 keg texture/hazard read,
   r81 V33 sand, r82 BLIND PACKET. (done r76) R14 keg
   (out of the slot, sharper decal, flame sprite), r77 A40/A36, r78 BLIND
   PACKET. Pending Scott:

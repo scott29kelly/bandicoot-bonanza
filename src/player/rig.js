@@ -129,7 +129,9 @@ export function createRiggedHero(gltfScene){
   // r92 (p15 WO-A36): sheen warm-neutral, not cool: the chest read blue
   // vinyl (45,55,66 sat 0.31); the cat's lit fur is near-neutral. UV-space
   // strand streaks were tried and dropped: tabby stripes, then moire.
-  skinned.material=toonMat({map:src.map??null,rim:{...RIM,strength:RIM.strength*0.8,power:7.0,mapBias:1.6,diffuseDesat:0.8,tint:[0.64,0.46,0.32],tintFace:[1.16,1.0,0.82],sheen:[0.118,0.108,0.098]}});
+  // r96 (p16 WO-A45): fur tint (0.64,0.46,0.32) -> (0.72,0.46,0.26): the body
+  // read cool grey (hue 216-233); the cat is a warm-brown black (hue ~18).
+  skinned.material=toonMat({map:src.map??null,rim:{...RIM,strength:RIM.strength*0.8,power:7.0,mapBias:1.6,diffuseDesat:0.8,tint:[0.72,0.46,0.26],tintFace:[1.16,1.0,0.82],sheen:[0.118,0.108,0.098]}});
   src.dispose();
   skinned.castShadow=true;
   skinned.frustumCulled=false; // skinned bounds do not follow the pose
