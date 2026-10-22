@@ -183,26 +183,33 @@ export function makeFern(x,y,z,s=1){
 function tuftGeom(){
   const parts=[];
   const N=11;
-  for(let i=0;i<N;i++){
-    const a=i/N*Math.PI*2+rand(-0.3,0.3),lean=rand(0.2,0.6),hgt=rand(0.5,0.9);
-    const w=0.04,wt=0.012;
+  // r98 (p17 WO-L43): blades read as untapered paper ribbons near the camera
+  // and the tufts as confetti. Each drawn blade now makes two thin tapered
+  // ones (the second derived, no draw), so a tuft is 22 blades that taper
+  // 2.8 cm -> 1.5 -> 0.6 cm and sit on a darker root. Same 33 draws.
+  const blade=(a,lean,hgt,w)=>{
+    const wt=0.006,wm=w*0.55;
     const sx=Math.cos(a+1.57),sz=Math.sin(a+1.57);   // blade width axis
     const mx=Math.cos(a)*lean*0.45,my=hgt*0.55,mz=Math.sin(a)*lean*0.45; // mid
     const tx=Math.cos(a)*lean,ty=hgt,tz=Math.sin(a)*lean;                 // tip
-    const wm=w*0.7;
     const pos=[
       sx*w,0,sz*w,  -sx*w,0,-sz*w,  mx-sx*wm,my,mz-sz*wm,  mx+sx*wm,my,mz+sz*wm,
       tx-sx*wt,ty,tz-sz*wt, tx+sx*wt,ty,tz+sz*wt];
     // Root 0.38 (was 0.55): measured root band L 0.555 vs tip 0.593 —
-    // the clump only read because of its cast shadow (round 30).
-    const col=[0.38,0.44,0.36, 0.38,0.44,0.36, 0.74,0.78,0.7, 0.74,0.78,0.7, 1,1,1, 1,1,1];
-    const blade=new THREE.BufferGeometry();
-    blade.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
-    blade.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
-    blade.setAttribute('uv',new THREE.Float32BufferAttribute([0,0,1,0,0,0.5,1,0.5,0,1,1,1],2));
-    blade.setIndex([0,1,2, 1,3,2, 2,3,4, 3,5,4]);
-    blade.computeVertexNormals();
-    parts.push(blade.toNonIndexed());
+    // the clump only read because of its cast shadow (round 30). 0.30 (r98).
+    const col=[0.30,0.36,0.28, 0.30,0.36,0.28, 0.70,0.75,0.66, 0.70,0.75,0.66, 1,1,1, 1,1,1];
+    const g=new THREE.BufferGeometry();
+    g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+    g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+    g.setAttribute('uv',new THREE.Float32BufferAttribute([0,0,1,0,0,0.5,1,0.5,0,1,1,1],2));
+    g.setIndex([0,1,2, 1,3,2, 2,3,4, 3,5,4]);
+    g.computeVertexNormals();
+    parts.push(g.toNonIndexed());
+  };
+  for(let i=0;i<N;i++){
+    const a=i/N*Math.PI*2+rand(-0.3,0.3),lean=rand(0.2,0.6),hgt=rand(0.5,0.9);
+    blade(a,lean,hgt,0.028);
+    blade(a+0.21,lean*0.8,hgt*0.78,0.022);
   }
   return mergeGeoms(parts);
 }
