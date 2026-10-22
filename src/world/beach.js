@@ -7,7 +7,7 @@
  * world coordinates (Far Country lesson).
  */
 import * as THREE from 'three';
-import {rand} from '../core/rng.js';
+import {rand,rnd,forkRng} from '../core/rng.js';
 import {mark,addFraming} from '../review/framings.js';
 import {CFG} from '../game/cfg.js';
 import {toonMat} from '../art/materials.js';
@@ -137,6 +137,28 @@ export function buildBeach(scene){
   scene.add(grass.mesh);
   updates.push(grass.update);
   scene.add(contactField(sink(grassSpots),0.30,0.5));
+
+  // Grass banks along the worn path's shoulders (r93, p14/p15 WO-V33): the
+  // refs line the path with continuous grass; ours scattered single tufts
+  // evenly over the whole beach. Same wandering centreline as the sand's
+  // path (masses.js); on a forked stream, so no later draw moves.
+  forkRng(0x6a55,()=>{
+    const bank=[],s=beach.solid;
+    for(let z=s.maxZ-1.2;z>s.minZ+1.2;z-=0.42)for(const side of [-1,1]){
+      const cx=0.45*Math.sin(z*0.11)+0.25*Math.sin(z*0.27+1.3);
+      for(let k=0;k<2;k++){
+        if(rnd()<0.22)continue;
+        const x=cx+side*rand(2.35,3.5),zz=z+rand(-0.2,0.2);
+        if(x<s.minX+0.8||x>s.maxX-0.8)continue;
+        if(avoid.some(a=>(x-a.x)*(x-a.x)+(zz-a.z)*(zz-a.z)<a.r*a.r))continue;
+        bank.push([x,s.topY,zz]);
+      }
+    }
+    const banks=makeGrassField(bank);
+    scene.add(banks.mesh);
+    updates.push(banks.update);
+    scene.add(contactField(bank,0.30,0.5));
+  });
 
   const broadSpots=[
     ...scatter(90,beach.solid,0.9,avoid),

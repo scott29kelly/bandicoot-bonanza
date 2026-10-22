@@ -21,3 +21,12 @@ export function rnd(){
 export const rand=(a,b)=>a+rnd()*(b-a);
 export const randInt=(a,b)=>Math.floor(rand(a,b+1));
 export const pick=(arr)=>arr[Math.floor(rnd()*arr.length)];
+
+/** Run fn on its own stream (seeded from SEED and salt), then resume the
+ * main stream where it left off. A late addition draws without moving every
+ * later draw, so the rest of the world stays the same world (r93, WO-R16). */
+export function forkRng(salt,fn){
+  const saved=_a;
+  _a=(SEED^salt)>>>0;
+  try{return fn();}finally{_a=saved;}
+}
