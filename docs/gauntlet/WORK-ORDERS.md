@@ -352,6 +352,24 @@ Verdict: BASELINE 6 / candidate 0 (hero-closeup med-high; beach, crate, water-ga
 | WO-P05 | — | critic | (confirms) crates flat orange, no edge-wear highlights or metal brackets | as WO-P05 | P3 | OPEN | — |
 | WO-V35 | — | critic | (confirms) plain sky gradient with four puffs (21% of beach-corridor); flat risers with drawn cracks | backlog | P3 | OPEN | — |
 
+## Packet p16 (r94: accepted baseline r85 vs candidate r93), critic v2, seed 94
+
+Verdict: CANDIDATE 4 / baseline 1 / 1 tie → PROMOTED, r93 `15e8302` is the accepted baseline (fifth promotion; deviation: one soft regression, WO-R19). Candidate won beach-corridor (med: path band + edge grass as leading lines; lower-40% green 31.9% vs 22.2%, ref form-1 26.1%), play-camera (med: lit path 0.82 vs 0.72, ref 0.836), title-hero (low: lighter path separates the hero) and crate-cluster (low: pebbles separate from the lighter sand). Baseline won hero-closeup (med): the r93 bank grass crowds the tail with large flat ribbon blades. water-gap tie. Note: the critic called the hero pixels identical — the r92 sheen change (chest 45,55,66 → 51,53,55) sat under its 12/255 diff threshold; its "cool grey hue 216–233" body read is real (shadow side, grade teal). Critic's top pick: hero shading (fur sheen, warm-brown black albedo, broad cool back-rim).
+
+| ID | Round | Source | Problem / impact | Hypothesis / intervention | Pri | Status | Attempts |
+|---|---|---|---|---|---|---|---|
+| WO-R19 | r94 | critic A/B | REGRESSION (r93 banks): in hero-closeup the bank grass crowds the tail (900–1280×400–800) with large flat ribbon blades (no root-to-tip value); in beach-corridor (780–1000×540–800) clumps cover a broadleaf and pebbles | keep the banks out of a radius around the framed hero spots (hero-closeup/title player positions) and off other dressing; shorter bank tufts near the camera | P1 | OPEN | 0 |
+| WO-A45 | r94 | critic (top pick) | Hero body cool grey (hue 216–233, V 0.10–0.15) vs the real cat's warm-brown black (hue 18, V 0.07); separation at portrait range rests on a 1–2 px rim (peak 130/255) against foliage 0.21–0.34 | warm the fur base (tint more red, or a warm core band); a broad cool BACK-rim from the key's opposite side (not a thin view-rim) | P1 | OPEN | 0 |
+| WO-A43 | — | critic | (again) the edge reads as a sticker outline: y=600 profile 24 → 40 → 130 (1 px pale) → 19 (dark line) | conflicts with p15 (which preferred the strong rim to r87's cap); the fix is a BROADER rim with a lower peak, not a weaker one — try with WO-A45 | P2 | OPEN | — |
+| WO-A39 | — | critic | (confirms) flat cream iris (sat 0.19), no darker ring | as WO-A39 | P2 | OPEN | — |
+| WO-A41 | — | critic | (confirms) brow whiskers thick white bars | as WO-A41 | P3 | OPEN | — |
+| WO-L37 | — | critic | (confirms) a thin black upright stick beside the hero in beach-corridor (533, 500–525) reads as a nail | as WO-L37 (lay sticks flat) | P2 | OPEN | — |
+| WO-T05 | — | critic | (confirms) hero buried to the chest in grass in water-gap (345–400×360–470) | as WO-T05 | P2 | OPEN | — |
+| WO-L39 | — | critic | (confirms) rectangular platform grass beds (play-camera 500–760×300–350) | as WO-L39 | P2 | OPEN | — |
+| WO-V36 | — | critic | (confirms) riser shadow V 0.067 (water-gap 75–110×545–570) | as WO-V36 | P2 | OPEN | — |
+| WO-V34 | — | critic | (confirms) jungle walls mean 0.198, coarse sd 0.076 vs form-1 0.314 / 0.116 | as WO-V34 | P1 | OPEN | — |
+| WO-V35 | — | critic | (confirms) flat sky with 3–4 small clouds; plain platform faces; no bounce on hero/props; fruit halos | backlog | P3 | OPEN | — |
+
 ## Engine limits (logged, not scheduled)
 
 - Shadow-map texel staircase on crate faces at portrait range (4096 map).

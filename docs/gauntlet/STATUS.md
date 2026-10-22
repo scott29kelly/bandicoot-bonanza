@@ -137,7 +137,12 @@
   (strip sat 0.54 -> 0.62).
 - r92: hero sheen warm-neutral (A36): chest sat 0.32 -> 0.06.
 - r93: grass banks along the path shoulders (V33), on a forked rng stream.
-- Next: r94 BLIND PACKET (base r85 vs r93). (done r80) R14 keg texture/hazard read,
+- r94 BLIND PACKET p16 (r85 vs r93, critic v2): CANDIDATE 4 / 1 / 1 tie.
+  PROMOTED: r93 `15e8302` is the ACCEPTED BASELINE (fifth promotion). The
+  golden lane + path-edge grass won the wide shots; the bank grass crowds
+  the tail in hero-closeup (R19, soft). Top pick: hero shading (A45).
+- Next: r95 R19 banks clear of the hero spots, r96 A45 warm fur + broad
+  back-rim, r97 L37/V36, r98 BLIND PACKET (base r93). (done r80) R14 keg texture/hazard read,
   r81 V33 sand, r82 BLIND PACKET. (done r76) R14 keg
   (out of the slot, sharper decal, flame sprite), r77 A40/A36, r78 BLIND
   PACKET. Pending Scott:
