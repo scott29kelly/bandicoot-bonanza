@@ -148,8 +148,12 @@
   PROMOTED: r97 `06ca7ad` is the ACCEPTED BASELINE (sixth promotion).
   Top pick: massed clumps of tapered blades (L43).
 - r99: tapered double-blade grass tufts (L43), same rng draws.
-- Next: r100 V42 contact AO, r101 A39
-  ghost pupil, r102 BLIND PACKET (base r97). (done r80) R14 keg texture/hazard read,
+- r100: ghost pupil filled in the hero texture (A39); contact-AO tactic
+  failed and was reverted (V42).
+- Pending Scott: adventurer look — options 1-4 (assets-raw/adventurer-
+  options-labeled.png) and 5-10 (adventurer-options-2.png); game title
+  (22 options offered 2026-10-22).
+- Next: r101 L39 platform bed edges, r102 BLIND PACKET (base r97). (done r80) R14 keg texture/hazard read,
   r81 V33 sand, r82 BLIND PACKET. (done r76) R14 keg
   (out of the slot, sharper decal, flame sprite), r77 A40/A36, r78 BLIND
   PACKET. Pending Scott:

@@ -301,6 +301,19 @@ if a.soften < 1 or a.fur_desat > 0 or a.fur_lift > 0:
                 il = (out[iris, :3] * np.array([0.2126, 0.7152, 0.0722])).sum(axis=1, keepdims=True)
                 # Pale green, sat ~0.2 (refs/cat 152,166,131 / 191,210,188; p08 WO-A34).
                 out[iris, :3] = np.clip(il * np.array([0.90, 1.0, 0.80]), 0, 1)
+                # Baked pupil filled with iris (r100, p17 WO-A39): the bake's own
+                # pupil sits nasal of the eye centre, and the game draws the slit
+                # at the centre, so the baked one read as a ghost pupil. The
+                # holes of a morphological closing of the iris mask are the
+                # pupil; lids and lashes lie outside the closed shape.
+                closed = iris.copy()
+                for _ in range(18):
+                    closed = closed | np.roll(closed, 1, 0) | np.roll(closed, -1, 0) | np.roll(closed, 1, 1) | np.roll(closed, -1, 1)
+                for _ in range(18):
+                    closed = closed & np.roll(closed, 1, 0) & np.roll(closed, -1, 0) & np.roll(closed, 1, 1) & np.roll(closed, -1, 1)
+                hole = closed & ~iris
+                out[hole, :3] = np.median(out[iris, :3], axis=0)
+                print(f'[rig] baked pupil filled: {int(hole.sum())} px')
             ps = pink & ~eye
             pl = (out[ps, :3] * np.array([0.2126, 0.7152, 0.0722])).sum(axis=1, keepdims=True)
             # Dark mauve, ~rgb(60,50,50) sat ~0.17 (refs/cat inner ear; p08 WO-A34:
