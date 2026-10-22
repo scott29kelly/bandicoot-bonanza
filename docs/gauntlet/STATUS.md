@@ -144,7 +144,11 @@
 - r95: bank grass kept off the close-up hero spot and camera (R19).
 - r96: warm-brown black fur base (A45): tint (0.72,0.46,0.26).
 - r97: twigs lie flat (L37), same rng draws.
-- Next: r98 BLIND PACKET (base r93). (done r80) R14 keg texture/hazard read,
+- r98 BLIND PACKET p17 (r93 vs r97, critic v2): CANDIDATE 1 / 0 / 5 ties.
+  PROMOTED: r97 `06ca7ad` is the ACCEPTED BASELINE (sixth promotion).
+  Top pick: massed clumps of tapered blades (L43).
+- Next: r99 L43 tapered blade geometry, r100 V42 contact AO, r101 A39
+  ghost pupil, r102 BLIND PACKET (base r97). (done r80) R14 keg texture/hazard read,
   r81 V33 sand, r82 BLIND PACKET. (done r76) R14 keg
   (out of the slot, sharper decal, flame sprite), r77 A40/A36, r78 BLIND
   PACKET. Pending Scott:

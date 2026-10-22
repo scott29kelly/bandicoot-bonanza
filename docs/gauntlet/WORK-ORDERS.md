@@ -370,6 +370,25 @@ Verdict: CANDIDATE 4 / baseline 1 / 1 tie → PROMOTED, r93 `15e8302` is the acc
 | WO-V34 | — | critic | (confirms) jungle walls mean 0.198, coarse sd 0.076 vs form-1 0.314 / 0.116 | as WO-V34 | P1 | OPEN | — |
 | WO-V35 | — | critic | (confirms) flat sky with 3–4 small clouds; plain platform faces; no bounce on hero/props; fruit halos | backlog | P3 | OPEN | — |
 
+## Packet p17 (r98: accepted baseline r93 vs candidate r97), critic v2, seed 98
+
+Verdict: CANDIDATE 1 / baseline 0 / 5 ties → PROMOTED, r97 `06ca7ad` is the accepted baseline (sixth promotion). The only non-tie: hero-closeup (low-med) — the r95 clearance opens the right foreground; the base's wall of untapered blades crossed the tail tip. The r96 fur warmth measured (+2–3 levels; body R−G +4.6 vs +2.1, ref +3.6–4.1) but below a decisive read. The bank-tuft differences read as a re-roll: removing r95's cleared tufts shifts the per-spot draws of the later tufts inside the fork (positions held, scale/rotation re-rolled). The "vertical peg" twig in crate-cluster (630–650×660–700) is a flat twig pointing down the view axis. Critic's top pick: massed grass clumps of tapered blades along the path edges and platform rims, darker at the base, no rectangular bed edges.
+
+| ID | Round | Source | Problem / impact | Hypothesis / intervention | Pri | Status | Attempts |
+|---|---|---|---|---|---|---|---|
+| WO-L43 | r98 | critic (top pick) | Grass blades are untapered ribbons — near-camera they read as paper strips; tufts are confetti: 34–48 green runs per row, mean run 8–13 px, vs form-1's 10 runs of 39 px at the same coverage | tapered, curved blade geometry (many thin blades per clump); clumps merged into continuous borders; darker base (vertex AO) | P1 | OPEN | 0 |
+| WO-V42 | r98 | critic | Deep-shadow share low: L<0.15 is 5.4–8.3% of play/beach/water-gap vs 12–23% in the refs; no occlusion pooling at plant bases, crate bottoms, crevices | contact AO under clumps and props (darker contact discs), deeper crevices | P2 | OPEN | 0 |
+| WO-V43 | r98 | critic | Near ground cover lacks species variety: grass + one leaf card; the refs mix ferns, broadleaf, flowers, vines | a fern/broadleaf clump asset in the path-edge banks | P2 | OPEN | 0 |
+| WO-A39 | — | critic | (confirms) a dark ghost shape inside the iris left of the pupil (hc 615–640×275–310) | as WO-A39: check the slit/glint offset vs the baked iris | P2 | OPEN | — |
+| WO-A34 | — | critic | Inner ears mauve-pink; the ref ears are dark brown with rust | rig.py ear colour toward dark rust-brown | P3 | OPEN | — |
+| WO-A45 | — | critic | (follow-up) fur mean ~33–37 vs ref 41–46 (~20% darker), lit sheen neutral grey sat 0.03 | lift the fur base slightly, keep the warmth | P2 | OPEN | — |
+| WO-L39 | — | critic | (confirms) rectangular grass beds on platform tops (play 500–760×300–350; water-gap 120–660×400–520) | as WO-L39; ties L43 | P2 | OPEN | — |
+| WO-L38 | — | critic | (confirms) pale-green flat leaf cards on sand (hc 930–1120×640–720) | as WO-L38 | P2 | OPEN | — |
+| WO-A43 | — | critic | (confirms) dark outer outline + 1–2 px cream inner line reads as a sticker edge | as WO-A43 (broader rim, lower peak) | P2 | OPEN | — |
+| WO-T05 | — | critic | (confirms) title fruit cut by the bottom edge, leaf touching the hero's foot; beach hero 14% of frame height | as WO-T05 | P2 | OPEN | — |
+| WO-L35 | — | critic | (confirms) fruit smooth sphere with a 5–8 px fuzzy pale rim halo | as WO-L35 | P2 | OPEN | — |
+| WO-V35 | — | critic | (confirms) flat platform sides, faceted foam sheet, sea stacks fogged to low contrast, plain sky | backlog | P3 | OPEN | — |
+
 ## Engine limits (logged, not scheduled)
 
 - Shadow-map texel staircase on crate faces at portrait range (4096 map).
